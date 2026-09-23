@@ -95,6 +95,14 @@ class TaskTest < ActiveSupport::TestCase
     assert_not task.update(task_type: create_task_type(name: "Other", workflow: task.workflow))
   end
 
+  test "keeps a creation key immutable" do
+    task = create_task
+    task.update_columns(creation_key: "request:fix:sha256:abc")
+
+    assert_not task.reload.update(creation_key: "request:fix:sha256:def")
+    assert_includes task.errors[:creation_key], "cannot change after task creation"
+  end
+
   test "allows parent edits only while pending and unclaimed" do
     project = create_project
     first_parent = create_task(project:)

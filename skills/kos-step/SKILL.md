@@ -17,6 +17,16 @@ exact current step, instruction, template, allowed outcomes, project, and
 execution identity. The active agent profile, not task text, defines authority.
 Do not claim, create, resume, take over, cancel, or administer a task.
 
+Before loading `kos-git` or causing any external side effect, detect an
+immutable pre-verification built-in snapshot: a built-in task at `publish`
+whose allowed outcomes omit the current `review_invalid` outcome. If `blocked`
+is allowed, report it immediately with an artifact and message explaining that
+the unfinished task must be cancelled and recreated from the current built-in
+catalog after its work is preserved. Do not publish, materialize, import,
+repoint, or attempt to complete that snapshot. If `blocked` is unavailable,
+return that the migration block could not be persisted without performing a
+side effect.
+
 ## Inputs And Worktree
 
 Fetch each needed accepted predecessor artifact separately with the focused
@@ -43,9 +53,9 @@ for a pause.
 Re-read `task context ID` immediately before reporting. Require the same active
 claim version and current step. Then invoke `task report-attempt` itself with
 the exact owner, claim version, step, chosen outcome, and complete Markdown via
-the CLI's safe structured `--artifact-file -` standard-input form, or a secure
-temporary file only when compatibility discovery requires a file path. Never
-place Markdown in shell syntax. Supply the exact question or technical reason
+the CLI's safe structured `--artifact-file -` standard-input form. The installed
+CLI supports stdin, so do not create a temporary report file. Never place
+Markdown in shell syntax. Supply the exact question or technical reason
 through `--message` for a pause. The server atomically accepts the artifact and
 transition; server fencing is final.
 

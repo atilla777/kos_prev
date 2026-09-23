@@ -8,19 +8,37 @@ description: Use when the user invokes /kos or /kos-fix as the scheduler for one
 Act only as the user-facing scheduler. Load `kos-cli` for every CLI operation.
 Do not access Rails, SQLite, the REST API, task worktrees, Git, or task Markdown.
 
+At command start, generate one cryptographically unpredictable owner ID such as
+`kos-session-` followed by 32 lowercase hexadecimal digits. Keep it only in the
+current scheduler session and pass it as one argument to exact claim or resume
+operations. Never read `KOS_OWNER_ID`, derive an owner from a PID, task, request,
+timestamp, or project, or reuse an owner from another command. A request-bound
+fix created through `kos-create` already has its intent owner; after creation,
+read that exact owner from authoritative context instead of replacing it.
+
 ## Select Or Create
 
 For `/kos`, reject nonblank arguments before any KOS call. Discover the project
 through `kos-cli`, offer resumable `development` tasks by title, status, and
-current step, or claim the next available development task. Never create one.
+current step, or claim the next available development task with the generated
+owner. Never create one.
 
-For `/kos-fix`, require a nonblank UTF-8 problem. Use the stable `fix` key and
-the existing durable creation-intent and task-receipt protocol to protect
-`create-and-claim` before a task ID is known. The intent may contain the exact
-request, canonical title and description, owner, and request digest. Recover an
-ambiguous creation by observing the intent owner through `kos-cli`; never create
-a duplicate. After the positive task ID is durably recorded, creation files are
-not step-execution inputs.
+For `/kos-fix`, require a nonblank UTF-8 problem, load `kos-create`, and delegate
+the complete exact request and kind `fix`. Do not implement any part of creation
+or inspect its intent, lock, receipt, owner, definition, or CLI responses. Accept
+from `kos-create` only one confirmed positive ASCII-decimal task ID. After that,
+retain only the ID; creation files are never scheduler or step-execution inputs.
+Read its authoritative context before dispatch. Because the creation procedure
+has ended and no child has started, handle its status before dispatch. For
+`active`, immediately fence its current owner by exact resume with the
+scheduler's fresh owner and `--takeover-confirmed`; for an earlier invocation,
+first require confirmation that its prior command process stopped. For
+`blocked`, show the persisted reason and treat this explicit reinvocation of the
+same exact request as confirmation to recheck the technical obstruction, then
+exactly resume with the fresh owner. For `needs_human`, show the question and
+stop; never use the repeated problem text as its answer. Never dispatch a
+request-created task while it still carries the durable creation owner or a
+paused status.
 
 Before claiming new work, offer matching resumable work without exposing an
 internal ID as a user choice. Repeat a persisted `needs_human` question before
@@ -41,9 +59,13 @@ discard all dispatch context except that ID. Repeat this loop:
 4. If server status is `blocked`, show the persisted server reason and stop.
 5. Require server status `active`, then choose the profile from the exact
    `current_step` map below.
-6. Launch exactly one fresh foreground child. Its complete prompt is the task
+6. At `publish`, treat a built-in context without the current `review_invalid`
+   outcome as an immutable pre-verification snapshot. Dispatch `kos-publish`
+   only so it can persist the required migration block; never treat it as
+   publication-capable.
+7. Launch exactly one fresh foreground child. Its complete prompt is the task
    ID's decimal digits and nothing else.
-7. Await the child, ignore all textual output and claimed outcome, then return
+8. Await the child, ignore all textual output and claimed outcome, then return
    to step 1 and reread authoritative state.
 
 Built-in exact-step dispatch:

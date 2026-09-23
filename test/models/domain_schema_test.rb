@@ -25,6 +25,7 @@ class DomainSchemaTest < ActiveSupport::TestCase
 
     assert Task.columns_hash.fetch("parent_id").null
     assert Task.columns_hash.fetch("owner_id").null
+    assert Task.columns_hash.fetch("creation_key").null
     assert Task.columns_hash.fetch("lease_expires_at").null
     assert_equal "pending", Task.columns_hash.fetch("status").default
     assert_equal 0, Task.columns_hash.fetch("claim_version").default
@@ -58,6 +59,28 @@ class DomainSchemaTest < ActiveSupport::TestCase
 
     assert_raises(ActiveRecord::RecordNotUnique) { second.update_columns(owner_id: "session") }
     assert_nil second.reload.owner_id
+  end
+
+  test "enforces scoped non-null task creation keys in the database" do
+    project = create_project
+    workflow = create_workflow
+    task_type = create_task_type(workflow:)
+    first = create_task(project:, workflow:, task_type:, title: "First")
+    second = create_task(project:, workflow:, task_type:, title: "Second")
+    first.update_columns(creation_key: "request:fix:sha256:abc")
+
+    assert_raises(ActiveRecord::RecordNotUnique) do
+      second.update_columns(creation_key: "request:fix:sha256:abc")
+    end
+
+    other_project = create_task(workflow:, task_type:, title: "Other project")
+    other_type = create_task_type(workflow:)
+    other_type_task = create_task(project:, workflow:, task_type: other_type, title: "Other type")
+    assert other_project.update_columns(creation_key: "request:fix:sha256:abc")
+    assert other_type_task.update_columns(creation_key: "request:fix:sha256:abc")
+
+    assert create_task(project:, workflow:, task_type:, title: "No key").creation_key.nil?
+    assert create_task(project:, workflow:, task_type:, title: "Another null key").creation_key.nil?
   end
 
   test "defines every domain foreign key" do

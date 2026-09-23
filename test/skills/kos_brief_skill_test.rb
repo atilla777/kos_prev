@@ -17,15 +17,17 @@ class KosBriefSkillTest < ActiveSupport::TestCase
     assert_includes source, "complete prompt is only the task ID"
     assert_includes source, "ignore its textual\nresponse and claimed result"
     assert_includes source, "persisted server question or reason"
+    assert_includes source, "immutable pre-verification snapshot"
+    assert_includes source, "must not publish or materialize children"
   end
 
-  test "brief retains creation durability but no step filesystem protocol" do
+  test "brief delegates creation durability but has no step filesystem protocol" do
     source = File.read(SKILL_PATH)
     compact = source.gsub(/\s+/, " ")
 
-    assert_includes source, "durable request-intent, lock, and task-receipt protocol"
-    assert_includes source, "until a positive task ID is known"
-    assert_includes source, "permanent binding for that exact request"
+    assert_includes source, "load `kos-create`, and delegate"
+    assert_includes source, "Do not implement creation or inspect its intent"
+    assert_includes source, "only one confirmed positive ASCII-decimal task ID"
     assert_includes source, "does not\nread or validate Markdown or graph files"
     assert_includes compact, "does not read or validate Markdown or graph files, inspect Git, parse outcomes, report"
     assert_not_includes source, "brief.md"

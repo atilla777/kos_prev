@@ -9,10 +9,18 @@ description: Use for focused KOS CLI discovery, compatibility checks, safe invoc
 
 Use only the absolute administrator-configured `KOS_CLI_PATH`; never use an
 ambient `kos`, a repository executable, the REST API, Rails, or SQLite. Require
-an executable regular file, validate `--version` and top-level `--help`, then
+an executable regular file. Check it only with a separate shell builtin `test`
+using `KOS_CLI_PATH` (`-n`, absolute-path shape, `-f`, and `-x`); do not use
+Python, Ruby, command substitution, or another wrapper for this validation.
+Validate `--version` and top-level `--help`, then
 validate `--help` for each operation before its first use. Pass every value as a
 distinct process argument. Never print `KOS_API_TOKEN`, put it in arguments, or
 expose a credential-bearing URL.
+
+Run exactly one CLI process in each shell tool call. Never combine validation or
+operations with `&&`, `;`, a pipeline, command substitution, a shell wrapper, or
+another command. Focused profile permissions intentionally match each absolute
+CLI invocation separately and reject composite command strings.
 
 Require the installed CLI to provide selection and creation operations needed
 by slash commands, plus these focused step operations:

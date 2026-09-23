@@ -22,10 +22,13 @@ components, an absolute scp path such as `host:/namespace/repository`, and a URI
 path with duplicate or ambiguous leading slashes. Fetch and push spellings may
 differ only when both normalize to the same identity.
 
-Return that canonical identity to `kos-cli` for exact project lookup. A
-fetch/push identity mismatch or any absent, malformed, unsafe, or ambiguous URL
-stops before task or local recovery mutation. Do not choose a similarly named
-project, infer a numeric project ID, or create a registration.
+Before a task ID exists, a scheduler or `kos-create` returns that canonical
+identity to `kos-cli` for exact project lookup. After a step agent has a task ID,
+compare the discovered identity directly with the registered identity in `task
+context`; do not call `project show`. A fetch/push identity mismatch or any
+absent, malformed, unsafe, or ambiguous URL stops before task or local recovery
+mutation. Do not choose a similarly named project, infer a numeric project ID,
+or create a registration.
 
 ## Authoritative Context
 
@@ -69,10 +72,13 @@ artifacts obtained through `kos-cli`. For a brief, also validate the accepted
 graph and reviewed specification and preserve publication-before-materialization.
 If review evidence is invalid, do not publish and return `review_invalid`.
 
-If the default branch moved forward, preserve task content on the new detached
-base and return `base_moved` without committing. Otherwise stage only validated
+If the default branch moved forward, use only `git checkout --merge --detach`
+to preserve task content on the new detached base and return `base_moved`
+without committing. Otherwise stage only validated
 task paths, inspect the complete staged patch, run `git diff --cached --check`,
-and create one commit:
+and create one commit using a safe whitespace-free path in the exact command
+`git commit -F <verified-message-file>`, with no trailing argument, so task text
+is never shell syntax:
 
 ```text
 KOS task <task-id>: <normalized title>
@@ -81,8 +87,10 @@ KOS-Task: <task-id>
 ```
 
 Require one parent at the fetched base, one exact trailer, exact expected changed
-paths, a nonempty tree change, and a clean worktree. Push the exact detached
-commit without force, fetch again regardless of push output, and report
+paths, a nonempty tree change, and a clean worktree. Push only exact
+`HEAD:refs/heads/<validated-default-branch>` to `origin` as one plain command,
+without options, extra refspecs, Git configuration prefixes, shell composition,
+or force; fetch again regardless of push output, and report
 `published` only when the candidate is observed in remote history. Recover an
 interrupted publication by observation before retrying; never create a duplicate
 commit.

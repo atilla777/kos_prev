@@ -7,7 +7,11 @@ class TaskLifecycle
   class InvalidInput < Error; end
 
   PAUSED_STATUSES = %w[needs_human blocked].freeze
+  BUILT_IN_TASK_KEYS = %w[brief development fix].freeze
+  BRIEF_POST_MATERIALIZATION_BACKWARD_OUTCOMES = %w[base_moved graph_invalid review_invalid].freeze
   MAX_ARTIFACT_BYTES = 1.megabyte
+  MAX_CREATION_KEY_BYTES = 200
+  CREATION_KEY_PATTERN = /\A[A-Za-z0-9][A-Za-z0-9._:-]*\z/
 
   def initialize(clock: -> { Time.current }, lease_duration: Rails.application.config.x.kos.lease_duration)
     raise ArgumentError, "lease_duration must be positive" unless lease_duration.positive?
@@ -51,21 +55,37 @@ class TaskLifecycle
     end
   end
 
-  def create_and_claim!(project:, task_type:, title:, description_markdown:, owner_id:, parent: nil, blockers: [])
+  def create_and_claim!(project:, task_type:, title:, description_markdown:, owner_id:, parent: nil, blockers: [],
+    creation_key: nil)
     validate_owner!(owner_id)
+    validate_creation_key!(creation_key) unless creation_key.nil?
     attributes = { project:, task_type:, title:, description_markdown:, parent:, blockers: }
 
     Task.transaction do
-      existing = Task.find_by(owner_id:)
-      return verify_matching_definition!(existing, **attributes) if existing
+      if creation_key
+        existing = find_by_creation_key(project:, task_type:, creation_key:)
+        return verify_matching_definition!(existing, **attributes, conflict_identity: "creation key") if existing
+      end
 
-      create_claimed_task!(**attributes, owner_id:)
+      existing = Task.find_by(owner_id:)
+      if existing && creation_key && existing.creation_key != creation_key
+        raise Conflict, "owner already identifies another task"
+      end
+      return verify_matching_definition!(existing, **attributes, conflict_identity: "owner") if existing
+
+      create_claimed_task!(**attributes, owner_id:, creation_key:)
     end
   rescue ActiveRecord::RecordNotUnique
+    if creation_key
+      existing = find_by_creation_key(project:, task_type:, creation_key:)
+      return verify_matching_definition!(existing, **attributes, conflict_identity: "creation key") if existing
+    end
+
     existing = Task.find_by(owner_id:)
     raise Conflict, "owner already identifies another task" unless existing
+    raise Conflict, "owner already identifies another task" if creation_key && existing.creation_key != creation_key
 
-    verify_matching_definition!(existing, **attributes)
+    verify_matching_definition!(existing, **attributes, conflict_identity: "owner")
   end
 
   def claim_next!(project:, owner_id:, task_type: nil)
@@ -152,10 +172,12 @@ class TaskLifecycle
   def report_attempt!(task_id:, owner_id:, claim_version:, step:, outcome:, artifact:, message: nil)
     validate_artifact!(artifact)
     Task.transaction do
-      task = Task.includes(:workflow).find(task_id)
+      task = Task.includes(:task_type, :workflow).find(task_id)
       action = task.workflow.action_for(step, outcome)
       raise InvalidTransition, "outcome is not allowed for the reported step" unless action
       validate_pause_message!(message) if action["pause"]
+      reject_invalid_builtin_completion!(task, step, action)
+      validate_brief_publication_order!(task, step, outcome, owner_id:, claim_version:)
 
       now = @clock.call
       artifacts = task.accepted_artifacts.deep_dup
@@ -239,22 +261,28 @@ class TaskLifecycle
     raise Conflict, "owner already identifies another task"
   end
 
-  def verify_matching_definition!(task, project:, task_type:, title:, description_markdown:, parent:, blockers:)
+  def find_by_creation_key(project:, task_type:, creation_key:)
+    Task.find_by(project:, task_type:, creation_key:)
+  end
+
+  def verify_matching_definition!(task, project:, task_type:, title:, description_markdown:, parent:, blockers:,
+    conflict_identity:)
     matches = task.project_id == project.id && task.task_type_id == task_type.id && task.title == title &&
       task.description_markdown == description_markdown && task.parent_id == parent&.id &&
       task.blocker_ids.sort == blockers.map(&:id).sort
-    raise Conflict, "owner already identifies a task with a different definition" unless matches
+    raise Conflict, "#{conflict_identity} already identifies a task with a different definition" unless matches
 
     task
   end
 
-  def create_claimed_task!(project:, task_type:, title:, description_markdown:, owner_id:, parent:, blockers:)
+  def create_claimed_task!(project:, task_type:, title:, description_markdown:, owner_id:, parent:, blockers:,
+    creation_key:)
     reject_brief_child_definition!(parent)
     ensure_blockers_completed!(blockers)
     task_type = TaskType.find(task_type.id)
     now = @clock.call
     task = Task.create!(project:, task_type:, workflow: task_type.workflow, parent:, title:, description_markdown:,
-      current_step: task_type.workflow.first_step_id)
+      current_step: task_type.workflow.first_step_id, creation_key:)
     blockers.each { |blocker| TaskDependency.create!(task:, blocker:) }
     Task.where(id: task.id).update_all(status: "active", owner_id:, claim_version: 1,
       lease_expires_at: now + @lease_duration, updated_at: now)
@@ -296,8 +324,43 @@ class TaskLifecycle
     changes
   end
 
+  def reject_invalid_builtin_completion!(task, step, action)
+    return unless BUILT_IN_TASK_KEYS.include?(task.task_type.key) && action["complete_task"] && step != "verify"
+
+    raise InvalidTransition, "built-in tasks can complete only from verify; cancel and recreate this legacy task"
+  end
+
+  def validate_brief_publication_order!(task, step, outcome, owner_id:, claim_version:)
+    return unless task.task_type.key == "brief" && step == "publish"
+
+    lock_brief_publication_fence!(task, step:, owner_id:, claim_version:)
+
+    children_exist = Task.where(parent_id: task.id).exists?
+    if outcome == "published" && !children_exist
+      raise InvalidTransition, "a brief cannot report published before its child graph is materialized"
+    end
+    if children_exist && BRIEF_POST_MATERIALIZATION_BACKWARD_OUTCOMES.include?(outcome)
+      raise InvalidTransition, "a materialized brief graph cannot return publication to an earlier step"
+    end
+  end
+
+  def lock_brief_publication_fence!(task, step:, owner_id:, claim_version:)
+    now = @clock.call
+    fenced = Task.where(id: task.id, status: "active", owner_id:, claim_version:, current_step: step)
+      .where("lease_expires_at > ?", now)
+    # Acquire SQLite's writer lock before observing children so materialization and reporting serialize.
+    raise Conflict, "task claim is stale or does not match the current step" unless
+      fenced.update_all("updated_at = updated_at") == 1
+  end
+
   def validate_owner!(owner_id)
     raise ArgumentError, "owner_id must be present" if owner_id.blank?
+  end
+
+  def validate_creation_key!(creation_key)
+    valid = creation_key.is_a?(String) && creation_key.bytesize.between?(1, MAX_CREATION_KEY_BYTES) &&
+      creation_key.match?(CREATION_KEY_PATTERN)
+    raise InvalidInput, "creation_key must be a safe nonblank string of at most 200 bytes" unless valid
   end
 
   def validate_artifact!(artifact)

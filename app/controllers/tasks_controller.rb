@@ -19,6 +19,7 @@ class TasksController < ApplicationController
       title: required_string(:title),
       description_markdown: required_string(:description_markdown),
       owner_id: required_string(:owner_id),
+      creation_key: optional_string(:creation_key),
       parent: find_optional_task(:parent_id),
       blockers: find_tasks(optional_integer_array(:blocker_ids, default: []))
     )

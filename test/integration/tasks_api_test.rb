@@ -80,17 +80,22 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "report failure leaves both lifecycle state and artifacts unchanged" do
+  test "stale owner claim and wrong step reports atomically leave state and artifacts unchanged" do
     task = create_task(project: @project, workflow: @workflow, task_type: @task_type)
     task = TaskLifecycle.new.claim!(task_id: task.id, owner_id: "session")
     before = task.attributes
 
-    post report_attempt_task_path(task), params: {
-      owner_id: "wrong", claim_version: 1, step: "develop", outcome: "ready", artifact: "# Rejected"
-    }, headers: @headers, as: :json
+    [
+      { owner_id: "wrong", claim_version: 1, step: "develop", outcome: "ready" },
+      { owner_id: "session", claim_version: 0, step: "develop", outcome: "ready" },
+      { owner_id: "session", claim_version: 1, step: "check", outcome: "passed" }
+    ].each do |identity|
+      post report_attempt_task_path(task), params: identity.merge(artifact: "# Rejected"), headers: @headers, as: :json
 
-    assert_response :conflict
-    assert_equal before, task.reload.attributes
+      assert_response :conflict
+      assert_equal before, task.reload.attributes
+      assert_empty task.accepted_artifacts
+    end
   end
 
   test "creates and claims idempotently by owner and exact definition" do
@@ -107,6 +112,33 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     assert_equal task_id, response.parsed_body.dig("task", "id")
 
     post tasks_create_and_claim_path, params: parameters.merge(title: "Different"), headers: @headers, as: :json
+    assert_response :conflict
+  end
+
+  test "creates and claims idempotently by request key across owners without changing the response" do
+    parameters = task_parameters.except(:task_type_id).merge(
+      task_type_key: @task_type.key, owner_id: "first", creation_key: "request:fix:sha256:api"
+    )
+
+    post tasks_create_and_claim_path, params: parameters, headers: @headers, as: :json
+    assert_response :created
+    first_body = response.parsed_body
+    task = Task.find(first_body.dig("task", "id"))
+    TaskLifecycle.new.report_attempt!(task_id: task.id, owner_id: "first", claim_version: task.claim_version,
+      step: "develop", outcome: "ready", artifact: "# Progressed")
+    before = task.reload.attributes
+
+    assert_no_difference -> { Task.count } do
+      post tasks_create_and_claim_path, params: parameters.merge(owner_id: "second"), headers: @headers, as: :json
+    end
+    assert_response :created
+    assert_equal first_body.fetch("task").keys.sort, response.parsed_body.fetch("task").keys.sort
+    refute_includes response.parsed_body.fetch("task"), "creation_key"
+    assert_equal task.id, response.parsed_body.dig("task", "id")
+    assert_equal before, task.reload.attributes
+
+    post tasks_create_and_claim_path, params: parameters.merge(owner_id: "third", title: "Different"),
+      headers: @headers, as: :json
     assert_response :conflict
   end
 

@@ -9,6 +9,138 @@ require "timeout"
 class AcceptanceScenariosTest < ActiveSupport::TestCase
   include GitRepositoryHelpers
 
+  test "built in development and fix lifecycles atomically progress through verification" do
+    BuiltInCatalog.install!
+    lifecycle = TaskLifecycle.new
+
+    {
+      "development" => %w[plan implement document review publish verify],
+      "fix" => %w[diagnose plan implement document review publish verify]
+    }.each do |type_key, expected_steps|
+      project = create_project(name: type_key)
+      task = lifecycle.create!(project:, task_type: TaskType.find_by!(key: type_key), title: type_key.titleize,
+        description_markdown: "Exercise the complete #{type_key} lifecycle")
+      task = lifecycle.claim!(task_id: task.id, owner_id: "#{type_key}-owner")
+
+      observed_steps = []
+      expected_steps.each do |step|
+        observed_steps << task.current_step
+        outcome = successful_outcome(type_key, step)
+        previous = task.attributes
+        artifact = "# #{step.titleize}\n\nAccepted #{outcome}.\n"
+        task = lifecycle.report_attempt!(task_id: task.id, owner_id: task.owner_id,
+          claim_version: task.claim_version, step:, outcome:, artifact:)
+
+        assert_equal artifact, task.accepted_artifacts.dig(step, "markdown")
+        assert_equal outcome, task.accepted_artifacts.dig(step, "outcome")
+        assert_equal previous.fetch("claim_version"),
+          task.accepted_artifacts.dig(step, "accepted_claim_version")
+        assert_equal previous.fetch("claim_version") + 1, task.claim_version
+        if step == "publish"
+          assert_equal [ "active", "verify", "#{type_key}-owner" ],
+            task.values_at(:status, :current_step, :owner_id)
+        end
+      end
+
+      assert_equal expected_steps, observed_steps
+      assert_equal expected_steps, task.accepted_artifacts.keys
+      assert_equal [ "completed", "verify", nil, nil ],
+        task.values_at(:status, :current_step, :owner_id, :lease_expires_at)
+    end
+  end
+
+  test "built in correction outcomes route backward and verification failures do not complete" do
+    BuiltInCatalog.install!
+    routes = {
+      "development" => [
+        %w[implement plan_invalid plan], %w[document implementation_invalid implement],
+        %w[review changes_requested implement], %w[review redesign_required plan],
+        %w[publish review_invalid review], %w[publish base_moved implement],
+        %w[verify publication_missing publish], %w[verify changes_invalid implement]
+      ],
+      "fix" => [
+        %w[plan diagnosis_invalid diagnose], %w[implement plan_invalid plan],
+        %w[document implementation_invalid implement], %w[review changes_requested implement],
+        %w[review redesign_required plan], %w[publish review_invalid review],
+        %w[publish base_moved implement], %w[verify publication_missing publish],
+        %w[verify changes_invalid implement]
+      ],
+      "brief" => [
+        %w[review changes_requested brief], %w[publish review_invalid review],
+        %w[publish base_moved brief], %w[publish graph_invalid brief],
+        %w[verify publication_missing publish], %w[verify materialization_missing publish],
+        %w[verify brief_invalid brief]
+      ]
+    }
+
+    routes.each do |type_key, cases|
+      cases.each_with_index do |(source, outcome, target), index|
+        lifecycle = TaskLifecycle.new
+        project = create_project(name: "#{type_key}-route-#{index}")
+        task = lifecycle.create!(project:, task_type: TaskType.find_by!(key: type_key), title: outcome,
+          description_markdown: "Exercise #{outcome}")
+        task = lifecycle.claim!(task_id: task.id, owner_id: "#{type_key}-route-#{index}")
+        task = advance_to_step(lifecycle, task, type_key, source)
+
+        task = lifecycle.report_attempt!(task_id: task.id, owner_id: task.owner_id,
+          claim_version: task.claim_version, step: source, outcome:, artifact: "# #{outcome}\n")
+
+        assert_equal [ "active", target, "#{type_key}-route-#{index}" ],
+          task.values_at(:status, :current_step, :owner_id)
+        assert_equal outcome, task.accepted_artifacts.dig(source, "outcome")
+      end
+    end
+  end
+
+  test "brief materializes its exact validated graph at publish before verification completes it" do
+    BuiltInCatalog.install!
+    lifecycle = TaskLifecycle.new
+    project = create_project(name: "brief-lifecycle")
+    brief = lifecycle.create!(project:, task_type: TaskType.find_by!(key: "brief"), title: "Specify work",
+      description_markdown: "Specify an exact graph")
+    brief = lifecycle.claim!(task_id: brief.id, owner_id: "brief-owner")
+    brief = lifecycle.report_attempt!(task_id: brief.id, owner_id: brief.owner_id,
+      claim_version: brief.claim_version, step: "brief", outcome: "specified", artifact: "# Brief\n")
+    children = [
+      { "key" => "core", "title" => "Core", "description_markdown" => "Build core", "blocker_keys" => [] },
+      { "key" => "client", "title" => "Client", "description_markdown" => "Build client",
+        "blocker_keys" => [ "core" ] }
+    ]
+    graph = BriefTaskGraph.new
+    validation = graph.validate!(parent: brief, children:)
+
+    assert_no_difference -> { Task.count } do
+      assert_raises(TaskLifecycle::Conflict) do
+        graph.materialize!(parent_id: brief.id, owner_id: brief.owner_id, claim_version: brief.claim_version,
+          expected_digest: validation.fetch(:digest), children:)
+      end
+    end
+
+    brief = lifecycle.report_attempt!(task_id: brief.id, owner_id: brief.owner_id,
+      claim_version: brief.claim_version, step: "review", outcome: "approved", artifact: "# Review\n")
+    publish_fence = brief.claim_version
+    assert_equal [ "active", "publish", "brief-owner" ], brief.values_at(:status, :current_step, :owner_id)
+
+    assert_difference -> { Task.count }, 2 do
+      materialized = graph.materialize!(parent_id: brief.id, owner_id: brief.owner_id,
+        claim_version: publish_fence, expected_digest: validation.fetch(:digest), children:)
+      assert_equal validation.fetch(:digest), materialized.fetch(:digest)
+    end
+    assert_equal [ "publish", publish_fence ], brief.reload.values_at(:current_step, :claim_version)
+    assert_equal validation.fetch(:digest), graph.observe(parent: brief).fetch(:digest)
+
+    published = lifecycle.report_attempt!(task_id: brief.id, owner_id: brief.owner_id,
+      claim_version: publish_fence, step: "publish", outcome: "published", artifact: "# Publication\n")
+    assert_equal [ "active", "verify", publish_fence + 1 ],
+      published.values_at(:status, :current_step, :claim_version)
+    completed = lifecycle.report_attempt!(task_id: brief.id, owner_id: published.owner_id,
+      claim_version: published.claim_version, step: "verify", outcome: "verified", artifact: "# Verification\n")
+
+    assert_equal [ "completed", "verify", nil ], completed.values_at(:status, :current_step, :owner_id)
+    assert_equal %w[brief review publish verify], completed.accepted_artifacts.keys
+    assert completed.children.all? { |child| child.parent_id == completed.id && child.blocker_ids.include?(completed.id) }
+  end
+
   test "a moved base repeats checks and review before one publication commit" do
     with_repository do |repository|
       task, lifecycle = claimed_acceptance_task
@@ -168,6 +300,37 @@ class AcceptanceScenariosTest < ActiveSupport::TestCase
       step:, outcome:, artifact:)
   end
 
+  def successful_outcome(type_key, step)
+    {
+      "brief" => { "brief" => "specified", "review" => "approved", "publish" => "published",
+        "verify" => "verified" },
+      "development" => { "plan" => "planned", "implement" => "implemented", "document" => "documented",
+        "review" => "approved", "publish" => "published", "verify" => "verified" },
+      "fix" => { "diagnose" => "diagnosed", "plan" => "planned", "implement" => "implemented",
+        "document" => "documented", "review" => "approved", "publish" => "published",
+        "verify" => "verified" }
+    }.fetch(type_key).fetch(step)
+  end
+
+  def advance_to_step(lifecycle, task, type_key, target)
+    until task.current_step == target
+      step = task.current_step
+      materialize_acceptance_child(task) if type_key == "brief" && step == "publish"
+      task = lifecycle.report_attempt!(task_id: task.id, owner_id: task.owner_id,
+        claim_version: task.claim_version, step:, outcome: successful_outcome(type_key, step), artifact: "# #{step}\n")
+    end
+    task
+  end
+
+  def materialize_acceptance_child(task)
+    children = [ { "key" => "work", "title" => "Work", "description_markdown" => "Implement work",
+      "blocker_keys" => [] } ]
+    graph = BriefTaskGraph.new
+    digest = graph.validate!(parent: task, children:).fetch(:digest)
+    graph.materialize!(parent_id: task.id, owner_id: task.owner_id, claim_version: task.claim_version,
+      expected_digest: digest, children:)
+  end
+
   def run_read_only_plan(lifecycle, task, worktree, root)
     head = git("rev-parse", "HEAD", chdir: worktree)
     status = git("status", "--porcelain=v2", "--untracked-files=all", "-z", chdir: worktree)
@@ -206,7 +369,7 @@ class AcceptanceScenariosTest < ActiveSupport::TestCase
 end
 
 class RestartRecoveryScenarioTest < ActiveSupport::TestCase
-  test "task state and accepted artifact survive server and orchestrator restart" do
+  test "task state and accepted artifact survive restart without a local task artifact directory" do
     with_running_system do |system|
       resources = create_resources(system)
       claim = run_kos_json(system, "task", "claim-next", "--project-id", resources.fetch(:project_id).to_s,
@@ -217,6 +380,7 @@ class RestartRecoveryScenarioTest < ActiveSupport::TestCase
         "--owner-id", "session-before-restart", "--claim-version", "1", "--step", "plan", "--outcome", "planned",
         "--artifact-file", artifact.path)
       assert_equal "implement", advanced.dig("task", "current_step")
+      refute_predicate system.fetch(:data_home).join("tasks"), :exist?
 
       restart_server(system)
       shown = run_kos_json(system, "task", "show", task.fetch("id").to_s)
@@ -229,6 +393,7 @@ class RestartRecoveryScenarioTest < ActiveSupport::TestCase
       assert_equal resources.fetch(:workflow_id), shown.dig("task", "workflow_id")
       assert_equal "# Plan\n\nReady.\n", accepted.fetch("markdown")
       assert_equal "planned", accepted.fetch("outcome")
+      refute_predicate system.fetch(:data_home).join("tasks"), :exist?
       assert_equal [ "session-after-restart", "implement", 3 ],
         resumed.fetch("task").values_at("owner_id", "current_step", "claim_version")
     end

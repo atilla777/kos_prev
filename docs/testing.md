@@ -1,128 +1,118 @@
 # Testing Rules
 
-## Required Layers
+## Isolation And Layers
 
-- Unit tests cover domain validation and pure behavior.
-- Request or integration tests cover REST contracts and persistence effects.
-- Concurrency tests cover claims, claim fencing, and atomic transitions.
-- CLI tests execute the public command rather than internal implementation.
-- Gem packaging tests build and install the CLI into an isolated gem home.
-- Git integration tests use temporary repositories and a temporary bare remote.
-- Recovery scenarios use isolated persistent databases, data directories, and
-  subprocesses; they never inherit an ambient database URL or Git configuration.
-- Moved-base scenarios prove checks and read-only review repeat while staged,
-  unstaged, and untracked task work remains uncommitted.
-- The PLAN-012 foundation test exercises one real `/kos` flow in OpenCode.
-- Bootstrap tests prepare an empty database, rerun installation without
-  duplicates, and prove a changed canonical definition creates a new immutable
-  workflow revision without changing existing tasks.
-- Migration tests assign deterministic non-reserved keys to existing types,
-  preserve their workflow references, reject reserved-key collisions, and stop
-  safely on partially migrated data.
-- Repository-identity migration tests preserve numeric IDs, relationships,
-  workflow snapshots, and execution columns; malformed or colliding remotes
-  roll back both schema and data. URL and branch tests cover ambiguous slashes,
-  unsafe credentials, and Git-invalid names.
-- Request and CLI tests cover task type keys, filtered next-claim, exact claim,
-  idempotent create-and-claim, owned and resumable observation, and atomic
-  brief-child graph validation, creation, and observation.
-- Concurrency tests prove filtered and exact claims retain the same ownership,
-  blocker, and fencing guarantees as the original next-claim operation.
-- OKF skill contract tests use temporary worktrees and prove concept discovery,
-  metadata preservation, link and index maintenance, and confinement to
-  `specs/`.
-- Clean-install tests build the CLI gem and install the exact command, agent,
-  and skill inventory into an isolated OpenCode configuration, removing known
-  obsolete managed files and comparing installed bytes with the checkout.
-- Step-artifact contract tests cover first creation, pre-dispatch removal on
-  retry, direct writes independent of inode identity, unsafe object refusal,
-  UTF-8 and template validation, exact outcome handling, unconfirmed-file
-  cleanup, and exact-byte report recovery. They also preserve the separate
-  atomic protocols for durable answer, intent, receipt, and graph files.
+- Unit tests cover workflow validation, artifact validation, state transitions,
+  canonical repository identity, task graphs, and pure domain behavior.
+- Request tests cover exact REST projections, authentication, error codes,
+  persistence effects, and transaction rollback.
+- Concurrency tests cover selection, ownership and request-creation uniqueness,
+  leases, claim fencing, report fencing, dependencies, and graph materialization.
+- CLI tests execute the packaged public command and validate exact options,
+  standard-input artifact handling, output preservation, and exit statuses.
+- Gem tests build and install the CLI into an isolated gem home.
+- Skill and profile contract tests verify scheduler boundaries, ID-only dispatch,
+  focused operations, permission deny-lists, and step-owned reporting.
+- Git tests use temporary source repositories, task worktrees, and bare remotes.
+- Migration and recovery tests use isolated persistent SQLite databases, data
+  homes, subprocesses, repositories, remotes, and OpenCode configuration homes.
+- No test may use the developer's KOS database, data directory, worktree, remote,
+  Git configuration, credentials, or ambient database URL.
+- Time-sensitive ownership behavior uses controlled time. Tests are deterministic,
+  order-independent, and pair failure cases with preserved-invariant assertions.
 
-## Test Properties
+## Required Properties
 
-- Tests must be deterministic and independent of execution order.
-- Tests must not use the developer's real KOS database, repositories, or data
-  directory.
-- Time-sensitive ownership behavior must use controlled time.
-- Failure cases and preserved invariants are tested alongside successful paths.
-- External command ambiguity is tested through observed state, not assumptions
-  about a previous command's response.
-- Tests distinguish current implemented behavior from later target contracts;
-  a normative document is not evidence that a command is available.
+The acceptance matrix preserves these exact 23 user-required criteria in order:
 
-## Built-In Scenario Coverage
+1. Agent only ID/context.
+2. Context index no bodies.
+3. Separate artifact.
+4. Atomic artifact+transition.
+5. Crash before completion unchanged.
+6. Lost response ordinary show.
+7. Stale/wrong no write.
+8. Bad predecessor backward allowed.
+9. Repeated replaces.
+10. Answer stored/restart.
+11. Scheduler only ID.
+12. Scheduler no Markdown/Git.
+13. Profile policy.
+14. Independent read-only review.
+15. Publish->verify.
+16. Verify remote independently.
+17. Verify failure not complete.
+18. Nonpublish no commit/push.
+19. Existing IDs/relationships/workflows/worktrees.
+20. Clean install assets/workflows.
+21. Real development/fix/brief scenarios E2E.
+22. No local tasks/id dir.
+23. `bin/check`.
 
-Automated tests must prove the development workflow follows `plan`,
-`implement`, `document`, `review`, and `publish`; required project checks run
-inside `implement`; and no built-in `check` transition occurs. A custom workflow
-with a step ID of `check` remains valid.
+The matrix maps each criterion to executable deterministic tests or the exact
+`bin/check` contract. Criterion 21 maps the deterministic lifecycle scenarios;
+it does not claim model execution. Live development, fix, and brief slash-command
+release evidence remains an explicit separate requirement.
 
-Development scenarios cover type-filtered selection, read-only planning,
-implementation failures corrected before transition, documentation before
-review, independent review, `changes_requested` returning to `implement`,
-`redesign_required` returning to `plan`, and `base_moved` repeating
-implementation, documentation, and review.
+## Scenario Coverage
 
-Fix scenarios cover exact creation and claim by the `fix` key, read-only
-evidence-based diagnosis, a regression check for the reproduced defect,
-`needs_human` for ambiguous behavior or a non-reproducible report, and the same
-post-diagnosis guarantees as development.
+Deterministic development E2E follows `plan`, `implement`, `document`, `review`,
+`publish`, and `verify`. It proves required checks occur in implementation, no
+built-in `check` step exists, ordinary changes return to implementation, design
+failures return to planning, invalid predecessor outcomes route precisely, and
+only verification completes. A custom workflow step named `check` remains valid.
 
-Brief scenarios cover execution in the main conversational agent, conformant
-OKF output, independent read-only review, publication before materialization,
-one-child and acyclic multi-child graphs, parent and blocker assignment, and
-availability only after the parent completes. Batch validation failures create
-no children and return to briefing before publication. Tests also cover
-`changes_requested`, `base_moved`, `graph_invalid`, repeated materialization,
-and contradictory graph conflicts.
+Deterministic fix E2E creates and claims by the stable `fix` key, performs
+read-only evidenced diagnosis, requires a regression check that would fail for
+the reproduced defect, covers `diagnosis_invalid`, and then proves all
+development delivery and verification guarantees. Ambiguous behavior or a
+non-reproducible report pauses with one question; infrastructure obstruction
+pauses as blocked.
 
-Recovery tests interrupt brief materialization before response, compare the
-complete observed child graph, and prove no duplicate or partial graph is
-created. Existing recovery coverage remains required for creation, claim,
-pause, report, moved base, commit, and push.
+Deterministic brief E2E runs briefing in a fresh `kos-brief` agent, verifies OKF
+conformance, independently reviews specification and exact graph, validates
+before publication, publishes before materialization, and independently verifies
+remote specification plus observed graph. One-child and acyclic multi-child
+graphs, sibling blockers, parent availability, every backward outcome, repeated
+materialization, digest mismatch, and post-publication graph conflict are covered.
 
-Artifact recovery tests require the orchestrator to remove a prior regular
-`<step-id>.md` before each attempt and refuse symbolic links, directories, and
-other unexpected objects without deleting them. They reject absent, empty,
-partial, invalid-UTF-8, template-inconsistent, and outcome-inconsistent results.
-An invalid or missing agent response cannot be reconstructed from the file, and
-an ambiguous report may be repeated only after authoritative task observation
-and byte-for-byte comparison with the previously verified artifact.
+State recovery tests restart the server after accepted reports and between
+question, answer, resume, and next report. They drop responses before and after
+create, report, commit, push, and materialization boundaries and prove recovery
+through the appropriate authoritative read. No test creates or consults a local
+task artifact directory.
+Request-bound creation tests cover lost receipts, changed owners, progressed and
+terminal tasks, exact-definition conflicts, concurrent creators, null ordinary
+tasks, baseline receipt compatibility, and reversible scoped-key migration.
 
-Creation recovery drops the `create-and-claim` response before and after commit
-and proves a durable command intent plus unique owner returns the same task on
-retry. Resume recovery covers zero, one, and multiple resumable tasks, active
-takeover confirmation, exact question replay, atomic answer sidecars, and a
-second interruption before the paused step advances.
+Repository-identity migration tests preserve numeric IDs, relationships,
+workflow snapshots, execution context, and accepted evidence. Malformed or
+colliding remotes roll back schema and data. URL and branch tests include
+equivalent SSH/HTTPS forms, ambiguous slashes, credentials, ports, unsafe users,
+fetch/push mismatch, and Git-invalid branches.
 
-API and CLI failure tests require stable errors for unknown or reserved type
-keys, wrong projects, blocked or otherwise unclaimable tasks, owner collisions,
-invalid and cyclic child definitions, repeated materialization, and a graph
-whose supplied expected digest differs from its transactional canonical digest.
-Command-skill tests require the orchestrator to reject reviewed-byte changes
-before it sends a materialization request.
+Clean-install tests build the exact CLI gem and install all commands, focused
+agents, and skills into an isolated OpenCode configuration. They remove known
+obsolete managed agents, compare installed bytes with the checkout, restart the
+runtime boundary, and verify command and skill discovery.
 
-The final clean-install acceptance suite installs the CLI, commands, agents,
-skills, and built-in catalog from one revision. Real `/kos-brief`, `/kos`, and
-`/kos-fix` invocations must complete without hand-written workflow JSON,
-numeric task type configuration, pre-publication commits, or manual lifecycle
-commands. It verifies read-only `plan`, `diagnose`, and `review`, documentation
-before review, all mandatory project checks, remote publication, final task
-state, ownership release, and durable Markdown artifacts.
-
-The deterministic installation, catalog, lifecycle, Git, and recovery layers
-run in `bin/check`. Live OpenCode model execution is retained as release
-acceptance evidence rather than placed in `bin/check`, so ordinary verification
-does not depend on provider credentials, network availability, or model output.
+Required live release acceptance invokes `/kos-brief`, `/kos`, and `/kos-fix` against an
+isolated Rails database, KOS data home, fixture repository, task worktrees, and
+bare remote. It proves ID-only scheduling, fresh focused agents, mandatory
+checks, read-only authorities, accepted evidence, one publication commit per
+task, post-publication verification, completed state, ownership release, and the
+brief child graph. The automated suite proves lifecycle and installed-asset
+contracts only. Live model execution remains separate release evidence rather
+than a credential-dependent ordinary test, and this document does not claim
+that evidence has already been produced.
 
 ## Commands
 
-- `bin/test` runs the current automated test suite.
+- `bin/test` runs the automated suite.
 - `bin/lint` performs the non-mutating style check.
 - `bin/format` applies automatic formatting fixes.
-- `bin/check` prepares the test database, lints, and runs all tests required for
-  a change.
+- `bin/check` prepares the isolated test database, lints, and runs every
+  deterministic catalog, API, CLI, migration, lifecycle, skill, Git, recovery,
+  installation, and scenario test required for a change.
 
 Every completed change must leave `bin/check` passing.

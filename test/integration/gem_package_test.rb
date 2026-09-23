@@ -60,7 +60,8 @@ class GemPackageTest < ActiveSupport::TestCase
         kos-brief.md kos-diagnose.md kos-document.md kos-implement.md kos-plan.md kos-publish.md kos-review.md
         kos-step-advanced.md kos-step-standard.md kos-verify.md
       ], installed_names(config_home.join("agents"))
-      assert_equal %w[kos kos-brief kos-cli kos-git kos-step okf], installed_names(config_home.join("skills"))
+      assert_equal %w[kos kos-brief kos-cli kos-create kos-git kos-step okf],
+        installed_names(config_home.join("skills"))
       refute_predicate stale_agent, :exist?
       refute_predicate stale_orchestrator, :exist?
       refute_predicate stale_skill, :exist?

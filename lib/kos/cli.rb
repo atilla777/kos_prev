@@ -327,6 +327,7 @@ module Kos
       parser.on("--task-type-id ID", Integer, "Task type ID") { |value| values[:task_type_id] = value } unless update
       parser.on("--task-type-key KEY", String, "Stable task type key") { |value| values[:task_type_key] = value } unless update
       parser.on("--owner-id OWNER", String, "Orchestrator session ID") { |value| values[:owner_id] = value } if owner
+      parser.on("--creation-key KEY", String, "Request-bound creation key") { |value| values[:creation_key] = value } if owner
       parser.on("--title TITLE", String, "Task title") { |value| values[:title] = value } unless update
       parser.on("--description-file FILE", String, "Markdown file, or - for STDIN") do |value|
         values[:description_markdown] = read_file(value)

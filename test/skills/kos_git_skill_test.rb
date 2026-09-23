@@ -43,8 +43,9 @@ class KosGitSkillTest < ActiveSupport::TestCase
     assert_includes source, "absolute scp path"
     assert_includes source, "duplicate or ambiguous leading slashes"
     assert_includes source, "Fetch and push spellings may\ndiffer only when both normalize to the same identity"
-    assert_includes source, "Return that canonical identity to `kos-cli` for exact project lookup"
-    assert_includes source, "stops before task or local recovery mutation"
+    assert_includes source, "Before a task ID exists, a scheduler or `kos-create` returns that canonical\nidentity to `kos-cli` for exact project lookup"
+    assert_includes source, "compare the discovered identity directly with the registered identity in `task\ncontext`; do not call `project show`"
+    assert_match(/stops before task or local recovery\s+mutation/, source)
   end
 
   test "separate task worktrees preserve independent uncommitted changes without commits" do

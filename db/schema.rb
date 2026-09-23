@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_010000) do
   create_table "projects", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "default_branch", null: false
@@ -44,6 +44,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000000) do
     t.json "accepted_artifacts", default: {}, null: false
     t.integer "claim_version", default: 0, null: false
     t.datetime "created_at", null: false
+    t.string "creation_key"
     t.string "current_step", null: false
     t.text "description_markdown", null: false
     t.text "human_answer"
@@ -63,6 +64,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000000) do
     t.integer "workflow_id", null: false
     t.index ["owner_id"], name: "index_tasks_on_owner_id", unique: true, where: "owner_id IS NOT NULL"
     t.index ["parent_id"], name: "index_tasks_on_parent_id"
+    t.index ["project_id", "task_type_id", "creation_key"], name: "index_tasks_on_scoped_creation_key", unique: true, where: "creation_key IS NOT NULL"
     t.index ["project_id"], name: "index_tasks_on_project_id"
     t.index ["task_type_id"], name: "index_tasks_on_task_type_id"
     t.index ["workflow_id"], name: "index_tasks_on_workflow_id"

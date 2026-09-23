@@ -156,6 +156,56 @@ class TaskLifecycleTest < ActiveSupport::TestCase
     end
   end
 
+  test "creation key returns the exact task without changing progressed paused or completed lifecycle state" do
+    project = create_project
+    workflow = create_workflow
+    task_type = create_task_type(workflow:)
+
+    %w[progressed blocked completed].each do |final_state|
+      owner = "initial-#{final_state}"
+      arguments = {
+        project:, task_type:, title: final_state, description_markdown: "Description", owner_id: owner,
+        creation_key: "request:fix:sha256:#{final_state}"
+      }
+      task = @lifecycle.create_and_claim!(**arguments)
+      task = @lifecycle.report_attempt!(task_id: task.id, owner_id: owner, claim_version: task.claim_version,
+        step: "develop", outcome: "ready", artifact: "# Develop")
+      if final_state != "progressed"
+        outcome = final_state == "blocked" ? "blocked" : "passed"
+        task = @lifecycle.report_attempt!(task_id: task.id, owner_id: owner, claim_version: task.claim_version,
+          step: "check", outcome:, artifact: "# Check", message: ("Infrastructure unavailable" if outcome == "blocked"))
+      end
+      before = task.attributes
+
+      repeated = @lifecycle.create_and_claim!(**arguments.merge(owner_id: "retry-#{final_state}"))
+
+      assert_equal task.id, repeated.id
+      assert_equal before, repeated.attributes
+    end
+    assert_equal 3, Task.where(project:, task_type:).count
+  end
+
+  test "creation key rejects a different immutable definition and unsafe keys" do
+    project = create_project
+    workflow = create_workflow
+    task_type = create_task_type(workflow:)
+    arguments = {
+      project:, task_type:, title: "Created", description_markdown: "Description", owner_id: "session",
+      creation_key: "request:fix:sha256:abc"
+    }
+    @lifecycle.create_and_claim!(**arguments)
+
+    assert_raises(TaskLifecycle::Conflict) do
+      @lifecycle.create_and_claim!(**arguments.merge(owner_id: "other", description_markdown: "Different"))
+    end
+    [ "", " leading", "unsafe/key", "a" * 201 ].each do |creation_key|
+      assert_raises(TaskLifecycle::InvalidInput) do
+        @lifecycle.create_and_claim!(**arguments.merge(owner_id: SecureRandom.hex, creation_key:))
+      end
+    end
+    assert_equal 1, Task.where(project:, task_type:).count
+  end
+
   test "one owner cannot claim two tasks" do
     project = create_project
     first = create_task(project:, title: "First")
@@ -231,6 +281,35 @@ class TaskLifecycleTest < ActiveSupport::TestCase
       claim_version: resumed.claim_version, step: "check", outcome: "passed", artifact: "# Passed")
     assert_equal "completed", completed.status
     assert_nil completed.owner_id
+  end
+
+  test "legacy built-in publish snapshots cannot complete without verification" do
+    BuiltInCatalog.install!
+
+    TaskLifecycle::BUILT_IN_TASK_KEYS.each do |key|
+      task_type = TaskType.find_by!(key:)
+      definition = BuiltInCatalog.definitions.fetch(key).deep_dup
+      definition["steps"].reject! { |candidate| candidate["id"] == "verify" }
+      publish = definition["steps"].find { |candidate| candidate["id"] == "publish" }
+      publish["outcomes"]["published"] = { "complete_task" => true }
+      publish["outcomes"].delete("review_invalid")
+      legacy_workflow = create_workflow(name: "Pre-PLAN-022 #{key}", definition:)
+      task_type.update!(workflow: legacy_workflow)
+      task = create_task(project: create_project, workflow: legacy_workflow, task_type:, current_step: "publish")
+      task = @lifecycle.claim!(task_id: task.id, owner_id: "#{key}-owner")
+      before = task.attributes
+
+      error = assert_raises(TaskLifecycle::InvalidTransition) do
+        @lifecycle.report_attempt!(task_id: task.id, owner_id: task.owner_id,
+          claim_version: task.claim_version, step: "publish", outcome: "published", artifact: "# Published")
+      end
+
+      assert_match(/complete only from verify/, error.message)
+      assert_equal before, task.reload.attributes
+      assert_equal legacy_workflow.id, task.workflow_id
+      assert_equal legacy_workflow.definition_json, task.workflow.definition_json
+      assert_empty task.accepted_artifacts
+    end
   end
 
   test "rejects stale identity expired leases wrong steps and unknown outcomes without mutation" do
@@ -583,6 +662,38 @@ class TaskLifecycleConcurrencyTest < ActiveSupport::TestCase
     assert_empty outcomes.grep(StandardError)
     assert_equal 1, outcomes.map(&:id).uniq.size
     assert_equal 1, Task.where(project:, owner_id: "session").count
+  end
+
+  test "concurrent creation-key requests with different owners return one task" do
+    project = create_project
+    workflow = create_workflow
+    task_type = create_task_type(workflow:)
+    gate = Queue.new
+    results = Queue.new
+    arguments = {
+      project:, task_type:, title: "Created", description_markdown: "Description",
+      creation_key: "request:brief:sha256:concurrent"
+    }
+
+    threads = 2.times.map do |index|
+      Thread.new do
+        ActiveRecord::Base.connection_pool.with_connection do
+          gate.pop
+          result = TaskLifecycle.new.create_and_claim!(**arguments, owner_id: "session-#{index}")
+        rescue StandardError => error
+          result = error
+        ensure
+          results << result
+        end
+      end
+    end
+    2.times { gate << true }
+    threads.each(&:join)
+    outcomes = 2.times.map { results.pop }
+
+    assert_empty outcomes.grep(StandardError)
+    assert_equal 1, outcomes.map(&:id).uniq.size
+    assert_equal 1, Task.where(project:, task_type:, creation_key: arguments[:creation_key]).count
   end
 
   test "the same claim cannot report one transition twice concurrently" do

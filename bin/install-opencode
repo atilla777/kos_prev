@@ -23,7 +23,7 @@ inventory = {
     kos-brief.md kos-diagnose.md kos-document.md kos-implement.md kos-plan.md kos-publish.md kos-review.md kos-verify.md
     kos-step-advanced.md kos-step-standard.md
   ],
-  "skills" => %w[kos kos-brief kos-cli kos-git kos-step okf]
+  "skills" => %w[kos kos-brief kos-cli kos-create kos-git kos-step okf]
 }
 obsolete = {
   "agents" => %w[kos-orchestrator.md kos-step.md]
