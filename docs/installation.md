@@ -7,7 +7,7 @@ context, artifact reporting, profiles, and workflow outcomes are one protocol.
 ## Prerequisites
 
 - Ruby 3.4.10 and Bundler 4.0.20;
-- SQLite 3 with development headers;
+- SQLite 3 with development headers and the `sqlite3` command-line program;
 - Git; and
 - OpenCode 1.18.26 or later with credentials for the configured models.
 
@@ -23,12 +23,14 @@ export KOS_DATA_HOME="$HOME/.local/share/kos"
 export KOS_API_TOKEN="$(openssl rand -hex 32)"
 bundle check || bundle install
 bin/rails db:prepare
+bin/rails db:seed
 ```
 
 `KOS_DATA_HOME` must be an absolute local path outside the checkout, not a
 synchronized or network-mounted directory. Database preparation installs the
-canonical `brief`, `development`, and `fix` task types and workflows. It does
-not register a project.
+canonical `brief`, `development`, and `fix` task types and workflows. Explicit
+seeding is required because an existing prepared database does not rerun seeds
+automatically. Neither command registers a project.
 
 Build and install the exact CLI revision outside the checkout, then retain its
 absolute path:
@@ -59,6 +61,10 @@ nonstandard destination. The installer copies this exact inventory:
 - skills: `kos`, `kos-cli`, `kos-step`, `kos-git`,
   and `okf`.
 
+It also writes `$CONFIG_HOME/kos-installation.json` as the final successful
+installation marker. Its `source_id` is the SHA-256 identity of the operational
+source payload used by the server, CLI package, and installer.
+
 The installer removes obsolete role-specific KOS agent profiles, including
 `kos-brief.md`, `kos-diagnose.md`, `kos-document.md`, `kos-implement.md`,
 `kos-plan.md`, `kos-publish.md`, and `kos-review.md`, plus the obsolete
@@ -82,24 +88,126 @@ Check availability with `opencode models openai`.
 Restart OpenCode after every installation or profile, command, skill, or model
 change. A running OpenCode process does not reload this inventory.
 
-## Configure And Register
+## Production Service
 
-Start Rails with the same data home and token:
+The supported topology is one Puma process on the same host as SQLite and
+OpenCode, supervised by systemd and bound to loopback. A separately supervised
+TLS reverse proxy is the only public listener. The proxy owns certificates,
+renewal, redirects, and public access logs; it forwards to `127.0.0.1:3000` and
+must not log `Authorization` values. Public Puma listeners, multi-host service,
+and network filesystems are unsupported.
+
+Provision the service account and persistent directory, then create a root-owned,
+group-readable `0640` `/etc/kos/kos.env`:
 
 ```sh
-export KOS_DATA_HOME="$HOME/.local/share/kos"
-export KOS_API_TOKEN="<installation-token>"
-export KOS_API_URL="http://127.0.0.1:3000"
-bin/rails server
+sudo useradd --system --home /var/lib/kos --shell /usr/sbin/nologin kos
+sudo install -d -o kos -g kos -m 0750 /var/lib/kos
+sudo install -d -o root -g kos -m 0750 /etc/kos
+sudo install -o root -g kos -m 0640 /dev/null /etc/kos/kos.env
+sudoedit /etc/kos/kos.env
 ```
 
-In another terminal, expose the same API and installed CLI, verify readiness,
-and explicitly register the repository:
+Enter these assignments in that file; they are not shell commands:
+
+```dotenv
+KOS_DATA_HOME=/var/lib/kos
+KOS_API_TOKEN=<installation-token>
+SECRET_KEY_BASE=<openssl-rand-hex-64-output>
+RAILS_MAX_THREADS=3
+```
+
+Install `/etc/systemd/system/kos.service`, replacing the user and release path:
+
+```ini
+[Unit]
+Description=KOS task coordination service
+After=network.target
+
+[Service]
+Type=simple
+User=kos
+Group=kos
+WorkingDirectory=/opt/kos/releases/<source-revision>
+Environment=RAILS_ENV=production
+Environment=BIND=127.0.0.1
+Environment=PORT=3000
+EnvironmentFile=/etc/kos/kos.env
+ExecStart=/usr/bin/env bundle exec puma -C config/puma.rb
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Puma defaults to loopback; do not override `BIND` with a public address. From
+the release directory, prepare production state as the service user with the
+same environment before enabling the service:
 
 ```sh
-export KOS_DATA_HOME="$HOME/.local/share/kos"
+sudo -u kos sh -c 'set -a; . /etc/kos/kos.env; set +a; RAILS_ENV=production bin/rails db:prepare'
+sudo -u kos sh -c 'set -a; . /etc/kos/kos.env; set +a; RAILS_ENV=production bin/rails db:seed'
+sudo systemctl daemon-reload
+sudo systemctl enable --now kos.service
+```
+
+Run Caddy as the separately supervised proxy. A minimal site block is:
+
+```caddyfile
+kos.example.test {
+  @ready {
+    path /ready
+    remote_ip 127.0.0.1/32 10.0.0.0/8
+  }
+  handle @ready {
+    reverse_proxy 127.0.0.1:3000
+  }
+  handle /ready {
+    respond 404
+  }
+  handle {
+    reverse_proxy 127.0.0.1:3000
+  }
+}
+```
+
+Caddy owns certificate acquisition and renewal. Its default access log does not
+record request headers; any customized log format must continue to omit
+`Authorization`. Replace the example private range with the monitoring network,
+do not expose `/ready` to untrusted clients, and probe it no more than once every
+10 seconds because it deliberately verifies a SQLite writer transaction and
+durable data-home write. Reload Caddy only after validating its configuration.
+
+The reverse proxy sends the original HTTPS scheme. Production uses
+`assume_ssl`; direct loopback HTTP is a trusted backend path, not the public TLS
+boundary. `GET /up` is unauthenticated liveness: Rails booted and can answer.
+`GET /ready` is unauthenticated readiness: the database is queryable, migrations
+are current, the canonical catalog is installed, and the data home accepts a
+durable temporary write. Failure returns generic `503` JSON and logs only the
+failed component and exception class with the request ID.
+
+Verify the public service and common provenance:
+
+```sh
+curl --fail https://kos.example.test/up
+curl --fail http://127.0.0.1:3000/ready
+"$KOS_CLI_PATH" --version
+cat "${XDG_CONFIG_HOME:-$HOME/.config}/opencode/kos-installation.json"
+```
+
+The `/ready` `source_id`, CLI `source=...`, and manifest `source_id` must match.
+A mismatch is a mixed installation and is not ready for task execution.
+
+## Configure And Register
+
+Expose the same data home, installed CLI, token, and public API URL to OpenCode,
+then explicitly register each repository:
+
+```sh
+export KOS_DATA_HOME="/var/lib/kos"
 export KOS_API_TOKEN="<installation-token>"
-export KOS_API_URL="http://127.0.0.1:3000"
+export KOS_API_URL="https://kos.example.test"
 export KOS_CLI_PATH="$(realpath "$(command -v kos)")"
 "$KOS_CLI_PATH" health
 "$KOS_CLI_PATH" project create \
@@ -119,8 +227,8 @@ the launch environment. Rails and OpenCode may run as separate processes on
 the same host, but their configured data-home paths must identify the same
 local directory.
 
-`health` uses `KOS_API_URL` to call the public `GET /up` endpoint and does not
-require a token. `session-id` is entirely local and requires neither API
+`health` calls public liveness and does not require a token; use `/ready` for
+deployment admission. `session-id` is entirely local and requires neither API
 setting. All other CLI operations use the same `KOS_API_URL` and require the
 `KOS_API_TOKEN` configured when Rails started. Tokens must be valid UTF-8,
 nonempty, free of HTTP control characters, and have no surrounding whitespace.
@@ -150,11 +258,75 @@ operations and compatibility diagnosis. Verify the installed focused operations 
 The installation is not ready until those operations, including report artifact
 input, and all managed profiles and skills come from the same revision.
 
-## Upgrade
+## Backup And Restore
 
-Stop Rails and active schedulers, check out one new revision, rebuild and
-install the gem, reinstall the OpenCode integration, prepare the existing
-database, and restart Rails and OpenCode. Back up persistent state first.
+The database owns task state; worktrees and source repositories own unpublished
+commits and Git objects. A database backup alone is not a backup of active work,
+and copying linked worktree directories is not a portable Git backup.
+
+Stop every scheduler and OpenCode process, then stop Puma gracefully. Keep
+project repositories and `$KOS_DATA_HOME/worktrees` unchanged until the backup
+or upgrade decision is complete:
+
+```sh
+sudo systemctl stop kos.service
+sudo -u kos sh -c '
+  set -eu
+  set -a; . /etc/kos/kos.env; set +a
+  mkdir -p "$KOS_DATA_HOME/backups"
+  backup="$KOS_DATA_HOME/backups/production-$(date -u +%Y%m%dT%H%M%SZ).sqlite3"
+  sqlite3 "$KOS_DATA_HOME/production.sqlite3" ".backup '\''$backup'\''"
+  sqlite3 "$backup" "PRAGMA integrity_check; PRAGMA foreign_key_check;"
+'
+```
+
+Require exactly one `ok` line and no additional output. Never copy a live main
+database file directly; journal or WAL state can make it inconsistent. Back up
+source repositories with normal Git repository tooling.
+
+Rehearse restore before relying on a backup. From the same release directory,
+select the verified backup and create an isolated service-owned data home:
+
+```sh
+backup=/var/lib/kos/backups/production-<timestamp>.sqlite3
+rehearsal=/var/lib/kos-restore-rehearsal
+sudo rm -rf "$rehearsal"
+sudo install -d -o kos -g kos -m 0750 "$rehearsal"
+sudo install -o kos -g kos -m 0600 "$backup" "$rehearsal/production.sqlite3"
+sudo -u kos sh -c '
+  set -a; . /etc/kos/kos.env; set +a
+  KOS_DATA_HOME=/var/lib/kos-restore-rehearsal PORT=3001 \
+    RAILS_ENV=production bundle exec puma -C config/puma.rb
+'
+```
+
+Leave that foreground process running, and from another terminal check
+`http://127.0.0.1:3001/ready` plus a known project or task using the installed
+CLI. Do not run `db:prepare` or `db:seed`; they can mutate or mask a bad restore.
+Stop Puma with `Ctrl-C`, then remove the rehearsal directory only after success.
+
+To restore after a failure, keep all KOS clients stopped and run from the
+verified compatible release:
+
+```sh
+sudo systemctl stop kos.service
+failed="/var/lib/kos/production.failed-$(date -u +%Y%m%dT%H%M%SZ).sqlite3"
+sudo mv /var/lib/kos/production.sqlite3 "$failed"
+sudo install -o kos -g kos -m 0600 "$backup" /var/lib/kos/production.sqlite3.restore
+sudo mv /var/lib/kos/production.sqlite3.restore /var/lib/kos/production.sqlite3
+sudo systemctl start kos.service
+curl --fail http://127.0.0.1:3000/ready
+```
+
+Preserve the failed database for diagnosis. Restart OpenCode and schedulers only
+after readiness and a known record both succeed.
+
+## Upgrade And Rollback
+
+Stop Rails, OpenCode, and active schedulers; make and rehearse a backup; then
+prepare a new immutable release directory. Rebuild the gem and OpenCode
+inventory from that directory. Keep the previous release and worktrees in place
+until the rollback decision is closed.
 Existing tasks retain their immutable workflow revisions; revisions lacking
 `execution_mode` execute as `subagent`, and those lacking `model_tier` execute
 as `advanced`. Database preparation installs new canonical built-in revisions
@@ -164,8 +336,15 @@ for newly created tasks without repointing existing tasks.
 gem build kos.gemspec --output /tmp/kos.gem
 gem install /tmp/kos.gem
 bin/install-opencode
-bin/rails db:prepare
+sudo -u kos sh -c 'set -a; . /etc/kos/kos.env; set +a; RAILS_ENV=production bin/rails db:prepare'
+sudo -u kos sh -c 'set -a; . /etc/kos/kos.env; set +a; RAILS_ENV=production bin/rails db:seed'
 ```
+
+Before migrations or seeding, switch systemd back to the prior release on
+failure. After either command mutates the database, never run the old and new
+applications against the same file: stop the service, restore the pre-upgrade
+backup, switch to the old release, and require `/ready`. Only then restart
+OpenCode and schedulers.
 
 Do not import or dual-run old local `tasks/<id>/<step>.md` files or answer
 sidecars. They are not workflow state and remain ignored.

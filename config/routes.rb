@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
+  get "ready" => "readiness#show", as: :readiness
 
   get "projects", to: "projects#show"
   resources :projects, only: %i[create update]

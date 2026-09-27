@@ -31,6 +31,7 @@ development records and are not read by the KOS server or CLI.
 | 021 | [Resolve custom workflow execution](021-resolve-custom-execution/task.md) | done | 020 |
 | 022 | [Tighten runtime boundaries](022-tighten-runtime-boundaries/task.md) | done | 021 |
 | 023 | [Test real scheduling](023-test-real-scheduling/task.md) | done | 022 |
+| 024 | [Complete production operations](024-complete-operations/task.md) | done | 023 |
 
 ## Planned
 
@@ -42,7 +43,6 @@ acceptance criteria so a new session can continue from the first unblocked row.
 
 | ID | Task | Status | Dependencies |
 | --- | --- | --- | --- |
-| 024 | [Complete production operations](024-complete-operations/task.md) | planned | 023 |
 | 025 | [Run current live acceptance](025-current-live-acceptance/task.md) | planned | 024 |
 
 ## Resolved Decisions

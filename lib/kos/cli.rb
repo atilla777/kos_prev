@@ -5,6 +5,7 @@ require "optparse"
 require "securerandom"
 require "uri"
 require "kos/api_token"
+require "kos/build_identity"
 require_relative "version"
 
 module Kos
@@ -49,7 +50,7 @@ module Kos
     private
 
     def print_version
-      @stdout.puts("kos #{Kos::VERSION}")
+      @stdout.puts("kos #{Kos::VERSION} source=#{Kos::BuildIdentity.installed_source_id}")
       0
     end
 

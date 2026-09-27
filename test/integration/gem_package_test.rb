@@ -31,7 +31,8 @@ class GemPackageTest < ActiveSupport::TestCase
       output, error, status = Open3.capture3(environment, bin_dir.join("kos").to_s, "--version", chdir: directory)
 
       assert_predicate status, :success?, error
-      assert_equal "kos #{Kos::VERSION}\n", output
+      expected_source_id = Kos::BuildIdentity.source_id(root: Rails.root)
+      assert_equal "kos #{Kos::VERSION} source=#{expected_source_id}\n", output
       assert_empty error
 
       session_id, error, status = Open3.capture3(environment.merge("KOS_API_URL" => "invalid"),
@@ -78,12 +79,40 @@ class GemPackageTest < ActiveSupport::TestCase
       _output, error, status = Open3.capture3(server_environment(system), Rails.root.join("bin/rails").to_s,
         "db:prepare")
       assert_predicate status, :success?, error
+      _output, error, status = Open3.capture3(server_environment(system), Rails.root.join("bin/rails").to_s,
+        "db:seed")
+      assert_predicate status, :success?, error
 
       start_server(system)
       environment = cli_environment.merge("KOS_API_URL" => system.fetch(:api_url))
       output, error, status = Open3.capture3(environment, cli.to_s, "health", chdir: root.to_s)
       assert_predicate status, :success?, error
       assert_not_empty output
+
+      ready = JSON.parse(Net::HTTP.get(URI("#{system.fetch(:api_url)}/ready")))
+      assert_equal "ready", ready.fetch("status")
+      assert_equal Kos::BuildIdentity.source_id(root: Rails.root), ready.fetch("source_id")
+
+      database = system.fetch(:data_home).join("production.sqlite3")
+      _output, error, status = Open3.capture3("sqlite3", database.to_s,
+        "UPDATE task_types SET key = 'development-unavailable' WHERE key = 'development';")
+      assert_predicate status, :success?, error
+      uri = URI("#{system.fetch(:api_url)}/ready")
+      request = Net::HTTP::Get.new(uri)
+      request["X-Request-Id"] = "operations-smoke-request"
+      request["Authorization"] = "Bearer #{system.fetch(:token)}"
+      unavailable = Net::HTTP.start(uri.host, uri.port) { |http| http.request(request) }
+      assert_equal "503", unavailable.code
+      _output, error, status = Open3.capture3("sqlite3", database.to_s,
+        "UPDATE task_types SET key = 'development' WHERE key = 'development-unavailable';")
+      assert_predicate status, :success?, error
+      Timeout.timeout(2) do
+        sleep 0.05 until system.fetch(:log).read.include?("operations-smoke-request")
+      end
+      log = system.fetch(:log).read
+      assert_includes log, "KOS readiness failed"
+      assert_includes log, "operations-smoke-request"
+      refute_includes log, system.fetch(:token)
 
       authenticated = environment.merge("KOS_API_TOKEN" => system.fetch(:token))
       project = run_installed_json(cli, authenticated, root, "project", "create", "--name", "Smoke",
@@ -119,6 +148,30 @@ class GemPackageTest < ActiveSupport::TestCase
         assert_equal "passed", context.fetch("artifacts").find { |entry| entry.fetch("step") == "implement" }
           .fetch("required_checks")
       end
+
+      stop_server(system)
+      backup = root.join("production-backup.sqlite3")
+      _output, error, status = Open3.capture3("sqlite3", database.to_s, ".backup '#{backup}'")
+      assert_predicate status, :success?, error
+      integrity, error, status = Open3.capture3("sqlite3", backup.to_s, "PRAGMA integrity_check;")
+      assert_predicate status, :success?, error
+      assert_equal "ok\n", integrity
+      foreign_keys, error, status = Open3.capture3("sqlite3", backup.to_s, "PRAGMA foreign_key_check;")
+      assert_predicate status, :success?, error
+      assert_empty foreign_keys
+
+      restored_home = root.join("restored-data")
+      restored_home.mkpath
+      FileUtils.cp(backup, restored_home.join("production.sqlite3"))
+      system = { data_home: restored_home, token: system.fetch(:token), log: root.join("restored-server.log") }
+      start_server(system)
+      restored_ready = JSON.parse(Net::HTTP.get(URI("#{system.fetch(:api_url)}/ready")))
+      assert_equal "ready", restored_ready.fetch("status")
+      restored_environment = cli_environment.merge("KOS_API_URL" => system.fetch(:api_url),
+        "KOS_API_TOKEN" => system.fetch(:token))
+      restored = run_installed_json(cli, restored_environment, root, "project", "show", "--repository-identity",
+        "example.test/test/smoke").fetch("project")
+      assert_equal project.fetch("id"), restored.fetch("id")
     ensure
       stop_server(system) if system
     end
@@ -156,6 +209,10 @@ class GemPackageTest < ActiveSupport::TestCase
         assert_predicate status, :success?, error
         assert_includes output, config_home.to_s
       end
+      manifest = JSON.parse(config_home.join("kos-installation.json").read)
+      assert_equal Kos::VERSION, manifest.fetch("version")
+      assert_equal Kos::BuildIdentity.source_id(root: Rails.root), manifest.fetch("source_id")
+      assert_equal %w[kos-brief.md kos-fix.md kos-task.md kos.md], manifest.fetch("commands")
       assert_equal %w[kos-brief.md kos-fix.md kos-task.md kos.md], installed_names(config_home.join("commands"))
       assert_equal %w[kos-step-advanced.md kos-step-standard.md], installed_names(config_home.join("agents"))
       assert_equal %w[kos kos-cli kos-git kos-step okf],
@@ -242,8 +299,9 @@ class GemPackageTest < ActiveSupport::TestCase
 
   def server_environment(system)
     {
-      "RAILS_ENV" => "development", "KOS_API_TOKEN" => system.fetch(:token),
-      "KOS_DATA_HOME" => system.fetch(:data_home).to_s, "RAILS_LOG_TO_STDOUT" => "1", "DATABASE_URL" => nil
+      "RAILS_ENV" => "production", "KOS_API_TOKEN" => system.fetch(:token),
+      "KOS_DATA_HOME" => system.fetch(:data_home).to_s, "SECRET_KEY_BASE" => "production-smoke-secret",
+      "RAILS_LOG_TO_STDOUT" => "1", "DATABASE_URL" => nil
     }
   end
 

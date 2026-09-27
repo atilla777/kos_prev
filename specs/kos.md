@@ -22,6 +22,8 @@ reading the task instead of reconstructing progress from local execution files.
 - A step executor performs and reports exactly one step within the workflow's
   declared authority.
 - An administrator installs KOS and registers participating repositories.
+- An administrator operates one supervised single-host service and verifies its
+  readiness, provenance, backups, and restores.
 
 # User Scenarios
 
@@ -49,6 +51,10 @@ reading the task instead of reconstructing progress from local execution files.
 - The shared bearer token authorizes every application operation and its holders
   are trusted. Owner IDs, leases, and claim-version fences coordinate concurrent
   trusted operations; they are not agent authorization or a security boundary.
+- Liveness only proves the server process can answer. Readiness separately
+  requires current queryable persistent state, the canonical built-in catalog,
+  and a writable data home. The server, packaged CLI, and installed OpenCode
+  inventory expose one matching operational source identity.
 - The scheduler only selects, creates, claims, or resumes work; reads
   authoritative state; executes a `main` step in the command agent or dispatches
   a `subagent` step by its standard or advanced model tier; and reads state

@@ -1,8 +1,11 @@
 #!/usr/bin/env ruby
 
 require "fileutils"
+require "json"
 require "optparse"
 require "pathname"
+require_relative "../lib/kos/build_identity"
+require_relative "../lib/kos/version"
 
 root = Pathname(__dir__).join("..").expand_path
 default_config_home = Pathname(ENV.fetch("XDG_CONFIG_HOME", "~/.config")).expand_path.join("opencode")
@@ -30,9 +33,12 @@ obsolete = {
   "skills" => %w[kos-brief kos-create]
 }
 config_home = options.fetch(:config_home)
+manifest = config_home.join("kos-installation.json")
 
 abort("Refusing symbolic-link configuration directory: #{config_home}") if config_home.symlink?
 abort("Configuration path is not a directory: #{config_home}") if config_home.exist? && !config_home.directory?
+abort("Refusing symbolic-link manifest: #{manifest}") if manifest.symlink?
+abort("Manifest path is not a file: #{manifest}") if manifest.exist? && !manifest.file?
 
 # Validate the complete source and destination shape before changing anything.
 inventory.each do |kind, names|
@@ -76,6 +82,10 @@ obsolete.each do |kind, names|
   end
 end
 
+# The manifest is the successful-install marker, so invalidate it before the
+# first managed destination changes.
+FileUtils.rm_f(manifest)
+
 inventory.fetch("commands").each do |name|
   source = root.join(".opencode/commands", name)
   destination = config_home.join("commands", name)
@@ -100,5 +110,17 @@ inventory.fetch("skills").each do |name|
   FileUtils.mkdir_p(destination.dirname)
   FileUtils.cp_r(source, destination)
 end
+
+FileUtils.mkdir_p(config_home)
+temporary_manifest = config_home.join(".kos-installation-#{Process.pid}.json")
+temporary_manifest.write(JSON.pretty_generate({
+  "schema" => 1,
+  "version" => Kos::VERSION,
+  "source_id" => Kos::BuildIdentity.source_id(root:),
+  "commands" => inventory.fetch("commands").sort,
+  "agents" => inventory.fetch("agents").sort,
+  "skills" => inventory.fetch("skills").sort
+}) << "\n")
+File.rename(temporary_manifest, manifest)
 
 puts "Installed KOS OpenCode integration in #{config_home}"

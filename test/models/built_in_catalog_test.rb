@@ -54,6 +54,19 @@ class BuiltInCatalogTest < ActiveSupport::TestCase
     assert_equal ids, TaskType.where(key: TaskType::RESERVED_KEYS).order(:key).pluck(:id, :workflow_id)
   end
 
+  test "observes whether the complete canonical catalog is installed without changing it" do
+    refute BuiltInCatalog.installed?
+    assert_no_difference [ -> { TaskType.count }, -> { Workflow.count } ] do
+      refute BuiltInCatalog.installed?
+    end
+
+    BuiltInCatalog.install!
+    assert BuiltInCatalog.installed?
+
+    TaskType.find_by!(key: "development").workflow.update_column(:definition_json, valid_workflow_definition)
+    refute BuiltInCatalog.installed?
+  end
+
   test "brief publication completes only after its graph prerequisites" do
     steps = BuiltInCatalog.definitions.fetch("brief").fetch("steps").index_by { |step| step.fetch("id") }
     publish = steps.fetch("publish")

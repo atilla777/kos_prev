@@ -103,6 +103,14 @@ class BuiltInCatalog
     CATALOG.transform_values { |entry| definition_for(entry.fetch(:steps)) }
   end
 
+  def self.installed?
+    expected = definitions
+    installed = TaskType.includes(:workflow).where(key: expected.keys).index_by(&:key)
+    installed.keys.sort == expected.keys.sort && expected.all? do |key, definition|
+      installed.fetch(key).workflow.definition_json == definition
+    end
+  end
+
   def self.definition_for(steps)
     { "steps" => steps.map do |id, name, execution_mode, model_tier, instruction, artifact_template, outcomes|
       {

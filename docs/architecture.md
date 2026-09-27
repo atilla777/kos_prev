@@ -33,6 +33,8 @@ These rules describe the implemented PLAN-022 state-oriented architecture.
   their shared host; derive worktrees only below its `worktrees` directory.
 - Keep external side effects outside Rails transactions and recover ambiguity by
   observing authoritative task, Git, remote, or child-graph state before retry.
+- Keep liveness independent of dependencies. Readiness observes database access,
+  migrations, canonical catalog state, and data-home writes without repairing them.
 - Every local task commit is content-agent-owned, carries exactly one raw
   canonical task trailer line with no case variant or duplicate, and remains
   unpushed until publication; built-in tasks complete
@@ -50,6 +52,8 @@ task types, tasks, dependencies, and transitions. `GET /up` remains public.
 The shared bearer token trusts its holders for every application operation.
 Owner IDs, leases, and claim-version fences preserve concurrency consistency
 among those holders; they are not authorization or an agent security boundary.
+Public `/up` reports process liveness. Public `/ready` reports dependency
+readiness with generic failures and the running version/source identity.
 Rails validates workflow shape but does not select, execute, or interpret
 planning, diagnosis, checks, documentation, review, publication,
 or OKF. It enforces a closed required-check assertion at built-in delivery gates
@@ -274,6 +278,12 @@ Scoped server creation keys recover request creation through an identical
 create-or-get retry. Git publication and brief materialization ambiguity are
 recovered from remote Git and complete server graph observations respectively,
 never from local protocol files.
+
+Production is one systemd-supervised, loopback-bound Puma process behind a TLS
+proxy. SQLite backup uses its online backup command while application writers
+are stopped, then integrity, foreign-key, and isolated restore checks. Database
+rollback and application rollback are one decision after migrations; task
+worktrees and source repositories remain separate Git recovery state.
 
 See [the system specification](specification.md), [testing rules](testing.md),
 and [installation guide](installation.md).

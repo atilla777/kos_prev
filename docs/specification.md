@@ -350,9 +350,11 @@ uses existing `task resumable` and `task claim-next` operations, and never
 creates work. The three reserved built-in keys are rejected in favor of their
 dedicated commands.
 
-`kos health` calls the public `GET /up` endpoint selected by `KOS_API_URL`
-without requiring `KOS_API_TOKEN`. Every application operation requires the
-configured shared token. Its holders are trusted for all such operations;
+`kos health` calls the public liveness `GET /up` endpoint selected by `KOS_API_URL`
+without requiring `KOS_API_TOKEN`. Public `GET /ready` separately verifies a
+queryable current database, canonical built-in catalog, and writable data home,
+returning the server version and operational source identity. Every application
+operation requires the configured shared token. Its holders are trusted for all such operations;
 ownership and fencing coordinate their concurrent writes but do not authorize
 them separately.
 
@@ -363,6 +365,12 @@ relative client value. The path remains machine-local configuration and is not
 stored in a project row. API tokens must be nonempty valid UTF-8 HTTP header
 values without controls or surrounding whitespace; server boot and the CLI use
 the same validation.
+
+The supported production service is one loopback-bound Puma process supervised
+on the same host as SQLite and OpenCode, behind a separately supervised TLS
+terminating proxy. Server readiness, packaged CLI version output, and the
+OpenCode installation manifest expose the same deterministic operational source
+identity. Mixed identities are unsupported.
 
 ## Recovery And Upgrade
 

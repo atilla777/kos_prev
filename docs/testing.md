@@ -32,6 +32,10 @@
   workflow bodies, separate Rails and OpenCode environments resolve the same
   nondefault data home, and server boot and the packaged CLI accept the same
   HTTP-safe bearer-token values.
+- Production operations tests boot an isolated eager-loaded production server,
+  require distinct liveness/readiness, compare server, CLI, and OpenCode source
+  identities, and rehearse SQLite integrity and restore without preparing the
+  restored database.
 - Git tests use temporary source repositories, task worktrees, and bare remotes.
 - Migration and recovery tests use isolated persistent SQLite databases, data
   homes, subprocesses, repositories, remotes, and OpenCode configuration homes.
@@ -173,3 +177,5 @@ failing.
   installation, and scenario test required for a change.
 
 Every completed change must leave `bin/check` passing.
+Remote CI invokes this exact contract; live model execution remains outside
+ordinary CI.

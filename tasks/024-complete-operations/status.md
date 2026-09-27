@@ -1,23 +1,24 @@
 # Status
 
-State: planned
-Updated: 2026-09-26
+State: done
+Updated: 2026-09-27
 
 ## Current
 
-KOS has a local development installation path and strong isolated tests, but no
-complete production runbook, meaningful readiness check, remote release gate,
-or rehearsed restore procedure.
+KOS now has a documented supervised single-host production topology, distinct
+liveness and dependency readiness, remote CI, shared source identity, and a
+tested SQLite backup/restore rehearsal.
 
 ## Next
 
-After task 023 is done, define the supported single-host deployment topology and
-its readiness dependencies before implementing endpoints or CI.
+Proceed to task 025 current live acceptance.
 
 ## Blockers
 
-Depends on task 023.
+None.
 
 ## Checks
 
-Not started.
+- `bin/check` passed on 2026-09-27: 283 tests, 4251 assertions, 0 failures,
+  0 errors, 0 skips.
+- Independent review found no remaining high- or medium-severity findings.

@@ -31,10 +31,10 @@ export KOS_API_TOKEN="$(openssl rand -hex 32)"
 ```
 
 Keep the token secret. Application endpoints require `Authorization: Bearer
-<token>`; `GET /up` is public. This shared bearer token trusts its holders for
-every application operation. Owner IDs, leases, and claim-version fences
-coordinate concurrent trusted operations; they are not authorization or an
-agent security boundary.
+<token>`; liveness `GET /up` and readiness `GET /ready` are public. This shared
+bearer token trusts its holders for every application operation. Owner IDs,
+leases, and claim-version fences coordinate concurrent trusted operations; they
+are not authorization or an agent security boundary.
 
 Development and production databases default to `$XDG_DATA_HOME/kos`, or
 `~/.local/share/kos`. `KOS_DATA_HOME` may override it with an absolute local
@@ -57,6 +57,7 @@ export KOS_DATA_HOME="$HOME/.local/share/kos"
 export KOS_API_TOKEN="$(openssl rand -hex 32)"
 bundle check || bundle install
 bin/rails db:prepare
+bin/rails db:seed
 
 gem build kos.gemspec --output /tmp/kos.gem
 gem install /tmp/kos.gem
@@ -68,9 +69,12 @@ export KOS_CLI_PATH="$(realpath "$(command -v kos)")"
 bin/install-opencode
 ```
 
-Database preparation installs the `brief`, `development`, and `fix` task types
-and workflows. It does not register a project. Start Rails and register each
-repository explicitly:
+The CLI version, `/ready`, and the installed `kos-installation.json` expose one
+`sha256:` source identity and must match.
+
+Database preparation plus explicit seeding installs the `brief`, `development`,
+and `fix` task types and workflows. It does not register a project. Start Rails
+and register each repository explicitly:
 
 ```sh
 export KOS_API_URL="http://127.0.0.1:3000"
@@ -102,8 +106,9 @@ Standard agents use `openai/gpt-5.6-terra` with medium reasoning; advanced
 agents use `openai/gpt-5.6-sol` with high reasoning. Administrators may change
 complete provider/model IDs while preserving roles. Restart OpenCode after
 installation or configuration changes; running sessions do not reload managed
-files. See the [installation guide](docs/installation.md) for upgrades and the
-full readiness procedure.
+files. See the [installation guide](docs/installation.md) for the supported
+loopback-Puma/systemd/TLS-proxy topology, readiness, SQLite backup rehearsal,
+upgrades, and rollback.
 
 ## Commands
 

@@ -86,7 +86,7 @@ class CliTest < ActiveSupport::TestCase
     output, error, status = run_cli("--version", environment: {})
 
     assert_predicate status, :success?
-    assert_equal "kos #{Kos::VERSION}\n", output
+    assert_equal "kos #{Kos::VERSION} source=#{Kos::BuildIdentity.installed_source_id}\n", output
     assert_empty error
   end
 
