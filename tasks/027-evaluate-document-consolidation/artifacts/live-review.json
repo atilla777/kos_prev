@@ -1,0 +1,10 @@
+{
+  "outcome": "approved",
+  "accepted_claim_version": 5,
+  "base": "aa287ffb70634b5b52172d7100c9bbe3868e1d88",
+  "tip": "440bedad70e857cee9a682c34e4f49928335e03e",
+  "base_tree": "7fa02c0c42b12c6efddc048bf29b0a3e8ee8b821",
+  "tip_tree": "e73fef31cb89fffcbc848cc357ffc5d19a9d4e37",
+  "paths": ["bin/greet", "lib/greeting.rb", "specs/greeting.md", "test/greeting_test.rb"],
+  "diff_sha256": "408ed042ad4c588eedf5a7bda6047961aa847e6fd836bf73ebf7914ac16d3b24"
+}

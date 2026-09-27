@@ -131,8 +131,8 @@ class GemPackageTest < ActiveSupport::TestCase
           "--owner-id", "smoke-owner").fetch("task")
 
         {
-          "plan" => "planned", "implement" => "implemented", "document" => "documented",
-          "review" => "approved", "publish" => "published"
+          "plan" => "planned", "implement" => "implemented", "review" => "approved",
+          "publish" => "published"
         }.each do |step, outcome|
           check_options = step == "implement" ? [ "--required-checks", "passed" ] : []
           task = run_installed_json(cli, authenticated, root, "task", "report-attempt", task.fetch("id").to_s,
@@ -143,7 +143,7 @@ class GemPackageTest < ActiveSupport::TestCase
         context = run_installed_json(cli, authenticated, root, "task", "context", task.fetch("id").to_s)
         assert_equal [ "completed", "publish", nil, nil ],
           context.fetch("task").values_at("status", "current_step", "owner_id", "lease_expires_at")
-        assert_equal %w[plan implement document review publish],
+        assert_equal %w[plan implement review publish],
           context.fetch("artifacts").map { |entry| entry.fetch("step") }
         assert_equal "passed", context.fetch("artifacts").find { |entry| entry.fetch("step") == "implement" }
           .fetch("required_checks")

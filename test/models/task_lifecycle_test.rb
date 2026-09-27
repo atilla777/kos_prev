@@ -380,7 +380,7 @@ class TaskLifecycleTest < ActiveSupport::TestCase
           claim_version: task.claim_version, step: "implement", outcome: "implemented",
           artifact: "# Implementation", required_checks:)
 
-        assert_equal "document", task.current_step
+        assert_equal "review", task.current_step
         assert_equal required_checks, task.accepted_artifacts.dig("implement", "required_checks")
       end
     end
@@ -471,8 +471,6 @@ class TaskLifecycleTest < ActiveSupport::TestCase
     end
     task = @lifecycle.report_attempt!(task_id: task.id, owner_id: task.owner_id, claim_version: task.claim_version,
       step: "implement", outcome: "done", artifact: "# Implementation", required_checks: "passed")
-    task = @lifecycle.report_attempt!(task_id: task.id, owner_id: task.owner_id, claim_version: task.claim_version,
-      step: "document", outcome: "documented", artifact: "# Documentation")
     %w[accepted published].each do |outcome|
       task = @lifecycle.report_attempt!(task_id: task.id, owner_id: task.owner_id, claim_version: task.claim_version,
         step: task.current_step, outcome:, artifact: "# #{outcome.titleize}")

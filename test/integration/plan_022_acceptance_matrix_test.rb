@@ -111,8 +111,8 @@ class Plan022AcceptanceMatrixTest < ActiveSupport::TestCase
     assert_equal %w[kos kos-cli kos-git kos-step okf], managed_names("skills")
     assert_equal %w[brief development fix], BuiltInCatalog.definitions.keys.sort
     assert_equal %w[brief review publish], catalog_steps("brief")
-    assert_equal %w[plan implement document review publish], catalog_steps("development")
-    assert_equal %w[diagnose plan implement document review publish], catalog_steps("fix")
+    assert_equal %w[plan implement review publish], catalog_steps("development")
+    assert_equal %w[diagnose plan implement review publish], catalog_steps("fix")
   end
 
   test "deterministic scenarios do not claim live model release evidence" do

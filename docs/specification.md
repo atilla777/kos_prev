@@ -19,8 +19,8 @@ The implemented built-in scenarios are:
 
 ```text
 /kos-brief <request> -> brief -> review -> publish -> completed
-/kos                 -> plan -> implement/check -> document -> review -> publish -> completed
-/kos-fix <problem>   -> diagnose -> plan -> implement/check -> document -> review -> publish -> completed
+/kos                 -> plan -> implement/check/document -> review -> publish -> completed
+/kos-fix <problem>   -> diagnose -> plan -> implement/check/document -> review -> publish -> completed
 ```
 
 `/kos-task <task-type-key>` schedules an existing custom task through its
@@ -195,8 +195,7 @@ are:
 | Step | Outcomes |
 | --- | --- |
 | `plan` | `planned` -> `implement` |
-| `implement` | `implemented` -> `document`; `plan_invalid` -> `plan` |
-| `document` | `documented` -> `review`; `implementation_invalid` -> `implement` |
+| `implement` | `implemented` -> `review`; `plan_invalid` -> `plan` |
 | `review` | `approved` -> `publish`; `changes_requested` -> `implement`; `redesign_required` -> `plan` |
 | `publish` | `published` -> complete; `review_invalid` -> `review`; `base_moved` -> `implement` |
 
@@ -206,8 +205,7 @@ are:
 | --- | --- |
 | `diagnose` | `diagnosed` -> `plan` |
 | `plan` | `planned` -> `implement`; `diagnosis_invalid` -> `diagnose` |
-| `implement` | `implemented` -> `document`; `plan_invalid` -> `plan` |
-| `document` | `documented` -> `review`; `implementation_invalid` -> `implement` |
+| `implement` | `implemented` -> `review`; `plan_invalid` -> `plan` |
 | `review` | `approved` -> `publish`; `changes_requested` -> `implement`; `redesign_required` -> `plan` |
 | `publish` | `published` -> complete; `review_invalid` -> `review`; `base_moved` -> `implement` |
 
@@ -221,8 +219,8 @@ are:
 
 Built-in diagnosis, planning, and review instructions require advanced,
 read-only execution. Built-in briefing is advanced `main` execution and may
-change only authorized specification and graph work. Briefing,
-implementation, and documentation may create local task commits but never push;
+change only authorized specification and graph work. Briefing and implementation
+may create local task commits but never push;
 each successful content step leaves a clean linear sequence from its observed
 base to its tip, with exactly one raw canonical `KOS-Task: <task-id>` line and no
 case variant or duplicate on every commit.
@@ -405,15 +403,16 @@ Git recovery remains observation-oriented. Publication observes the approved
 base, ordered commit sequence, tip, trees, paths, diff digest, and remote before retrying,
 never force-pushes, and never duplicates a confirmed push. A moved base leaves
 history and content unchanged and returns to implementation or briefing as the
-workflow specifies; that content agent integrates before checks, documentation,
-and review repeat. An ambiguous push is resolved by fetching and observing the
-exact sequence remotely. Brief graph creation recovers by observing the complete
+workflow specifies; that content agent integrates before checks,
+product-behavior maintenance, and review repeat. An ambiguous push is resolved
+by fetching and observing the exact sequence remotely. Brief graph creation
+recovers by observing the complete
 materialized graph and its server-derived digest, which must equal accepted
 review evidence.
 
 ## Publication
 
-Briefing, implementation, and documentation may create local commits but never
+Briefing and implementation may create local commits but never
 push. Every commit in the task range contains exactly one raw canonical
 `KOS-Task: <id>` line with no case variant or duplicate. Before a successful
 content report the worktree and index are clean and

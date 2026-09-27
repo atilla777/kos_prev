@@ -233,8 +233,10 @@ class KosSkillsTest < ActiveSupport::TestCase
 
     assert_includes definitions.dig("fix", "steps").first.fetch("instruction"), "exported temporary copy"
     assert_includes development.dig("implement", "instruction"), "every required test, lint, formatting, build, and type check"
+    assert_includes development.dig("implement", "instruction"), "Use okf to update affected product behavior before review"
     assert_includes development.dig("implement", "instruction"), "never push"
     assert_includes development.dig("review", "instruction"), "without changing HEAD, refs, index, worktree bytes, or status"
+    assert_includes development.dig("review", "instruction"), "product behavior to be updated through okf before approval"
     assert_includes development.dig("review", "instruction"), "nonempty contiguous linear single-parent sequence"
     assert_includes development.dig("review", "instruction"), "exactly one raw line KOS-Task: <task-id>"
     assert_includes development.dig("review", "instruction"), "exact base, ordered commits, tip"

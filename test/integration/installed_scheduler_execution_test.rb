@@ -70,11 +70,10 @@ class InstalledSchedulerExecutionTest < ActiveSupport::TestCase
         Task.find_by!(creation_key: request_key("brief", "exact brief request\n")) ].map { |task| task.reload.status }
     assert_equal [
       %w[development plan advanced], %w[development implement standard],
-      %w[development document standard], %w[development review advanced],
-      %w[development implement standard], %w[development document standard],
+      %w[development review advanced], %w[development implement standard],
       %w[development review advanced], %w[development publish standard],
       %w[fix diagnose advanced], %w[fix plan advanced], %w[fix implement standard],
-      %w[fix document standard], %w[fix review advanced], %w[fix publish standard],
+      %w[fix review advanced], %w[fix publish standard],
       %w[brief review advanced], %w[brief publish standard]
     ], child_calls.map { |type, step, tier,| [ type, step, tier ] }
     assert child_calls.all? { |_, _, _, prompt, _, _, _| prompt.match?(/\A\d+\z/) }
@@ -90,10 +89,10 @@ class InstalledSchedulerExecutionTest < ActiveSupport::TestCase
 
   def successful_outcome(type, step)
     {
-      "development" => { "plan" => "planned", "implement" => "implemented", "document" => "documented",
-        "review" => "approved", "publish" => "published" },
+      "development" => { "plan" => "planned", "implement" => "implemented", "review" => "approved",
+        "publish" => "published" },
       "fix" => { "diagnose" => "diagnosed", "plan" => "planned", "implement" => "implemented",
-        "document" => "documented", "review" => "approved", "publish" => "published" },
+        "review" => "approved", "publish" => "published" },
       "brief" => { "review" => "approved", "publish" => "published" }
     }.fetch(type).fetch(step)
   end

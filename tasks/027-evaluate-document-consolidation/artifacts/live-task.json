@@ -1,0 +1,18 @@
+{
+  "task": {
+    "id": 1,
+    "status": "completed",
+    "current_step": "publish",
+    "owner_id": null,
+    "claim_version": 7,
+    "lease_expires_at": null,
+    "title": "Add whisper greeting mode"
+  },
+  "artifacts": [
+    { "step": "plan", "outcome": "planned", "accepted_claim_version": 1 },
+    { "step": "implement", "outcome": "implemented", "required_checks": "passed", "accepted_claim_version": 4 },
+    { "step": "review", "outcome": "approved", "accepted_claim_version": 5 },
+    { "step": "publish", "outcome": "published", "accepted_claim_version": 6 }
+  ],
+  "pause": null
+}

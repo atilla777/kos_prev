@@ -357,7 +357,7 @@ Git worktrees are derived as:
 $KOS_DATA_HOME/worktrees/<project-id>/<task-id>
 ```
 
-Briefing, implementation, and documentation may create local commits but never
+Briefing and implementation may create local commits but never
 push. Successful content steps leave a clean linear range from the observed base
 to `HEAD`, with exactly one raw canonical `KOS-Task: <task-id>` line per commit
 and no case variant or duplicate.
@@ -365,9 +365,9 @@ Review inspects the complete aggregate diff and records the exact base, ordered
 commits, tip, trees, paths, and SHA-256 diff digest.
 Publication does not alter that approved history or content: it pushes the exact
 range without force and fetches to observe the same sequence remotely. A moved
-base changes nothing at publication and repeats the content, checks,
-documentation, and review path after integration. Ambiguous pushes recover by
-observing the exact remote range.
+base changes nothing at publication and repeats implementation-owned
+product-behavior maintenance, checks, and review after integration. Ambiguous
+pushes recover by observing the exact remote range.
 
 ## Verify
 

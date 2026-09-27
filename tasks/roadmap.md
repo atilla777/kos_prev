@@ -34,6 +34,7 @@ development records and are not read by the KOS server or CLI.
 | 024 | [Complete production operations](024-complete-operations/task.md) | done | 023 |
 | 025 | [Run current live acceptance](025-current-live-acceptance/task.md) | done | 024 |
 | 026 | [Diagnose live stale reports](026-diagnose-live-stale-reports/task.md) | done | 025 |
+| 027 | [Evaluate document consolidation](027-evaluate-document-consolidation/task.md) | done | 025, 026 |
 
 ## Planned
 
@@ -43,25 +44,23 @@ review retained at
 Each task preserves its own stable scope, plan, status, source evidence, and
 acceptance criteria so a new session can continue from the first unblocked row.
 
-| ID | Task | Status | Dependencies |
-| --- | --- | --- | --- |
-| 027 | [Evaluate document consolidation](027-evaluate-document-consolidation/task.md) | planned | 025, 026 |
+No tasks are currently planned.
 
 ## Resolved Decisions
 
 ### Server Workflow And Data Model
 
-Retain the current workflow and five-table data model. The live acceptance runs
-used or validated request idempotence, ownership fencing, pause and answer
-binding, required-check gates, interruption recovery, immutable workflow
-snapshots, and atomic brief graph materialization. Their extra agent launches do
-not identify redundant server state.
+Retain the five-table data model. Development and fix now combine
+product-behavior maintenance with implementation before independent review; task
+027 verified this removes a recurring no-op dispatch without weakening OKF,
+checks, immutable workflow snapshots, review, or publication. The live acceptance
+runs otherwise validated request idempotence, ownership fencing, pause and answer
+binding, required-check gates, interruption recovery, and atomic brief graph
+materialization without identifying redundant server state.
 
 Reconsider a focused reduction only when ordinary sessions show one of these
 conditions:
 
-- `document` is repeatedly a no-op and combining it with implementation would
-  not weaken product-specification maintenance;
 - agents make incorrect decisions from later accepted artifacts retained after
   a backward transition;
 - leases or claim fencing repeatedly require operator intervention without

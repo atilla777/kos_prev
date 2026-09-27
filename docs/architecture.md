@@ -221,8 +221,8 @@ review checks the resulting work.
 
 Focused agents validate predecessor evidence and use explicit correction routes:
 
-- Development: `plan_invalid` to `plan`, `implementation_invalid` to
-  `implement`, review `changes_requested` to `implement`, `redesign_required` to
+- Development: `plan_invalid` to `plan`, review `changes_requested` to
+  `implement`, `redesign_required` to
   `plan`, and publish `review_invalid` to `review` or `base_moved` to `implement`.
 - Fix adds plan `diagnosis_invalid` to `diagnose`; all later routes match
   development.
@@ -237,7 +237,7 @@ step validates the exact predecessors and current repository state it relies on.
 
 ## Publication
 
-Publication validates accepted plan, implementation, documentation, and review
+Publication validates accepted plan, implementation, and review
 evidence. Review inspects the complete aggregate diff and approval identifies
 the exact base, ordered commit SHAs, tip, trees, paths, and SHA-256 diff digest
 of a clean linear range whose every commit has one exact canonical `KOS-Task`

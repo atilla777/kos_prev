@@ -1,0 +1,8 @@
+{
+  "outcome": "implemented",
+  "required_checks": "passed",
+  "accepted_claim_version": 4,
+  "product_behavior": "Updated specs/greeting.md before review.",
+  "checks": "bin/check passed with 5 runs and 51 assertions.",
+  "commit": "440bedad70e857cee9a682c34e4f49928335e03e"
+}

@@ -15,8 +15,8 @@ class AcceptanceScenariosTest < ActiveSupport::TestCase
     lifecycle = TaskLifecycle.new
 
     {
-      "development" => %w[plan implement document review publish],
-      "fix" => %w[diagnose plan implement document review publish]
+      "development" => %w[plan implement review publish],
+      "fix" => %w[diagnose plan implement review publish]
     }.each do |type_key, expected_steps|
       project = create_project(name: type_key)
       task = lifecycle.create!(project:, task_type: TaskType.find_by!(key: type_key), title: type_key.titleize,
@@ -51,13 +51,11 @@ class AcceptanceScenariosTest < ActiveSupport::TestCase
     BuiltInCatalog.install!
     routes = {
       "development" => [
-        %w[implement plan_invalid plan], %w[document implementation_invalid implement],
-        %w[review changes_requested implement], %w[review redesign_required plan],
+        %w[implement plan_invalid plan], %w[review changes_requested implement], %w[review redesign_required plan],
         %w[publish review_invalid review], %w[publish base_moved implement]
       ],
       "fix" => [
-        %w[plan diagnosis_invalid diagnose], %w[implement plan_invalid plan],
-        %w[document implementation_invalid implement], %w[review changes_requested implement],
+        %w[plan diagnosis_invalid diagnose], %w[implement plan_invalid plan], %w[review changes_requested implement],
         %w[review redesign_required plan], %w[publish review_invalid review],
         %w[publish base_moved implement]
       ],
@@ -109,7 +107,7 @@ class AcceptanceScenariosTest < ActiveSupport::TestCase
       task = lifecycle.report_attempt!(task_id: task.id, owner_id: task.owner_id,
         claim_version: task.claim_version, step: "implement", outcome: "implemented",
         artifact: "# Implementation\n\nRequired checks passed.\n", required_checks: "passed")
-      %w[document review publish].each do |step|
+      %w[review publish].each do |step|
         task = lifecycle.report_attempt!(task_id: task.id, owner_id: task.owner_id,
           claim_version: task.claim_version, step:, outcome: successful_outcome(type_key, step),
           artifact: "# #{step.titleize}\n")
@@ -175,14 +173,34 @@ class AcceptanceScenariosTest < ActiveSupport::TestCase
       previous_base = git("rev-parse", "HEAD", chdir: worktree).strip
 
       task = run_read_only_plan(lifecycle, task, worktree, repository[:root])
-      implementation_commit = task_commit(worktree, task.id, "Implement task", "task.txt", "task change\n")
+      worktree.join("specs").mkpath
+      File.write(worktree.join("specs/index.md"), <<~MARKDOWN)
+        ---
+        okf_version: "0.2"
+        ---
+
+        # Product Specifications
+
+        - [Task behavior](task.md) - Observable behavior delivered by the task.
+      MARKDOWN
+      File.write(worktree.join("specs/task.md"), <<~MARKDOWN)
+        ---
+        type: Product Specification
+        title: Task behavior
+        description: Observable behavior delivered by the task.
+        ---
+
+        # Goal
+
+        The task provides the requested observable behavior.
+      MARKDOWN
+      git("add", "specs/index.md", "specs/task.md", chdir: worktree)
+      implementation_commit = task_commit(worktree, task.id, "Implement and document task", "task.txt", "task change\n")
       task = run_implementation(lifecycle, task, worktree, repository[:root], attempt: 1)
-      documentation_commit = task_commit(worktree, task.id, "Document task", "README.md", "task documentation\n")
-      task = run_documentation(lifecycle, task, repository[:root], attempt: 1)
       task, first_review = run_read_only_review(lifecycle, task, worktree, previous_base,
-        %w[README.md task.txt], attempt: 1)
+        %w[specs/index.md specs/task.md task.txt], attempt: 1)
       assert_equal "publish", task.current_step
-      assert_equal [ implementation_commit, documentation_commit ], first_review.fetch("commits")
+      assert_equal [ implementation_commit ], first_review.fetch("commits")
 
       File.write(repository[:publisher].join("base.txt"), "base change\n")
       git("add", "base.txt", chdir: repository[:publisher])
@@ -204,15 +222,14 @@ class AcceptanceScenariosTest < ActiveSupport::TestCase
       assert_equal reviewed_head, git("rev-parse", "HEAD", chdir: worktree)
       assert_equal reviewed_status, git("status", "--porcelain=v2", "--untracked-files=all", "-z", chdir: worktree)
       assert_equal "task change\n", File.read(worktree.join("task.txt"))
-      assert_equal "task documentation\n", File.read(worktree.join("README.md"))
+      assert_includes File.read(worktree.join("specs/index.md")), "okf_version: \"0.2\""
+      assert_includes File.read(worktree.join("specs/task.md")), "type: Product Specification"
 
       git("rebase", "--onto", moved_base, previous_base, "HEAD", chdir: worktree)
       task = run_implementation(lifecycle, task, worktree, repository[:root], attempt: 2)
-      task = run_documentation(lifecycle, task, repository[:root], attempt: 2)
       task, second_review = run_read_only_review(lifecycle, task, worktree, moved_base,
-        %w[README.md task.txt], attempt: 2)
+        %w[specs/index.md specs/task.md task.txt], attempt: 2)
       assert_includes task.accepted_artifacts.dig("implement", "markdown"), "Attempt 2"
-      assert_includes task.accepted_artifacts.dig("document", "markdown"), "Attempt 2"
       assert_includes task.accepted_artifacts.dig("review", "markdown"), "Attempt 2"
       refute_equal first_review.fetch("commits"), second_review.fetch("commits")
       accepted_review = parse_review_artifact(task.accepted_artifacts.dig("review", "markdown"))
@@ -230,7 +247,7 @@ class AcceptanceScenariosTest < ActiveSupport::TestCase
       assert_equal reviewed_tip, git("--git-dir", repository[:remote].to_s, "rev-parse", "refs/heads/main").strip
       assert_equal second_review.fetch("commits"),
         git("--git-dir", repository[:remote].to_s, "rev-list", "--reverse", "#{moved_base}..main").lines.map(&:strip)
-      assert_equal "4", git("--git-dir", repository[:remote].to_s, "rev-list", "--count", "main").strip
+      assert_equal "3", git("--git-dir", repository[:remote].to_s, "rev-list", "--count", "main").strip
     end
   end
 
@@ -275,12 +292,10 @@ class AcceptanceScenariosTest < ActiveSupport::TestCase
     task, lifecycle = claimed_acceptance_task
     task = report(lifecycle, task, "plan", "planned")
     task = report(lifecycle, task, "implement", "implemented")
-    task = report(lifecycle, task, "document", "documented")
 
     task = report(lifecycle, task, "review", "changes_requested")
     assert_equal "implement", task.current_step
     task = report(lifecycle, task, "implement", "implemented")
-    task = report(lifecycle, task, "document", "documented")
 
     task = report(lifecycle, task, "review", "redesign_required")
     assert_equal "plan", task.current_step
@@ -348,10 +363,10 @@ class AcceptanceScenariosTest < ActiveSupport::TestCase
   def successful_outcome(type_key, step)
     {
       "brief" => { "brief" => "specified", "review" => "approved", "publish" => "published" },
-      "development" => { "plan" => "planned", "implement" => "implemented", "document" => "documented",
-        "review" => "approved", "publish" => "published" },
+      "development" => { "plan" => "planned", "implement" => "implemented", "review" => "approved",
+        "publish" => "published" },
       "fix" => { "diagnose" => "diagnosed", "plan" => "planned", "implement" => "implemented",
-        "document" => "documented", "review" => "approved", "publish" => "published" }
+        "review" => "approved", "publish" => "published" }
     }.fetch(type_key).fetch(step)
   end
 
@@ -388,13 +403,9 @@ class AcceptanceScenariosTest < ActiveSupport::TestCase
   def run_implementation(lifecycle, task, worktree, root, attempt:)
     git("diff", "--check", chdir: worktree)
     report(lifecycle, task, "implement", "implemented",
-      artifact: "# Implementation\n\nAttempt #{attempt}.\n\n## Checks\n\n`git diff --check`: passed.\n",
+      artifact: "# Implementation\n\nAttempt #{attempt}.\n\n## Product behavior\n\nUpdated `specs/task.md`.\n\n" \
+        "## Checks\n\n`git diff --check`: passed.\n",
       required_checks: ("passed" if %w[development fix].include?(task.task_type.key)))
-  end
-
-  def run_documentation(lifecycle, task, root, attempt:)
-    report(lifecycle, task, "document", "documented",
-      artifact: "# Documentation\n\nAttempt #{attempt}: no observable behavior change.\n")
   end
 
   def run_read_only_review(lifecycle, task, worktree, base, expected_paths, attempt:)

@@ -1,23 +1,28 @@
 # Status
 
-State: planned
+State: done
 Updated: 2026-09-27
 
 ## Current
 
-Task 025 observed two consecutive no-op document steps. This satisfies the
-roadmap's evidence condition for focused reconsideration but does not itself
-prove that removing the step is safe.
+New development and fix workflow revisions consolidate product-behavior
+maintenance into implementation and proceed directly to independent review.
+Existing tasks retain their immutable prior workflow revisions. Deterministic
+checks and a focused live `/kos` run verified the reduced execution shape.
 
 ## Next
 
-After task 026, compare separate documentation with implementation-owned OKF
-maintenance and preserve the stronger invariant.
+None.
 
 ## Blockers
 
-Depends on tasks 025 and 026.
+None.
 
 ## Checks
 
-Not started.
+- Focused catalog and scenario tests passed: 20 runs, 749 assertions.
+- `bin/check` passed: 283 runs, 4262 assertions. An earlier run had two transient
+  local connection refusals; both tests passed alone before the clean full run.
+- Focused live fixture `bin/check` passed: 5 runs, 51 assertions.
+- Focused live `/kos` completed without a `document` step or artifact; see
+  `artifacts/focused-live.md` and `artifacts/fixture-remote.bundle`.

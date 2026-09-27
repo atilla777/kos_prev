@@ -3,20 +3,20 @@ require "test_helper"
 class BuiltInCatalogTest < ActiveSupport::TestCase
   EXPECTED_STEPS = {
     "brief" => %w[brief review publish],
-    "development" => %w[plan implement document review publish],
-    "fix" => %w[diagnose plan implement document review publish]
+    "development" => %w[plan implement review publish],
+    "fix" => %w[diagnose plan implement review publish]
   }.freeze
 
   EXPECTED_TIERS = {
     "brief" => %w[advanced advanced standard],
-    "development" => %w[advanced standard standard advanced standard],
-    "fix" => %w[advanced advanced standard standard advanced standard]
+    "development" => %w[advanced standard advanced standard],
+    "fix" => %w[advanced advanced standard advanced standard]
   }.freeze
 
   EXPECTED_MODES = {
     "brief" => %w[main subagent subagent],
-    "development" => %w[subagent subagent subagent subagent subagent],
-    "fix" => %w[subagent subagent subagent subagent subagent subagent]
+    "development" => %w[subagent subagent subagent subagent],
+    "fix" => %w[subagent subagent subagent subagent subagent]
   }.freeze
 
   test "installs the complete canonical catalog" do
@@ -86,7 +86,7 @@ class BuiltInCatalogTest < ActiveSupport::TestCase
       steps = BuiltInCatalog.definitions.fetch(key).fetch("steps").index_by { |step| step.fetch("id") }
 
       assert_equal({ "next_step" => "plan" }, steps.dig("implement", "outcomes", "plan_invalid"))
-      assert_equal({ "next_step" => "implement" }, steps.dig("document", "outcomes", "implementation_invalid"))
+      assert_equal({ "next_step" => "review" }, steps.dig("implement", "outcomes", "implemented"))
       assert_equal({ "next_step" => "implement" }, steps.dig("review", "outcomes", "changes_requested"))
       assert_equal({ "next_step" => "plan" }, steps.dig("review", "outcomes", "redesign_required"))
       assert_equal({ "next_step" => "review" }, steps.dig("publish", "outcomes", "review_invalid"))
@@ -101,22 +101,45 @@ class BuiltInCatalogTest < ActiveSupport::TestCase
   test "creates a new revision and preserves existing tasks and custom catalog entries" do
     BuiltInCatalog.install!
     development = TaskType.find_by!(key: "development")
-    old_workflow = development.workflow
+    legacy_definition = development.workflow.definition_json.deep_dup
+    legacy_steps = legacy_definition.fetch("steps")
+    legacy_steps.find { |step| step.fetch("id") == "implement" }.dig("outcomes", "implemented")
+      .replace("next_step" => "document")
+    legacy_steps.insert(2, {
+      "id" => "document", "name" => "Document", "execution_mode" => "subagent", "model_tier" => "standard",
+      "instruction" => "Update product behavior before review.", "artifact_template" => "# Documentation",
+      "outcomes" => {
+        "documented" => { "next_step" => "review" },
+        "implementation_invalid" => { "next_step" => "implement" },
+        "needs_human" => { "pause" => "needs_human" }, "blocked" => { "pause" => "blocked" }
+      }
+    })
+    old_workflow = create_workflow(name: "Former built-in development", definition: legacy_definition)
+    development.update_builtin!(workflow: old_workflow)
     project = create_project
     task = TaskLifecycle.new.create!(project:, task_type: development, title: "Existing",
       description_markdown: "Description")
     custom = create_task_type(key: "custom", name: "Custom")
-    changed = create_workflow(name: "Changed built-in")
-    development.update_builtin!(workflow: changed)
-
     assert_difference -> { Workflow.count }, 1 do
       BuiltInCatalog.install!
     end
 
     assert_equal BuiltInCatalog.definitions.fetch("development"), development.reload.workflow.definition_json
     assert_equal old_workflow, task.reload.workflow
+    assert_includes task.workflow.step_ids, "document"
+    refute_includes development.workflow.step_ids, "document"
     assert_equal "custom", custom.reload.key
     assert_equal 1, TaskType.where(key: "development").count
+
+    lifecycle = TaskLifecycle.new
+    task = lifecycle.claim!(task_id: task.id, owner_id: "legacy-owner")
+    task = lifecycle.report_attempt!(task_id: task.id, owner_id: task.owner_id, claim_version: task.claim_version,
+      step: "plan", outcome: "planned", artifact: "# Plan")
+    task = lifecycle.report_attempt!(task_id: task.id, owner_id: task.owner_id, claim_version: task.claim_version,
+      step: "implement", outcome: "implemented", artifact: "# Implementation", required_checks: "passed")
+    task = lifecycle.report_attempt!(task_id: task.id, owner_id: task.owner_id, claim_version: task.claim_version,
+      step: "document", outcome: "documented", artifact: "# Documentation")
+    assert_equal "review", task.current_step
   end
 
   test "rolls back when the built-in catalog is only partially present" do

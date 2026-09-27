@@ -90,7 +90,7 @@ lease-expiry, exact-resume, and bounded-retry paths. Child output is not schedul
 evidence.
 
 Deterministic development coverage combines scheduler integration, domain
-lifecycle, and Git fixtures. Its lifecycle follows `plan`, `implement`, `document`, `review`,
+lifecycle, and Git fixtures. Its lifecycle follows `plan`, `implement`, `review`,
 and `publish`. It proves content agents leave a clean linear task-owned commit
 range, and review inspects the full diff and records its exact base, ordered
 SHAs, tip, trees, paths, and SHA-256 digest with external diff drivers and

@@ -10,7 +10,7 @@ tags:
 # Goal
 
 KOS gives AI agents durable, authoritative task state and exclusive temporary
-ownership while focused agents clarify requirements, implement, document,
+ownership while focused agents clarify requirements, implement and document,
 review, and publish work. A command can recover after interruption by
 reading the task instead of reconstructing progress from local execution files.
 
@@ -31,9 +31,9 @@ reading the task instead of reconstructing progress from local execution files.
   reviews product behavior, publishes it, materializes the reviewed development
   graph, and completes after observing the published result.
 - `/kos` resumes or claims the next available development task, then plans,
-  implements and checks, documents, reviews, and publishes it.
+  implements, checks and documents, reviews, and publishes it.
 - `/kos-fix <problem>` creates or resumes the exact reported problem, diagnoses
-  it before planning, and follows the same checked, documented, reviewed,
+  it before planning, and follows the same implemented, checked, documented, reviewed,
   and published delivery path.
 - `/kos-task <task-type-key>` resumes or claims an existing custom task by its
   stable type key and follows that task's workflow to completion.
@@ -86,7 +86,7 @@ reading the task instead of reconstructing progress from local execution files.
   answer is durably bound to that pause before the same step is retried.
 - Product behavior changes update the repository's `specs/` bundle before
   independent review. Technical-only work records why no product concept changed.
-- Briefing, implementation, and documentation may create local task commits but
+- Briefing and implementation may create local task commits but
   never push. Every task commit has exactly one raw canonical
   `KOS-Task: <task-id>` line with no case variant or duplicate, and
   each successful content step leaves a clean linear task-owned commit sequence
@@ -167,7 +167,7 @@ reading the task instead of reconstructing progress from local execution files.
   reset separately, and old local artifacts are not read.
 - If the default branch moves before publication, publication changes nothing
   and returns to briefing or implementation. The content agent integrates the
-  new base, then checks, documentation, and independent review repeat.
+  new base, then checks, product-behavior maintenance, and independent review repeat.
 - A corrective outcome may move a task backward. The newly accepted artifact for
   a repeated step supersedes its prior accepted artifact.
 - Brief-created children remain unavailable until their parent completes at
