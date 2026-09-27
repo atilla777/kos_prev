@@ -118,6 +118,10 @@ class KosSkillsTest < ActiveSupport::TestCase
     assert_includes source, "After either path"
     assert_includes source, "`completed` or `cancelled`"
     assert_includes source, "On `needs_human` or `blocked`"
+    assert_includes source, "status, current step, claim version, and accepted"
+    assert_includes source, "active for that owner at the same step"
+    assert_includes source, "claim\n   version incremented by one and a renewed valid lease"
+    assert_includes source, "dispatch that step at most once more"
     FORMER_ROLES.each { |role| assert_not_includes source, "`kos-#{role}`" }
     refute_match(/^\| .* \| .* \|$/, source)
   end
@@ -136,8 +140,8 @@ class KosSkillsTest < ActiveSupport::TestCase
     source = File.read(SCHEDULER_PATH)
 
     assert_includes source, "During scheduling"
-    assert_includes source, "never add context to a child prompt, inspect artifacts or Git"
-    assert_includes source, "interpret child\noutput"
+    assert_includes source, "never add context to a child prompt, inspect artifact bodies or Git"
+    assert_includes source, "interpret\nchild output"
     assert_includes source, "report a step"
     assert_includes source, "keep local recovery state"
     assert_not_includes source, "<step-id>.md"

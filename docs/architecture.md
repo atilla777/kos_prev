@@ -127,9 +127,13 @@ the current step's `execution_mode` and `model_tier`. A `main` step executes in
 the command agent through the shared step contract. A `subagent` step dispatches
 one fresh generic standard or advanced child whose entire prompt is the decimal
 task ID, then ignores all returned text. After either path the scheduler rereads
-context. Scheduling decisions never inspect task Markdown, accepted artifacts,
-Git state, checks, child outcomes, graph proposals, receipts, or pending
-submissions. Step execution, including reporting, remains a distinct phase.
+context and requires an authoritative change in status, step, claim version, or
+the dispatched step's artifact-index entry before continuing. Unchanged valid
+claims stop explicitly. An expired claim permits one exact fenced resume and at
+most one retry in that invocation; a second recovery need stops. Scheduling
+decisions never inspect task Markdown, accepted artifact bodies, Git state,
+checks, child outcomes, graph proposals, receipts, or pending submissions. Step
+execution, including reporting, remains a distinct phase.
 
 Request-bound creation is one CLI and server operation. The scheduler supplies
 the project, kind, fresh owner, and exact request. The server derives the

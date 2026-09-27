@@ -50,7 +50,10 @@ reading the task instead of reconstructing progress from local execution files.
 - The scheduler only selects, creates, claims, or resumes work; reads
   authoritative state; executes a `main` step in the command agent or dispatches
   a `subagent` step by its standard or advanced model tier; and reads state
-  again. A dispatched subagent receives only the positive task ID.
+  again. A dispatched subagent receives only the positive task ID. An unchanged
+  execution stops instead of redispatching blindly. One invocation may recover
+  one expired claim through its exact observed fence before retrying that step
+  once.
 - A step executor reads its own authoritative context, fetches only needed accepted
   predecessor evidence, validates that evidence, executes one step, and reports
   its Markdown evidence and transition itself.
@@ -114,11 +117,17 @@ reading the task instead of reconstructing progress from local execution files.
   explicit port, or exact registration lookup fails.
 - A step agent that cannot confirm its report leaves recovery to authoritative
   task observation; its textual response is never treated as a transition.
+- An unchanged child return or rejected report stops the command explicitly. An
+  expired claim is resumed with its exact observed version and step, and a
+  second required recovery stops instead of looping.
 
 # Edge Cases
 
 - After interruption or a lost response, commands observe authoritative task,
   Git, remote, or child-graph state as appropriate before retrying a mutation.
+- Scheduler progress is an authoritative change in status, current step, claim
+  version, or accepted evidence for the dispatched current step. Pause and
+  terminal states stop before another dispatch.
 - After a lost creation response, repeating the identical create-or-get request
   returns the existing task because server-side scoped key uniqueness is the
   creation boundary. Recovery requires no local protocol files.
@@ -156,6 +165,8 @@ reading the task instead of reconstructing progress from local execution files.
 - Subagent dispatch contains only the task ID; every main or subagent step
   executor obtains, validates, and reports its own authoritative state and
   evidence.
+- One unchanged execution cannot cause an unbounded dispatch loop, and one
+  expired active claim is exactly resumed before at most one retry.
 - Accepted artifact and transition changes are atomic and ownership-fenced.
 - Paused questions, technical reasons, and exactly bound answers survive restart.
 - `published` completes a built-in task, and no other outcome does.

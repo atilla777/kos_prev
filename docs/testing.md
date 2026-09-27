@@ -22,7 +22,10 @@
   executable against an isolated prepared Rails server for a core lifecycle smoke test.
 - Skill and profile contract tests verify both execution modes and model tiers,
   ID-only subagent dispatch, workflow-owned authority, generic profile inventory
-  and metadata, terminal cancellation, and step-owned reporting.
+  and metadata, bounded scheduler recovery, terminal cancellation, and
+  step-owned reporting. A controllable scheduler harness executes crash,
+  rejected-report, lease-expiry, progress, pause, and terminal paths against fake
+  CLI and step runners.
 - Git tests use temporary source repositories, task worktrees, and bare remotes.
 - Migration and recovery tests use isolated persistent SQLite databases, data
   homes, subprocesses, repositories, remotes, and OpenCode configuration homes.

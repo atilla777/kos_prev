@@ -1,23 +1,32 @@
 # Status
 
-State: planned
-Updated: 2026-09-26
+State: done
+Updated: 2026-09-27
 
 ## Current
 
-The scheduler rereads context after execution but does not require progress
-before dispatching the same step again. Expired active claims also lack an
-in-loop recovery path.
+The scheduler now compares status, current step, claim version, and accepted
+current-step evidence before and after every execution. Unchanged valid claims
+stop explicitly; an expired claim permits one exact fenced resume and one retry
+without retaining local protocol state. A controllable harness executes main and
+ID-only subagent paths against fake CLI state.
 
 ## Next
 
-After task 018 is done, define the bounded progress contract and add an
-executable failing scheduler scenario before changing guidance.
+Task 020 is now the first planned task with completed dependencies.
 
 ## Blockers
 
-Depends on task 018.
+None.
 
 ## Checks
 
-Not started.
+- Scheduler recovery tests passed: 9 runs, 57 assertions.
+- Scheduler and skill tests passed together: 21 runs, 376 assertions.
+- Independent read-only review findings on exact resume confirmation and retry
+  coverage were fixed; wrong owner, step, fence, and lease observations now stop
+  before dispatch.
+- `bin/lint` passed: 86 files, no offenses.
+- `git diff --check` passed.
+- `bin/check` passed: 258 runs, 3866 assertions, 0 failures, 0 errors,
+  0 skips.

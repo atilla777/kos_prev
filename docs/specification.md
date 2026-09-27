@@ -79,7 +79,15 @@ they retain only that ID. For every iteration a scheduler:
    standard or advanced subagent whose complete prompt is the task ID's decimal
    digits;
 5. ignores child prose and claimed outcomes when a child was launched; and
-6. rereads task context after either execution path.
+6. rereads task context after either execution path, continuing only after an
+   authoritative change in status, current step, claim version, or accepted
+   evidence for the dispatched step.
+
+An unchanged execution stops explicitly while its lease remains valid. If the
+observed active claim has expired, one scheduler invocation may use the exact
+observed claim version and step to resume it once, then dispatch that step at
+most once more. A second required recovery, rejected or ambiguous resume, pause,
+or terminal state stops without another dispatch.
 
 The scheduler never receives or reads task Markdown, task description for
 dispatch, workflow artifacts, Git diff, status, HEAD, project checks, child
@@ -324,7 +332,9 @@ history. After an ambiguous report, `context` and the accepted-artifact index
 show whether the fenced transition occurred. An observed version, step, and
 artifact prove acceptance; an unchanged matching fence permits at most one
 careful retry; contradiction or unavailable observation blocks. The scheduler
-does not retain artifact bytes or a pending submission.
+does not retain artifact bytes or a pending submission. Its in-memory
+before/after comparison bounds each unchanged execution, and expired-lease
+recovery uses at most one exact fenced resume per invocation.
 
 There is no `tasks/<id>/<step>.md`, answer sidecar, inode check, pre-dispatch
 deletion, rename/fsync requirement, attempt marker, step receipt, or dual-read
