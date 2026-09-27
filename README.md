@@ -90,7 +90,7 @@ There are no `KOS_PROJECT_*` environment variables.
 
 `bin/install-opencode` installs:
 
-- commands `kos.md`, `kos-fix.md`, and `kos-brief.md`;
+- commands `kos.md`, `kos-fix.md`, `kos-brief.md`, and `kos-task.md`;
 - generic agents `kos-step-standard` and `kos-step-advanced`; and
 - skills `kos`, `kos-cli`, `kos-step`, `kos-git`, and
   `okf`.
@@ -110,6 +110,9 @@ full readiness procedure.
 - `/kos-brief <request>` recovers or creates and claims the exact `brief`
   request. Its briefing step runs in the main command agent; independent review
   and publication use fresh generic subagents.
+- `/kos-task <task-type-key>` resumes or claims existing custom work by its exact
+  stable type key. It never creates a task and rejects the three reserved
+  built-in keys.
 
 KOS preserves the exact bytes produced by OpenCode's `$ARGUMENTS` expansion.
 Interactive slash-command payloads are supported directly. For non-interactive
@@ -293,6 +296,12 @@ confer no role, Git, commit, push, graph, or model authority. Public task-type
 administration cannot repoint reserved built-in types; catalog installation owns
 their revisions.
 
+Every step reachable from the first step must have a path to `complete_task`.
+Reachable closed cycles and pause-only dead ends are rejected, while backward
+cycles with a completion exit remain valid. `/kos-task` uses its fixed advanced
+command agent for custom `main` steps; `model_tier` selects a managed profile
+only for `subagent` steps.
+
 Development routes invalid plans back to `plan`, invalid implementation evidence
 to `implement`, review changes to `implement`, redesign to `plan`, invalid review
 to `review`, and a moved base to `implement`. Fix additionally routes invalid
@@ -359,7 +368,7 @@ request, CLI, migration, lifecycle, skill, Git, recovery, installation, and
 scenario contract tests. `bin/test`, `bin/lint`, and mutating `bin/format` are
 also available. This automated suite proves lifecycle and installed-asset
 contracts, not live model slash-command execution. Real `/kos-brief`, `/kos`,
-and `/kos-fix` model runs remain separate required release evidence with
+`/kos-fix`, and `/kos-task` model runs remain separate required release evidence with
 isolated databases, data homes, repositories, remotes, worktrees, and
 configuration; that evidence is not claimed complete here.
 

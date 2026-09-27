@@ -104,7 +104,7 @@ class Plan022AcceptanceMatrixTest < ActiveSupport::TestCase
   end
 
   test "clean install and workflow coverage use the exact managed inventory and catalog" do
-    assert_equal %w[kos-brief.md kos-fix.md kos.md], managed_names(".opencode/commands")
+    assert_equal %w[kos-brief.md kos-fix.md kos-task.md kos.md], managed_names(".opencode/commands")
     assert_equal %w[kos-step-advanced.md kos-step-standard.md], managed_names(".opencode/agents")
     assert_equal %w[kos kos-cli kos-git kos-step okf], managed_names("skills")
     assert_equal %w[brief development fix], BuiltInCatalog.definitions.keys.sort

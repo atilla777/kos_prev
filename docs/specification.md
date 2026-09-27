@@ -23,6 +23,10 @@ The implemented built-in scenarios are:
 /kos-fix <problem>   -> diagnose -> plan -> implement/check -> document -> review -> publish -> completed
 ```
 
+`/kos-task <task-type-key>` schedules an existing custom task through its
+immutable custom workflow. It never creates a task and does not accept the
+reserved `brief`, `development`, or `fix` keys.
+
 The first version runs on one host with Rails, SQLite, the installed CLI,
 OpenCode, KOS skills, and task worktrees. Parallel tasks use separate worktrees.
 Moving an unfinished active task to another host is unsupported.
@@ -70,8 +74,9 @@ results, and choose one allowed outcome from observed evidence.
 
 The slash-command skills are schedulers, not step executors. `/kos` resumes or
 claims development work; `/kos-fix` and `/kos-brief` recover or atomically
-create and claim their request-bound task. Once they have a positive task ID,
-they retain only that ID. For every iteration a scheduler:
+create and claim their request-bound task; `/kos-task` resumes or claims an
+existing custom task by exact stable task-type key. Once they have a positive
+task ID, they retain only that ID. For every iteration a scheduler:
 
 1. reads authoritative task context;
 2. stops on `completed`, `needs_human`, or `blocked` as directed by persisted state;
@@ -169,6 +174,11 @@ those without a tier execute as `advanced`. Every outcome has exactly one action
 - `pause` equal to `needs_human` or `blocked`; or
 - `complete_task: true`.
 
+Every step reachable from the first step through `next_step` actions must have
+some finite `next_step` path to a step with `complete_task: true`. Pauses do not
+advance or complete a task. Reachable closed cycles and pause-only dead ends are
+invalid; backward cycles with a completion exit remain valid.
+
 KOS validates workflow shape and transitions but does not interpret evidence or
 execute conditions. Every built-in step additionally supports `needs_human` and
 `blocked`, which preserve the current step and pause. The exact non-pause routes
@@ -214,7 +224,10 @@ Implementation instructions own base integration and all required tests, lint,
 formatting, builds, and type checks. Publication instructions are standard and
 may only validate and push the approved sequence and, for a brief, materialize
 children. Custom steps, including those whose IDs match built-in IDs, receive no
-implicit authority from their names.
+implicit authority from their names. For `/kos-task`, command frontmatter
+selects the advanced main agent before context is available. Every custom `main`
+step runs there regardless of its declared tier; `model_tier` selects a profile
+only for `subagent` execution.
 
 Briefing runs in the `/kos-brief` command agent and updates OKF behavior while
 proposing a minimal acyclic graph. Review runs independently in a fresh advanced
@@ -328,6 +341,10 @@ reserved built-in type's workflow; catalog installation owns built-in revisions.
 `task create-or-get` accepts a project, kind `fix` or `brief`, owner, and exact
 request file. `task create-and-claim` accepts optional `--creation-key KEY`;
 ordinary task creation does not.
+The installed `/kos-task` command accepts one exact stable custom task-type key,
+uses existing `task resumable` and `task claim-next` operations, and never
+creates work. The three reserved built-in keys are rejected in favor of their
+dedicated commands.
 
 `kos health` calls the public `GET /up` endpoint selected by `KOS_API_URL`
 without requiring `KOS_API_TOKEN`. Every application operation requires the

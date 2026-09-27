@@ -11,6 +11,7 @@ class Task < ApplicationRecord
   has_many :blocked_tasks, through: :blocking_task_dependencies, source: :task
 
   validate :current_step_belongs_to_workflow
+  validate :workflow_is_runnable, on: :create
   validate :parent_belongs_to_project
   validate :parent_does_not_create_cycle
   validate :project_is_immutable, on: :update
@@ -30,6 +31,12 @@ class Task < ApplicationRecord
     return if workflow.nil? || workflow.step_ids.include?(current_step)
 
     errors.add(:current_step, "must identify a step in the task workflow")
+  end
+
+  def workflow_is_runnable
+    return if workflow.nil? || workflow.valid?
+
+    errors.add(:workflow, "must have a valid executable definition")
   end
 
   def parent_belongs_to_project

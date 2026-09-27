@@ -18,7 +18,7 @@ end.parse!
 abort("--config-home must be an absolute path") unless options[:config_home].absolute?
 
 inventory = {
-  "commands" => %w[kos.md kos-brief.md kos-fix.md],
+  "commands" => %w[kos.md kos-brief.md kos-fix.md kos-task.md],
   "agents" => %w[kos-step-advanced.md kos-step-standard.md],
   "skills" => %w[kos kos-cli kos-git kos-step okf]
 }

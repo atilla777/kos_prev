@@ -38,7 +38,8 @@ class KosSkillsTest < ActiveSupport::TestCase
     commands = {
       "kos" => [ "openai/gpt-5.6-terra", "`development` mode" ],
       "kos-fix" => [ "openai/gpt-5.6-terra", "`fix` mode" ],
-      "kos-brief" => [ "openai/gpt-5.6-sol", "`brief` mode" ]
+      "kos-brief" => [ "openai/gpt-5.6-sol", "`brief` mode" ],
+      "kos-task" => [ "openai/gpt-5.6-sol", "`custom` mode" ]
     }
 
     commands.each do |name, (model, mode)|
@@ -52,14 +53,37 @@ class KosSkillsTest < ActiveSupport::TestCase
       assert_includes source, "`kos` scheduler skill"
       assert_includes source, mode
       assert_equal 1, source.scan("$ARGUMENTS").length
-      if name != "kos"
+      if %w[kos-fix kos-brief].include?(name)
         assert_includes source, "exactly one framing newline"
         assert_includes source, "are not request data"
         assert_includes source, "Never infer or unescape the originating argv"
+      elsif name == "kos-task"
+        assert_includes source, "exactly one framing newline"
+        assert_includes source, "are not key data"
+        assert_includes source, "reserved `brief`, `development`, and `fix` keys"
       end
       refute_match(/task (?:context|claim|resume|create-or-get)|owner|profile|outcome/i, body)
       assert_operator body.lines.length, :<=, 8
     end
+  end
+
+  test "custom command preserves one exact task type key argument" do
+    key = " \nteam workflow \"v2\"\n "
+    template = File.read(Rails.root.join(".opencode/commands/kos-task.md"))
+    expanded = template.sub("$ARGUMENTS", key)
+    opening = "<kos-task-arguments>\n"
+    argument_start = expanded.index(opening) + opening.bytesize
+    argument_end = expanded.index("\n</kos-task-arguments>", argument_start)
+    scheduler_key = expanded.byteslice(argument_start...argument_end)
+    cli_arguments = [ "task", "claim-next", "--project-id", "1", "--task-type-key", scheduler_key,
+      "--owner-id", "session" ]
+    output, error, status = Open3.capture3({ "RUBYOPT" => nil, "RUBYLIB" => nil }, RbConfig.ruby,
+      "--disable-gems", Rails.root.join("test/support/capture_cli_stdin.rb").to_s, *cli_arguments)
+
+    assert_predicate status, :success?
+    assert_empty error
+    assert_equal key, scheduler_key
+    assert_equal cli_arguments, JSON.parse(output).fetch("arguments")
   end
 
   test "post-expansion command framing and scheduler stdin preserve exact bytes" do
@@ -112,6 +136,8 @@ class KosSkillsTest < ActiveSupport::TestCase
 
     assert_includes source, "`execution_mode` and `model_tier`"
     assert_includes source, "For `main`, load `kos-step`"
+    assert_includes source, "`model_tier` selects a\n   profile only for `subagent` execution"
+    assert_includes source, "`/kos-task` uses the advanced command\n   agent for every custom `main` step"
     assert_includes source, "execute exactly one step in this command\n   agent"
     assert_includes source, "For `subagent`, launch one fresh foreground `kos-step-standard` or\n   `kos-step-advanced`"
     assert_includes compact, "complete prompt is only the positive decimal task ID"

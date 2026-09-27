@@ -1,11 +1,11 @@
 ---
 name: kos
-description: Shared scheduler for /kos, /kos-fix, and /kos-brief, driven by authoritative server state.
+description: Shared scheduler for built-in and custom KOS commands, driven by authoritative server state.
 ---
 
 # KOS Scheduler
 
-Schedule one task in `development`, `fix`, or `brief` mode. Load `kos-git` for
+Schedule one task in `development`, `fix`, `brief`, or `custom` mode. Load `kos-git` for
 repository discovery and `kos-cli` for every public KOS operation. During
 scheduling, do not access Rails, SQLite, the REST API, a task worktree, or task
 Markdown.
@@ -23,6 +23,10 @@ require its exact registered project through `kos-cli`.
 - `fix` or `brief`: use `task create-or-get` with the mode, project, owner, and
   complete exact `$ARGUMENTS` expansion through standard input. Preserve every
   request byte; do not trim, infer argv, or interpret or unescape delimiters.
+- `custom`: require one exact nonblank task-type key that is not `brief`,
+  `development`, or `fix`. Offer resumable work with that exact key; otherwise
+  use `task claim-next` with the same key. Never create a task. Preserve every
+  key byte; do not trim, split, infer argv, or interpret or unescape delimiters.
 
 Read authoritative context. Keep a completed or cancelled task terminal; otherwise use the
 public claim or resume operations when needed to make the chosen task active for
@@ -47,7 +51,10 @@ Repeat:
    a second time. A concurrently observed pause or terminal state also stops.
 4. Snapshot the authoritative status, current step, claim version, and accepted
    artifact-index entry for that current step. Inspect only the current step's
-   `execution_mode` and `model_tier` for execution selection.
+   `execution_mode` and `model_tier` for execution selection. The command's
+   frontmatter has already selected the main-agent model; `model_tier` selects a
+   profile only for `subagent` execution. `/kos-task` uses the advanced command
+   agent for every custom `main` step.
 5. For `main`, load `kos-step` and execute exactly one step in this command
    agent. The step phase may read the task, evidence, and repository only as
    allowed by its authoritative workflow instruction.

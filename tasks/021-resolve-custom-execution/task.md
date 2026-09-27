@@ -14,6 +14,18 @@ model-tier selection. It may add one generic entry point or deliberately narrow
 custom workflow support, but it must not leave server-accepted tasks with no
 supported executor.
 
+## Product Decision
+
+Custom task types remain executable. `/kos-task <task-type-key>` selects or
+resumes an existing custom task by its stable key and never creates one. The
+reserved built-in keys remain exclusive to their existing commands.
+
+The generic command uses the advanced main-agent profile selected before task
+context is available. `execution_mode: main` therefore runs in that fixed
+advanced command agent; `model_tier` selects the standard or advanced profile
+only for `subagent` execution. Accepted workflows must give every step reachable
+from the first step a path to `complete_task`.
+
 ## Source Evidence
 
 - Installed slash commands schedule only `development`, `fix`, and `brief`.

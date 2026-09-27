@@ -152,6 +152,55 @@ class WorkflowTest < ActiveSupport::TestCase
     end
   end
 
+  test "requires every reachable step to have a path to completion" do
+    definition = valid_workflow_definition.deep_dup
+    definition["steps"][1]["outcomes"] = { "again" => { "next_step" => "develop" } }
+    workflow = Workflow.new(name: "Closed cycle", definition_json: definition)
+
+    assert_not workflow.valid?
+    assert_includes workflow.errors[:definition_json],
+      "reachable steps without a path to complete_task: develop, check"
+
+    definition = valid_workflow_definition.deep_dup
+    definition["steps"] << {
+      "id" => "dead", "name" => "Dead", "execution_mode" => "main", "model_tier" => "standard",
+      "instruction" => "Wait.", "artifact_template" => "# Dead",
+      "outcomes" => { "wait" => { "pause" => "blocked" } }
+    }
+    definition["steps"][0]["outcomes"]["dead"] = { "next_step" => "dead" }
+    workflow = Workflow.new(name: "Dead branch", definition_json: definition)
+
+    assert_not workflow.valid?
+    assert_includes workflow.errors[:definition_json], "reachable steps without a path to complete_task: dead"
+  end
+
+  test "allows reachable cycles with a completion exit and ignores unreachable dead steps" do
+    definition = valid_workflow_definition.deep_dup
+    definition["steps"] << {
+      "id" => "unused", "name" => "Unused", "execution_mode" => "subagent", "model_tier" => "advanced",
+      "instruction" => "Wait.", "artifact_template" => "# Unused",
+      "outcomes" => { "again" => { "next_step" => "unused" } }
+    }
+
+    assert Workflow.new(name: "Completable", definition_json: definition).valid?
+  end
+
+  test "prevents new tasks from using a persisted legacy workflow that cannot complete" do
+    definition = valid_workflow_definition.deep_dup
+    definition["steps"][1]["outcomes"] = { "again" => { "next_step" => "develop" } }
+    workflow = Workflow.new(name: "Legacy closed cycle", definition_json: definition)
+    workflow.save!(validate: false)
+    task_type = create_task_type(workflow:)
+
+    assert_no_difference -> { Task.count } do
+      error = assert_raises(ActiveRecord::RecordInvalid) do
+        TaskLifecycle.new.create!(project: create_project, task_type:, title: "Unsupported",
+          description_markdown: "Cannot complete")
+      end
+      assert_includes error.record.errors[:workflow], "must have a valid executable definition"
+    end
+  end
+
   test "allows definition changes before a task uses the workflow" do
     workflow = create_workflow
     create_task_type(workflow:)

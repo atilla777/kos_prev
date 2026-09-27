@@ -66,6 +66,7 @@ class Workflow < ApplicationRecord
     targets.each do |target|
       errors.add(:definition_json, "next_step #{target.inspect} does not exist") unless ids.include?(target)
     end
+    validate_reachable_completion(steps) if errors[:definition_json].empty?
   end
 
   def validate_step(step, index, ids, targets)
@@ -131,6 +132,37 @@ class Workflow < ApplicationRecord
     when "complete_task"
       errors.add(:definition_json, "complete_task must be true") unless value == true
     end
+  end
+
+  def validate_reachable_completion(steps)
+    step_ids = steps.pluck("id")
+    edges = steps.to_h do |step|
+      [ step.fetch("id"), step.fetch("outcomes").values.filter_map { |action| action["next_step"] } ]
+    end
+    reachable = traverse([ step_ids.first ], edges)
+    reverse_edges = step_ids.to_h { |id| [ id, [] ] }
+    edges.each { |source, targets| targets.each { |target| reverse_edges.fetch(target) << source } }
+    completion_steps = steps.filter_map do |step|
+      step.fetch("id") if step.fetch("outcomes").values.any? { |action| action["complete_task"] == true }
+    end
+    can_complete = traverse(completion_steps, reverse_edges)
+    missing = step_ids.select { |id| reachable.include?(id) && !can_complete.include?(id) }
+    return if missing.empty?
+
+    errors.add(:definition_json, "reachable steps without a path to complete_task: #{missing.join(", ")}")
+  end
+
+  def traverse(start_ids, edges)
+    visited = {}
+    pending = start_ids.dup
+    until pending.empty?
+      id = pending.pop
+      next if visited[id]
+
+      visited[id] = true
+      pending.concat(edges.fetch(id))
+    end
+    visited
   end
 
   def definition_json_is_immutable

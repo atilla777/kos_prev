@@ -54,7 +54,7 @@ The default destination is `$XDG_CONFIG_HOME/opencode`, or
 `~/.config/opencode`. `--config-home <absolute-path>` selects an isolated or
 nonstandard destination. The installer copies this exact inventory:
 
-- commands: `kos.md`, `kos-fix.md`, and `kos-brief.md`;
+- commands: `kos.md`, `kos-fix.md`, `kos-brief.md`, and `kos-task.md`;
 - generic step agents: `kos-step-standard.md` and `kos-step-advanced.md`; and
 - skills: `kos`, `kos-cli`, `kos-step`, `kos-git`,
   and `okf`.
@@ -72,8 +72,10 @@ administrator's OpenCode configuration.
 
 The shipped generic standard profile uses `openai/gpt-5.6-terra` with medium
 reasoning, and the generic advanced profile uses `openai/gpt-5.6-sol` with high
-reasoning. `/kos` and `/kos-fix` use Terra; `/kos-brief` uses Sol so its built-in
-`main` briefing executes in the intended tier. Administrators may substitute
+reasoning. `/kos` and `/kos-fix` use Terra; `/kos-brief` and `/kos-task` use Sol.
+The custom command therefore executes every custom `main` step in its fixed
+advanced command agent; step tiers select models only for subagents.
+Administrators may substitute
 complete `provider/model-id` values while preserving the two tiers.
 Check availability with `opencode models openai`.
 
@@ -122,8 +124,10 @@ supported SSH and HTTPS URLs normalize to the same identity. A missing,
 ambiguous, malformed, or mismatched origin blocks before task or worktree
 mutation. There are no `KOS_PROJECT_*` environment variables.
 
-After restarting OpenCode, verify discovery of `/kos-brief`, `/kos`, and
-`/kos-fix`. CLI help remains the fallback syntax reference for uncommon
+After restarting OpenCode, verify discovery of `/kos-brief`, `/kos`, `/kos-fix`,
+and `/kos-task`. The custom command selects an existing task by exact stable
+custom task-type key; it never creates work and rejects the three reserved
+built-in keys. CLI help remains the fallback syntax reference for uncommon
 operations and compatibility diagnosis. Verify the installed focused operations directly:
 
 ```sh
@@ -160,7 +164,7 @@ sidecars. They are not workflow state and remain ignored.
 Run `bin/check` in the release checkout; it proves automated lifecycle and
 installed-asset contracts. Separately, required deployment release evidence
 uses live models and isolated state and repositories to run real `/kos-brief`,
-`/kos`, and `/kos-fix` commands through terminal publication. Confirm completed
+`/kos`, `/kos-fix`, and `/kos-task` commands through terminal completion. Confirm completed
 tasks, released ownership, accepted artifacts in KOS, expected remote commits,
 and the brief child graph. Passing `bin/check` alone is not evidence that those
 live command executions occurred.

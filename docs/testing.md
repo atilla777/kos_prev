@@ -23,8 +23,9 @@
   executable against an isolated prepared Rails server for a core lifecycle smoke test.
 - Skill and profile contract tests verify both execution modes and model tiers,
   ID-only subagent dispatch, workflow-owned authority, generic profile inventory
-  and metadata, bounded scheduler recovery, terminal cancellation, and
-  step-owned reporting. A controllable scheduler harness executes crash,
+  and metadata, fixed advanced custom-main execution, exact custom-type
+  selection, bounded scheduler recovery, terminal cancellation, and step-owned
+  reporting. A controllable scheduler harness executes crash,
   rejected-report, lease-expiry, progress, pause, and terminal paths against fake
   CLI and step runners.
 - Git tests use temporary source repositories, task worktrees, and bare remotes.
@@ -64,9 +65,10 @@ The acceptance matrix preserves these exact 23 user-required criteria in order:
 23. `bin/check`.
 
 The matrix maps each criterion to executable deterministic tests or the exact
-`bin/check` contract. Criterion 21 maps the deterministic lifecycle scenarios;
-it does not claim model execution. Live development, fix, and brief slash-command
-release evidence remains an explicit separate requirement.
+`bin/check` contract. Criterion 21 maps the deterministic built-in lifecycle
+scenarios; it does not claim model execution. Live evidence for every supported
+slash-command path, including custom execution, remains an explicit separate
+requirement.
 
 ## Scenario Coverage
 
@@ -124,11 +126,15 @@ runtime boundary, and verify command and skill discovery.
 Generic-execution coverage validates `main` and `subagent`, standard and advanced
 tiers, main-agent briefing with independent subagent review, CLI-owned session
 IDs, cancelled terminal state, and custom steps colliding with every former
-built-in ID without inheriting name-based authority.
+built-in ID without inheriting name-based authority. A custom scenario selects
+by stable type key and executes fixed-advanced main steps, tier-selected
+subagents, a backward transition, pause and resume, and custom completion.
+Workflow validation rejects every reachable step without a completion path while
+allowing unreachable dead components and cycles with a completion exit.
 
-Required live release acceptance invokes `/kos-brief`, `/kos`, and `/kos-fix` against an
-isolated Rails database, KOS data home, fixture repository, task worktrees, and
-bare remote. It proves ID-only subagent scheduling, workflow-directed main
+Required live release acceptance invokes `/kos-brief`, `/kos`, `/kos-fix`, and
+`/kos-task` against an isolated Rails database, KOS data home, fixture repository,
+task worktrees, and bare remote. It proves ID-only subagent scheduling, workflow-directed main
 execution, mandatory
 checks, read-only review, accepted exact-range evidence, unchanged task commits,
 remote publication observation, completed state, ownership release, and the

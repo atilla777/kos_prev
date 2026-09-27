@@ -28,6 +28,7 @@ development records and are not read by the KOS server or CLI.
 | 018 | [Restore production boot](018-restore-production-boot/task.md) | done | 017 |
 | 019 | [Bound scheduler recovery](019-bound-scheduler-recovery/task.md) | done | 018 |
 | 020 | [Harden brief graphs](020-harden-brief-graphs/task.md) | done | 019 |
+| 021 | [Resolve custom workflow execution](021-resolve-custom-execution/task.md) | done | 020 |
 
 ## Planned
 
@@ -39,7 +40,6 @@ acceptance criteria so a new session can continue from the first unblocked row.
 
 | ID | Task | Status | Dependencies |
 | --- | --- | --- | --- |
-| 021 | [Resolve custom workflow execution](021-resolve-custom-execution/task.md) | planned | 020 |
 | 022 | [Tighten runtime boundaries](022-tighten-runtime-boundaries/task.md) | planned | 021 |
 | 023 | [Test real scheduling](023-test-real-scheduling/task.md) | planned | 022 |
 | 024 | [Complete production operations](024-complete-operations/task.md) | planned | 023 |

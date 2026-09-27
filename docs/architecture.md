@@ -119,10 +119,11 @@ state.
 
 ### Schedulers
 
-`skills/kos` contains the shared scheduler for development, fix, and brief
-tasks; every slash command enters it directly. The scheduler may discover a
-project, offer resumable tasks, request a safe claim or resume, and display
-persisted pause information.
+`skills/kos` contains the shared scheduler for development, fix, brief, and
+custom tasks; every slash command enters it directly. The scheduler may discover
+a project, offer resumable tasks, request a safe claim or resume, and display
+persisted pause information. `/kos-task` selects only existing custom work by an
+exact stable type key and rejects reserved built-in keys.
 The CLI generates one fresh unpredictable owner for each command session;
 `KOS_OWNER_ID` is not configuration. Request-bound creation uses that owner in
 the focused server-idempotent `task create-or-get` operation.
@@ -191,11 +192,13 @@ workflow instruction supplies those substantive boundaries.
 ## Execution Profiles
 
 The slash commands run in OpenCode's primary `build` agent and load the shared
-scheduler. `main` may be declared by any built-in or custom step. `subagent`
-selection uses only `model_tier`: `kos-step-standard` selects the standard model
-and `kos-step-advanced` selects the advanced model. Built-in briefing is
-advanced `main`; its review is advanced `subagent`, and publication is standard
-`subagent`.
+scheduler. `main` may be declared by any built-in or custom step, but command
+frontmatter selects that agent's model before context is read. `/kos-task` uses
+the advanced model for every custom `main` step; a main step's declared tier does
+not dynamically replace it. `subagent` selection uses only `model_tier`:
+`kos-step-standard` selects the standard model and `kos-step-advanced` selects
+the advanced model. Built-in briefing is advanced `main`; its review is advanced
+`subagent`, and publication is standard `subagent`.
 
 Managed profiles intentionally contain no KOS-specific OpenCode permission
 blocks or substantive role instructions. They select only model, reasoning

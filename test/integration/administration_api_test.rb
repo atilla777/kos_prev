@@ -51,6 +51,20 @@ class AdministrationApiTest < ActionDispatch::IntegrationTest
     assert_equal "validation_failed", response.parsed_body["error"]
   end
 
+  test "rejects a workflow whose reachable steps cannot complete" do
+    definition = valid_workflow_definition.deep_dup
+    definition["steps"][1]["outcomes"] = { "again" => { "next_step" => "develop" } }
+
+    assert_no_difference -> { Workflow.count } do
+      post workflows_path, params: { name: "Closed cycle", definition_json: definition }, headers: @headers, as: :json
+    end
+
+    assert_response :unprocessable_entity
+    assert_equal "validation_failed", response.parsed_body["error"]
+    assert_includes response.parsed_body.dig("details", "definition_json"),
+      "reachable steps without a path to complete_task: develop, check"
+  end
+
   test "changes a task type workflow without changing existing tasks" do
     original = create_workflow(name: "Original")
     replacement = create_workflow(name: "Replacement")

@@ -54,6 +54,22 @@ class KosSchedulerHarness
     Result.new(reason: "invalid_context", context: context)
   end
 
+  def run_custom(project_id:, task_type_key:, owner_id:, answer: nil)
+    raise ArgumentError, "task type key must be nonblank" if task_type_key.blank?
+    raise ArgumentError, "reserved task type key" if %w[brief development fix].include?(task_type_key)
+
+    selected = @cli.resumable(project_id:, task_type_key:).first
+    selected ||= @cli.claim_next(project_id:, task_type_key:, owner_id:)
+    return Result.new(reason: "unavailable", context: nil) unless selected
+
+    task = selected.fetch("task")
+    if task.fetch("status") == "needs_human" && answer
+      @cli.resume(task_id: task.fetch("id"), owner_id:, claim_version: task.fetch("claim_version"),
+        step: task.fetch("current_step"), answer:)
+    end
+    run(task_id: task.fetch("id"), owner_id:)
+  end
+
   private
 
   def dispatch(task_id, context)

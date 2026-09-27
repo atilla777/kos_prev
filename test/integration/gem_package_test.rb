@@ -156,7 +156,7 @@ class GemPackageTest < ActiveSupport::TestCase
         assert_predicate status, :success?, error
         assert_includes output, config_home.to_s
       end
-      assert_equal %w[kos-brief.md kos-fix.md kos.md], installed_names(config_home.join("commands"))
+      assert_equal %w[kos-brief.md kos-fix.md kos-task.md kos.md], installed_names(config_home.join("commands"))
       assert_equal %w[kos-step-advanced.md kos-step-standard.md], installed_names(config_home.join("agents"))
       assert_equal %w[kos kos-cli kos-git kos-step okf],
         installed_names(config_home.join("skills"))

@@ -10,7 +10,8 @@ description: Execute one authoritative KOS workflow step from a positive task ID
 Accept one positive ASCII-decimal task ID. Load `kos-cli`, read authoritative
 `task context ID`, and require an active current step. When running in a generic
 subagent profile, require its declared `execution_mode` and `model_tier` to match
-that profile. In the command agent, require `execution_mode` `main`. Never
+that profile. In the command agent, require `execution_mode` `main`; command
+frontmatter, not the step's tier, has already selected that agent's model. Never
 claim, resume, cancel, or otherwise administer the task.
 
 Use the task description, step instruction, artifact template, allowed outcomes,
