@@ -1,23 +1,26 @@
 # Status
 
-State: planned
-Updated: 2026-09-26
+State: done
+Updated: 2026-09-27
 
 ## Current
 
-Domain and Git fixtures are strong, but scheduler behavior is represented mostly
-by static Markdown assertions and is overstated as real E2E in the acceptance
-matrix.
+The installed-command harness now executes development, fix, brief, and custom
+scheduler control flow around the real lifecycle domain. It verifies installed
+commands, skills, and profiles; ID-only tier dispatch; fixed custom-main model
+selection; ownership; backward transitions; pause/resume; and terminal progress.
+Task-019 recovery tests retain executed crash, unchanged, lease-expiry, and
+bounded retry coverage.
 
 ## Next
 
-After task 022 is done, extend the scheduler seam from task 019 into complete
-deterministic built-in scenarios.
+Proceed to task 024, completing production operations.
 
 ## Blockers
 
-Depends on task 022 and the final custom execution contract from task 021.
+None.
 
 ## Checks
 
-Not started.
+- `bin/check` passed on 2026-09-27: 278 tests, 4191 assertions, 0 failures,
+  0 errors, 0 skips.

@@ -42,7 +42,7 @@
 
 ## Required Properties
 
-The acceptance matrix preserves these exact 23 user-required criteria in order:
+The acceptance matrix contains these 23 criteria in order:
 
 1. Agent only ID/context.
 2. Context index no bodies.
@@ -64,19 +64,29 @@ The acceptance matrix preserves these exact 23 user-required criteria in order:
 18. No push before publish.
 19. Existing IDs/relationships/workflows/worktrees.
 20. Clean install assets/workflows.
-21. Real development/fix/brief scenarios E2E.
+21. Deterministic built-in scheduler scenarios.
 22. No local tasks/id dir.
 23. `bin/check`.
 
-The matrix maps each criterion to executable deterministic tests or the exact
-`bin/check` contract. Criterion 21 maps the deterministic built-in lifecycle
-scenarios; it does not claim model execution. Live evidence for every supported
-slash-command path, including custom execution, remains an explicit separate
-requirement.
+The matrix labels each criterion by evidence layer: domain lifecycle, scheduler
+integration, Git fixture, installed asset, package smoke, migration, or the exact
+`bin/check` contract. Criterion 21 executes installed command and profile input
+through deterministic scheduler control flow; it does not claim model execution.
+Live evidence for every supported slash-command path, including custom execution,
+remains an explicit separate requirement.
 
 ## Scenario Coverage
 
-Deterministic development E2E follows `plan`, `implement`, `document`, `review`,
+The deterministic installed-command harness uses a fake CLI and foreground child
+runner around the real lifecycle domain. It executes development, fix, brief, and
+custom scheduling; verifies main and tier-selected subagent dispatch with ID-only
+prompts; and covers backward progress, pause and answer resume, and terminal stop.
+The focused scheduler seam separately executes crash, unchanged-context,
+lease-expiry, exact-resume, and bounded-retry paths. Child output is not scheduler
+evidence.
+
+Deterministic development coverage combines scheduler integration, domain
+lifecycle, and Git fixtures. Its lifecycle follows `plan`, `implement`, `document`, `review`,
 and `publish`. It proves content agents leave a clean linear task-owned commit
 range, and review inspects the full diff and records its exact base, ordered
 SHAs, tip, trees, paths, and SHA-256 digest with external diff drivers and
@@ -85,7 +95,8 @@ built-in `check` step exists, ordinary changes return to implementation, design
 failures return to planning, invalid predecessor outcomes route precisely, and
 only `published` completes. A custom workflow step named `check` remains valid.
 
-Deterministic fix E2E creates and claims by the stable `fix` key, performs
+Deterministic fix coverage combines scheduler integration, domain lifecycle, and
+Git fixtures. It creates and claims by the stable `fix` key, performs
 read-only evidenced diagnosis, requires a regression check that would fail for
 the reproduced defect, covers `diagnosis_invalid`, and then proves all
 development delivery and publication guarantees. Ambiguous behavior or a
@@ -98,7 +109,8 @@ publication cannot positively advance without successful accepted check
 evidence. Successful scenarios retain and expose `passed` or `not_required`
 alongside the implementation Markdown.
 
-Deterministic brief E2E runs briefing in the `/kos-brief` main agent, verifies
+Deterministic brief coverage combines scheduler integration, domain lifecycle,
+installed assets, and Git fixtures. It dispatches briefing in the `/kos-brief` main agent, verifies
 OKF conformance, independently reviews the specification and exact graph in a
 fresh advanced subagent, observes
 remote publication of the exact reviewed range before one fenced atomic materialization operation, and

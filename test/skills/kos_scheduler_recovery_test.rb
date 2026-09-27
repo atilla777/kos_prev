@@ -41,9 +41,23 @@ class KosSchedulerRecoveryTest < ActiveSupport::TestCase
     assert_empty cli.resumes
   end
 
+  test "a live claim owned by another session stops before dispatch" do
+    context = active_context(owner_id: "other-owner")
+    cli = FakeCli.new([ context ], [])
+    calls = []
+    scheduler = harness(cli:, main_runner: ->(*) { calls << :main },
+      subagent_runner: ->(**) { calls << :subagent })
+
+    result = scheduler.run(task_id: 50, owner_id: "owner")
+
+    assert_equal "owner_mismatch", result.reason
+    assert_empty calls
+    assert_empty cli.resumes
+  end
+
   test "an expired unchanged claim is resumed once before one retry" do
     now = Time.utc(2026, 9, 27, 10, 0, 0)
-    first = active_context(lease_expires_at: (now + 1.minute).iso8601)
+    first = active_context(owner_id: "new-owner", lease_expires_at: (now + 1.minute).iso8601)
     resumed = active_context(owner_id: "new-owner", claim_version: 2, lease_expires_at: (now + 1.hour).iso8601)
     paused = context(status: "needs_human", claim_version: 3, lease_expires_at: nil)
     cli = FakeCli.new([ first, first.deep_dup, resumed, paused ], [])
@@ -99,7 +113,7 @@ class KosSchedulerRecoveryTest < ActiveSupport::TestCase
 
   test "an unchanged retry stops after one resume and two dispatches" do
     now = Time.utc(2026, 9, 27, 10, 0, 0)
-    first = active_context(lease_expires_at: (now + 1.minute).iso8601)
+    first = active_context(owner_id: "new-owner", lease_expires_at: (now + 1.minute).iso8601)
     resumed = active_context(owner_id: "new-owner", claim_version: 2, lease_expires_at: (now + 1.hour).iso8601)
     cli = FakeCli.new([ first, first.deep_dup, resumed, resumed.deep_dup ], [])
     calls = 0

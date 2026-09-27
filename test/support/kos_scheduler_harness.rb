@@ -40,6 +40,7 @@ class KosSchedulerHarness
         state = resumed
         next
       end
+      return Result.new(reason: "owner_mismatch", state:) unless task.fetch("owner_id") == owner_id
 
       before = state
       return Result.new(reason: "invalid_state", state:) unless dispatch(task_id, state)

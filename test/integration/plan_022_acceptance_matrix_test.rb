@@ -1,81 +1,79 @@
 require "test_helper"
 
 class Plan022AcceptanceMatrixTest < ActiveSupport::TestCase
-  Criterion = Data.define(:text, :tests)
+  Criterion = Data.define(:text, :layer, :tests)
 
   COVERAGE = [
-    Criterion.new("agent only ID/context", [
+    Criterion.new("agent only ID/context", :installed_asset, [
       [ "test/skills/kos_skills_test.rb", "step guidance uses workflow context as the complete role contract" ]
     ]),
-    Criterion.new("context index no bodies", [
+    Criterion.new("context index no bodies", :domain_lifecycle, [
       [ "test/integration/tasks_api_test.rb", "context returns the bounded agent projection and artifact bodies are read separately" ]
     ]),
-    Criterion.new("separate artifact", [
+    Criterion.new("separate artifact", :domain_lifecycle, [
       [ "test/integration/tasks_api_test.rb", "context returns the bounded agent projection and artifact bodies are read separately" ]
     ]),
-    Criterion.new("atomic artifact+transition", [
+    Criterion.new("atomic artifact+transition", :domain_lifecycle, [
       [ "test/models/task_lifecycle_test.rb", "accepted artifacts transition atomically and a repeated successful step replaces its record" ]
     ]),
-    Criterion.new("crash before completion unchanged", [
-      [ "test/models/brief_task_graph_test.rb", "rolls back every child when persistence fails partway through materialization" ],
-      [ "test/models/task_lifecycle_test.rb", "validates artifact bytes before changing task state" ]
+    Criterion.new("crash before completion unchanged", :scheduler_integration, [
+      [ "test/skills/kos_scheduler_recovery_test.rb", "a child crash stops after one unchanged dispatch" ]
     ]),
-    Criterion.new("lost response ordinary show", [
+    Criterion.new("lost response ordinary show", :domain_lifecycle, [
       [ "test/integration/acceptance_scenarios_test.rb", "a dropped report response is recovered by show without a duplicate transition" ]
     ]),
-    Criterion.new("stale/wrong no write", [
+    Criterion.new("stale/wrong no write", :domain_lifecycle, [
       [ "test/integration/tasks_api_test.rb", "stale owner claim and wrong step reports atomically leave state and artifacts unchanged" ]
     ]),
-    Criterion.new("bad predecessor backward allowed", [
+    Criterion.new("bad predecessor backward allowed", :domain_lifecycle, [
       [ "test/integration/acceptance_scenarios_test.rb", "built in correction outcomes route backward without completing" ]
     ]),
-    Criterion.new("repeated replaces", [
+    Criterion.new("repeated replaces", :domain_lifecycle, [
       [ "test/models/task_lifecycle_test.rb", "accepted artifacts transition atomically and a repeated successful step replaces its record" ]
     ]),
-    Criterion.new("answer stored/restart", [
+    Criterion.new("answer stored/restart", :domain_lifecycle, [
       [ "test/integration/acceptance_scenarios_test.rb", "a paused question and answer survive repeated interruption in server state" ]
     ]),
-    Criterion.new("scheduler only ID", [
-      [ "test/skills/kos_skills_test.rb", "scheduler dispatches by authoritative mode and tier with an ID-only prompt" ]
+    Criterion.new("scheduler only ID", :scheduler_integration, [
+      [ "test/integration/installed_scheduler_execution_test.rb", "installed built-in commands schedule complete workflows by mode and tier" ]
     ]),
-    Criterion.new("scheduler no Markdown/Git", [
-      [ "test/skills/kos_skills_test.rb", "scheduler phase has no artifact Git or result-parsing policy" ]
+    Criterion.new("scheduler no Markdown/Git", :scheduler_integration, [
+      [ "test/integration/installed_scheduler_execution_test.rb", "installed built-in commands schedule complete workflows by mode and tier" ]
     ]),
-    Criterion.new("profile policy", [
+    Criterion.new("profile policy", :installed_asset, [
       [ "test/skills/kos_skills_test.rb", "installs exactly two generic tier profiles without role policy" ],
       [ "test/skills/kos_skills_test.rb", "built-in workflow instructions retain delivery and independent review boundaries" ]
     ]),
-    Criterion.new("independent read-only review", [
+    Criterion.new("independent read-only review", :git_fixture, [
       [ "test/integration/acceptance_scenarios_test.rb", "a moved base repeats content checks and exact-range review before publication" ]
     ]),
-    Criterion.new("publish completes", [
+    Criterion.new("publish completes", :domain_lifecycle, [
       [ "test/integration/acceptance_scenarios_test.rb", "built in development and fix lifecycles complete at publication" ]
     ]),
-    Criterion.new("publish observes remote", [
-      [ "test/skills/kos_skills_test.rb", "built-in workflow instructions retain delivery and independent review boundaries" ]
+    Criterion.new("publish observes remote", :git_fixture, [
+      [ "test/integration/acceptance_scenarios_test.rb", "publication recovery pushes or reuses the exact range before and after an ambiguous result" ]
     ]),
-    Criterion.new("publication prerequisites gate completion", [
+    Criterion.new("publication prerequisites gate completion", :domain_lifecycle, [
       [ "test/models/brief_task_graph_test.rb", "rejects published before materialization without accepting an artifact" ]
     ]),
-    Criterion.new("no push before publish", [
-      [ "test/skills/kos_skills_test.rb", "built-in workflow instructions retain delivery and independent review boundaries" ]
+    Criterion.new("no push before publish", :git_fixture, [
+      [ "test/integration/acceptance_scenarios_test.rb", "two tasks retain independent ownership artifacts and local commit ranges" ]
     ]),
-    Criterion.new("existing IDs/relationships/workflows/worktrees", [
+    Criterion.new("existing IDs/relationships/workflows/worktrees", :migration_and_git, [
       [ "test/integration/repository_identity_migration_test.rb", "backfill and reversal preserve IDs relationships workflow snapshots and execution state" ],
       [ "test/integration/acceptance_scenarios_test.rb", "two tasks retain independent ownership artifacts and local commit ranges" ]
     ]),
-    Criterion.new("clean install assets/workflows", [
+    Criterion.new("clean install assets/workflows", :package_smoke, [
       [ "test/integration/gem_package_test.rb", "installs the complete OpenCode integration from the checkout" ],
       [ "test/integration/built_in_catalog_seed_test.rb", "a fresh prepared database receives the idempotent built-in catalog" ]
     ]),
-    Criterion.new("real development/fix/brief scenarios E2E", [
-      [ "test/integration/acceptance_scenarios_test.rb", "built in development and fix lifecycles complete at publication" ],
-      [ "test/integration/acceptance_scenarios_test.rb", "brief atomically materializes its exact graph before publication completes it" ]
+    Criterion.new("deterministic built-in scheduler scenarios", :scheduler_integration, [
+      [ "test/integration/installed_scheduler_execution_test.rb", "installed built-in commands schedule complete workflows by mode and tier" ]
     ]),
-    Criterion.new("no local tasks/id dir", [
+    Criterion.new("no local tasks/id dir", :domain_lifecycle, [
       [ "test/integration/acceptance_scenarios_test.rb", "task state and accepted artifact survive restart without a local task artifact directory" ]
     ]),
-    Criterion.new("bin/check", [])
+    Criterion.new("bin/check", :repository_check, [])
   ].freeze
 
   EXPECTED_CRITERIA = [
@@ -85,11 +83,15 @@ class Plan022AcceptanceMatrixTest < ActiveSupport::TestCase
     "scheduler no Markdown/Git", "profile policy", "independent read-only review", "publish completes",
     "publish observes remote", "publication prerequisites gate completion", "no push before publish",
     "existing IDs/relationships/workflows/worktrees", "clean install assets/workflows",
-    "real development/fix/brief scenarios E2E", "no local tasks/id dir", "bin/check"
+    "deterministic built-in scheduler scenarios", "no local tasks/id dir", "bin/check"
   ].freeze
 
-  test "the exact 23 acceptance criteria map in order to executable tests or the check contract" do
+  test "the 23 acceptance criteria map in order to executable tests or the check contract" do
     assert_equal EXPECTED_CRITERIA, COVERAGE.map(&:text)
+    assert_equal %i[
+      domain_lifecycle git_fixture installed_asset migration_and_git package_smoke repository_check
+      scheduler_integration
+    ], COVERAGE.map(&:layer).uniq.sort
 
     inventory = executable_test_inventory
     COVERAGE.each_with_index do |criterion, index|

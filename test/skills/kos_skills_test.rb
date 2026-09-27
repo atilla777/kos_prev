@@ -130,28 +130,6 @@ class KosSkillsTest < ActiveSupport::TestCase
     assert_includes readme, "KOS intentionally does not guess, strip wrappers, or unescape"
   end
 
-  test "scheduler dispatches by authoritative mode and tier with an ID-only prompt" do
-    source = File.read(SCHEDULER_PATH)
-    compact = source.gsub(/\s+/, " ")
-
-    assert_includes source, "`execution_mode` and `model_tier`"
-    assert_includes source, "For `main`, load `kos-step`"
-    assert_includes source, "`model_tier` selects a\n   profile only for `subagent` execution"
-    assert_includes source, "`/kos-task` uses the advanced command\n   agent for every custom `main` step"
-    assert_includes source, "execute exactly one step in this command\n   agent"
-    assert_includes source, "For `subagent`, launch one fresh foreground `kos-step-standard` or\n   `kos-step-advanced`"
-    assert_includes compact, "complete prompt is only the positive decimal task ID"
-    assert_includes source, "After either path"
-    assert_includes source, "`completed` or `cancelled`"
-    assert_includes source, "On `needs_human` or `blocked`"
-    assert_includes source, "status, current step, claim version, and accepted"
-    assert_includes source, "active for that owner at the same step"
-    assert_includes source, "claim\n   version incremented by one and a renewed valid lease"
-    assert_includes source, "dispatch that step at most once more"
-    FORMER_ROLES.each { |role| assert_not_includes source, "`kos-#{role}`" }
-    refute_match(/^\| .* \| .* \|$/, source)
-  end
-
   test "scheduler obtains one private command owner from the CLI" do
     source = File.read(SCHEDULER_PATH)
 
@@ -162,17 +140,25 @@ class KosSkillsTest < ActiveSupport::TestCase
     assert_not_includes source, "PID"
   end
 
-  test "scheduler phase has no artifact Git or result-parsing policy" do
+  test "scheduler skill retains the executable seam contract" do
+    source = File.read(SCHEDULER_PATH)
+    compact = source.gsub(/\s+/, " ")
+
+    assert_includes source, "Inspect only the current step's\n   `execution_mode` and `model_tier`"
+    assert_includes compact, "complete prompt is only the positive decimal task ID"
+    assert_includes source, "Ignore its text and claimed result"
+    assert_includes source, "Progress requires\n   an authoritative change"
+    assert_includes source, "dispatch that step at most once more"
+  end
+
+  test "scheduler skill excludes non-observable local protocol and Git policy" do
     source = File.read(SCHEDULER_PATH)
 
-    assert_includes source, "During scheduling"
-    assert_includes source, "never add context to a child prompt, inspect artifact bodies or Git"
-    assert_includes source, "interpret\nchild output"
-    assert_includes source, "report a step"
-    assert_includes source, "keep local recovery state"
     assert_not_includes source, "<step-id>.md"
     assert_not_includes source, '"outcome"'
     assert_not_includes source, "git status"
+    FORMER_ROLES.each { |role| assert_not_includes source, "`kos-#{role}`" }
+    refute_match(/^\| .* \| .* \|$/, source)
   end
 
   test "step guidance uses workflow context as the complete role contract" do
