@@ -166,8 +166,11 @@ reverse that external representation. Interactive slash payloads and separate
 Every executor loads `kos-step` with exactly one positive task ID. The shared
 guidance tells it to read authoritative context and relevant accepted evidence,
 obtain its worktree through `kos-git`, execute one step, and report its own
-result. The workflow step's instruction, artifact template, and outcomes are the
-complete substantive role contract. Step IDs and profiles confer no authority.
+result. Immediately before reporting, it rereads context and uses the active
+task's owner, claim version, and current step as one fence; it does not create a
+new session owner or substitute accepted-artifact versions. The workflow step's
+instruction, artifact template, and outcomes are the complete substantive role
+contract. Step IDs and profiles confer no authority.
 
 The server transaction validates the active owner, claim version, current step,
 outcome, artifact, and pause message and is the acceptance boundary. On an

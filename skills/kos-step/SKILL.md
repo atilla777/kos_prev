@@ -27,11 +27,18 @@ and preserve unrelated work. Follow the artifact template with
 truthful evidence and choose one allowed outcome. Use `needs_human` for one
 precise product decision and `blocked` for a concrete technical obstruction.
 
+Immediately before reporting, read `task context ID` again and require the task
+to remain active at the step being executed. Take the complete report fence from
+that one response: `--owner-id` is `task.owner_id`, `--claim-version` is
+`task.claim_version`, and `--step` is `task.current_step`. Never run `session-id`
+or use an artifact's `accepted_claim_version` for a report. If any fence field
+changed during execution, stop without reporting.
+
 Report the attempt yourself with the `kos-cli` `task report-attempt` template,
 using standard input for the complete Markdown artifact and separate arguments
-for identity, fence, step, outcome, and any instruction-required fields. The server is authoritative
-for ownership, fencing, outcomes, and atomic artifact acceptance; never bypass
-a rejection. If the response is ambiguous, observe task state before any retry.
+for that authoritative fence, outcome, and any instruction-required fields. The
+server is authoritative for ownership, fencing, outcomes, and atomic artifact
+acceptance; never bypass a rejection. If the response is ambiguous, observe task state before any retry.
 Do not execute the next step.
 
 ## Result

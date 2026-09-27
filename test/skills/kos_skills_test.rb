@@ -173,6 +173,12 @@ class KosSkillsTest < ActiveSupport::TestCase
     assert_includes source, "observe task state before any retry"
     assert_includes source, "Do not execute the next step"
     assert_includes source, "`task report-attempt` template"
+    assert_includes source, "`--owner-id` is `task.owner_id`"
+    assert_includes source, "`--claim-version` is\n`task.claim_version`"
+    assert_includes source, "`--step` is `task.current_step`"
+    assert_includes source, "Never run `session-id`"
+    assert_includes source, "artifact's `accepted_claim_version`"
+    assert_includes source, "If any fence field\nchanged during execution, stop without reporting"
     assert_includes source, "In the command agent, return\ncontrol to the scheduler phase"
     assert_not_includes source, "role-specific"
   end
@@ -189,6 +195,11 @@ class KosSkillsTest < ActiveSupport::TestCase
       "task materialize-children"
     ].each { |template| assert_includes source, template }
     assert_includes source, "Installed per-command help is the fallback"
+    assert_includes source, "A step\n  executor never runs it"
+    assert_includes source, "[TASK.OWNER_ID]"
+    assert_includes source, "[TASK.CLAIM_VERSION]"
+    assert_includes source, "[TASK.CURRENT_STEP]"
+    assert_includes source, "never from `session-id` or artifact metadata"
     assert_match(/standard input|stdin/i, source)
     assert_match(/retry/i, source)
     (0..3).each { |status| assert_match(/Exit `#{status}`/, source) }

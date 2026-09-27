@@ -108,9 +108,11 @@ children, or perform Git checks.
 A step executor receives or retains only a positive task ID. It obtains
 authoritative context and relevant accepted evidence itself, invokes `kos-git`
 by task ID, and executes exactly one step within the workflow instruction. It reports its
-complete artifact and selected transition itself. The server validates the
-active owner, fence, current step, outcome, and artifact atomically; the agent
-does not execute the next step.
+complete artifact and selected transition itself. Immediately before reporting,
+it rereads context and takes owner ID, claim version, and step together from the
+current task projection, never from a new session ID or artifact metadata. The
+server validates the active owner, fence, current step, outcome, and artifact
+atomically; the agent does not execute the next step.
 
 For request-bound `/kos-fix` and `/kos-brief` work, the scheduler sends the
 project, exact kind, exact request, and its fresh owner to `task create-or-get`.

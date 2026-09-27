@@ -37,7 +37,9 @@ protocol state.
 Each bracketed value below is one separate process argument. Supply file value
 `-` content on standard input, never through shell interpolation.
 
-- Owner: `session-id`.
+- Scheduler owner creation: run `session-id` once per command session. A step
+  executor never runs it and instead uses the active `task.owner_id` returned by
+  its latest `task context` response.
 - Project lookup: `project show --repository-identity [IDENTITY]`.
 - Request creation: `task create-or-get --project-id [ID] --kind [KIND] --owner-id [OWNER] --request-file -`.
 - Resumable selection: `task resumable --project-id [ID] --task-type-key [KEY]`.
@@ -45,7 +47,7 @@ Each bracketed value below is one separate process argument. Supply file value
 - Resume: `task resume [ID] --owner-id [OWNER] --claim-version [VERSION] --step [STEP]`; add `--answer-file -` or `--takeover-confirmed` only when required.
 - Context: `task context [ID]`.
 - Artifact: `task artifact [ID] --step [STEP]`.
-- Report: `task report-attempt [ID] --owner-id [OWNER] --claim-version [VERSION] --step [STEP] --outcome [OUTCOME] --artifact-file [FILE]`; add `--message [MESSAGE]`, `--required-checks [STATUS]`, or `--brief-graph-file [FILE]` only when required. Artifact and graph need separate file inputs; use standard input for at most one of them.
+- Report: `task report-attempt [ID] --owner-id [TASK.OWNER_ID] --claim-version [TASK.CLAIM_VERSION] --step [TASK.CURRENT_STEP] --outcome [OUTCOME] --artifact-file [FILE]`; take all three fence values from the same latest `task context` response, never from `session-id` or artifact metadata. Add `--message [MESSAGE]`, `--required-checks [STATUS]`, or `--brief-graph-file [FILE]` only when required. Artifact and graph need separate file inputs; use standard input for at most one of them.
 - Child observation: `task children [ID]`.
 - Child materialization: `task materialize-children [ID] --owner-id [OWNER] --claim-version [VERSION] --definition-file -`.
 
