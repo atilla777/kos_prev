@@ -20,7 +20,7 @@ class CustomWorkflowExecutionTest < ActiveSupport::TestCase
       envelope(task) if task
     end
 
-    def context(task_id)
+    def show(task_id)
       task = Task.find(task_id)
       step = task.workflow.step_for(task.current_step)
       {

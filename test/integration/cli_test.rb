@@ -325,6 +325,13 @@ class CliTest < ActiveSupport::TestCase
     assert_equal "configuration_error", JSON.parse(error).fetch("error")
     assert_not_includes error, "cli.rb:"
 
+    [ " leading", "trailing ", "tab\tvalue", "line\rbreak", "line\nbreak" ].each do |token|
+      _output, error, status = run_cli("task", "show", "9", environment: { "KOS_API_TOKEN" => token })
+      assert_equal 2, status.exitstatus
+      assert_equal "configuration_error", JSON.parse(error).fetch("error")
+      assert_not_includes error, "cli.rb:"
+    end
+
     _output, error, status = run_cli("task", "show", "9", "--\xFF".b,
       environment: { "KOS_API_TOKEN" => "test-secret" })
     assert_equal 2, status.exitstatus

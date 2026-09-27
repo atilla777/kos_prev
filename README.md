@@ -39,6 +39,9 @@ agent security boundary.
 Development and production databases default to `$XDG_DATA_HOME/kos`, or
 `~/.local/share/kos`. `KOS_DATA_HOME` may override it with an absolute local
 path outside the checkout. Network or synchronized storage is unsupported.
+Rails and the process that starts OpenCode must receive the same value; task
+worktrees are derived below `$KOS_DATA_HOME/worktrees` and no project stores a
+machine-local path.
 Tests always use isolated temporary state. Ownership leases default to six
 hours; `KOS_LEASE_SECONDS` accepts a positive override.
 
@@ -245,8 +248,11 @@ An exact retry returns `materialization: unchanged`; a different identity
 conflicts. `graph_invalid` atomically retracts a still-unclaimed pending graph,
 and cancelling the brief cancels all unfinished children.
 
-Task responses for broader lifecycle operations contain `task`, `workflow`, and
-`step`. `claim-next` and `show-owned` return `204 No Content` when absent. Known
+Scheduler lifecycle operations and `task show` return only focused task and
+fence state, current execution mode and tier, artifact index metadata, and pause
+state. Task Markdown, instructions, templates, outcomes, and workflow bodies are
+available only through executor `context`. `claim-next` and `show-owned` return
+`204 No Content` when absent. Known
 failures use stable JSON errors and HTTP `400`, `404`, `409`, or `422`.
 `create-or-get` accepts a project, `fix` or `brief` kind, owner, and exact
 request. It derives the canonical task and returns the existing keyed task for
@@ -262,6 +268,7 @@ The CLI defaults to `http://127.0.0.1:3000`; configure it with:
 export KOS_API_URL="http://127.0.0.1:3000"
 export KOS_API_TOKEN="your-server-token"
 export KOS_CLI_PATH="$(realpath "$(command -v kos)")"
+export KOS_DATA_HOME="$HOME/.local/share/kos"
 ```
 
 The installed executable exposes every public API operation plus local
@@ -342,7 +349,7 @@ imported or read automatically.
 Git worktrees are derived as:
 
 ```text
-<kos-data-home>/worktrees/<project-id>/<task-id>
+$KOS_DATA_HOME/worktrees/<project-id>/<task-id>
 ```
 
 Briefing, implementation, and documentation may create local commits but never

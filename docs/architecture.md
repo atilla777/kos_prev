@@ -8,9 +8,9 @@ These rules describe the implemented PLAN-022 state-oriented architecture.
   artifacts, pause and answer bindings, and transactional transitions.
 - The CLI is a thin authenticated HTTP client. It never reads SQLite directly
   and does not contain an agent runtime or broker.
-- A slash-command orchestrator schedules from context: select or create, claim
+- A slash-command orchestrator schedules from focused state: select or create, claim
   or resume, execute `main` steps locally or dispatch `subagent` steps by tier,
-  and reread context.
+  and reread focused state.
 - A main or subagent step executor owns one step: focused context reads,
   predecessor evidence, worktree operations, checks, artifact production,
   outcome choice, and reporting.
@@ -29,6 +29,8 @@ These rules describe the implemented PLAN-022 state-oriented architecture.
 - Treat used workflow definitions as immutable values and keep concrete model
   identifiers in OpenCode profiles rather than workflow or task state.
 - Derive machine-local worktree paths; never persist them as domain state.
+- Require Rails and OpenCode to receive the same absolute `KOS_DATA_HOME` on
+  their shared host; derive worktrees only below its `worktrees` directory.
 - Keep external side effects outside Rails transactions and recover ambiguity by
   observing authoritative task, Git, remote, or child-graph state before retry.
 - Every local task commit is content-agent-owned, carries exactly one raw
@@ -128,7 +130,7 @@ The CLI generates one fresh unpredictable owner for each command session;
 `KOS_OWNER_ID` is not configuration. Request-bound creation uses that owner in
 the focused server-idempotent `task create-or-get` operation.
 
-For each active iteration the scheduler reads `task context` and follows only
+For each active iteration the scheduler reads the focused `task show` projection and follows only
 the current step's `execution_mode` and `model_tier`. A `main` step executes in
 the command agent through the shared step contract. A `subagent` step dispatches
 one fresh generic standard or advanced child whose entire prompt is the decimal
@@ -172,7 +174,8 @@ second step.
 ### Git And Worktrees
 
 `kos-git` accepts only a task ID, gets the registered project from context, and
-derives `<kos-data-home>/worktrees/<project-id>/<task-id>`. It
+requires the OpenCode process to have the same absolute `KOS_DATA_HOME` as
+Rails. It derives `$KOS_DATA_HOME/worktrees/<project-id>/<task-id>` and
 requires a verified detached worktree for the registered repository and remote,
 preserves staged, unstaged, and untracked work, and refuses unknown or unsafe
 paths and active Git operations rather than deleting or repairing them.

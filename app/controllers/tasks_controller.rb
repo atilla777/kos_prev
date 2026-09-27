@@ -35,11 +35,11 @@ class TasksController < ApplicationController
       owner_id: required_string(:owner_id)
     )
 
-    render json: serialize(task), status: :ok
+    render json: serialize_scheduler_action(task), status: :ok
   end
 
   def show
-    render json: serialize(lifecycle.show!(params[:id]))
+    render json: serialize_scheduler_state(lifecycle.show!(params[:id]))
   end
 
   def context
@@ -84,11 +84,11 @@ class TasksController < ApplicationController
     )
     return head :no_content unless task
 
-    render json: serialize(task)
+    render json: serialize_scheduler_action(task)
   end
 
   def claim
-    render json: serialize(lifecycle.claim!(task_id: params[:id], owner_id: required_string(:owner_id)))
+    render json: serialize_scheduler_action(lifecycle.claim!(task_id: params[:id], owner_id: required_string(:owner_id)))
   end
 
   def show_owned
@@ -98,7 +98,7 @@ class TasksController < ApplicationController
     )
     return head :no_content unless task
 
-    render json: serialize(task)
+    render json: serialize_scheduler_state(task)
   end
 
   def resumable
@@ -106,7 +106,7 @@ class TasksController < ApplicationController
       project: Project.find(required_query_integer(:project_id)),
       task_type: TaskType.find_by!(key: required_string(:task_type_key))
     )
-    render json: tasks.map { |task| serialize(task) }
+    render json: tasks.map { |task| serialize_scheduler_selection(task) }
   end
 
   def resume
@@ -119,7 +119,7 @@ class TasksController < ApplicationController
     task = lifecycle.resume!(task_id: params[:id], owner_id: required_string(:owner_id),
       claim_version: required_integer(:claim_version), step: required_string(:step),
       answer: optional_string(:answer), takeover_confirmed:)
-    render json: serialize(task)
+    render json: serialize_scheduler_action(task)
   end
 
   def report_attempt
@@ -243,11 +243,35 @@ class TasksController < ApplicationController
     step = workflow.step_for(task.current_step)
 
     {
-      task: task.as_json(only: %i[id project_id task_type_id workflow_id parent_id title description_markdown status
+      task: task.as_json(only: %i[id project_id task_type_id workflow_id parent_id title status
         current_step owner_id claim_version lease_expires_at created_at updated_at]).merge(
           "task_type_key" => task.task_type.key, "blocker_ids" => task.blocker_ids.sort),
-      workflow: workflow.as_json(only: %i[id name created_at]).merge("definition_json" => workflow.definition_for_execution),
-      step:
+      workflow: workflow.as_json(only: %i[id name created_at]),
+      step: step.slice("id", "name", "execution_mode", "model_tier")
     }
+  end
+
+  def serialize_scheduler_action(task)
+    { task: scheduler_task(task) }
+  end
+
+  def serialize_scheduler_selection(task)
+    { task: scheduler_task(task).merge("title" => task.title) }
+  end
+
+  def serialize_scheduler_state(task)
+    task = Task.includes(:workflow).find(task.id)
+    step = task.workflow.step_for(task.current_step)
+
+    {
+      task: scheduler_task(task).merge("title" => task.title),
+      step: step.slice("id", "execution_mode", "model_tier"),
+      artifacts: artifact_index(task),
+      pause: current_pause(task)
+    }
+  end
+
+  def scheduler_task(task)
+    task.as_json(only: %i[id status current_step owner_id claim_version lease_expires_at])
   end
 end

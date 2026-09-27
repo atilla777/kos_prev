@@ -8,7 +8,7 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     @task_type = create_task_type(name: "Feature", workflow: @workflow)
   end
 
-  test "creates and shows a task with its workflow current step and dependencies" do
+  test "creates a task without exposing executor-only bodies" do
     parent = create_task(project: @project, workflow: @workflow, task_type: @task_type, title: "Parent")
     blocker = create_task(project: @project, workflow: @workflow, task_type: @task_type, title: "Blocker")
 
@@ -23,11 +23,15 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     assert_equal "develop", response.parsed_body.dig("step", "id")
     assert_equal "advanced", response.parsed_body.dig("step", "model_tier")
     assert_equal "main", response.parsed_body.dig("step", "execution_mode")
-    assert_equal "Implement the task.", response.parsed_body.dig("step", "instruction")
+    refute_includes response.body, "description_markdown"
+    refute_includes response.body, "definition_json"
+    refute_includes response.body, "instruction"
+    refute_includes response.body, "artifact_template"
 
     get task_path(task_id), headers: @headers, as: :json
     assert_response :success
     assert_equal task_id, response.parsed_body.dig("task", "id")
+    assert_scheduler_state(response.parsed_body)
   end
 
   test "creates tasks by type key while preserving numeric creation" do
@@ -161,6 +165,7 @@ class TasksApiTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal existing.id, response.parsed_body.dig("task", "id")
+    assert_scheduler_action(response.parsed_body)
     assert_equal before, existing.reload.attributes
 
     post tasks_create_or_get_path,
@@ -266,10 +271,12 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     }, headers: @headers, as: :json
     assert_response :success
     assert_equal requested.id, response.parsed_body.dig("task", "id")
+    assert_scheduler_action(response.parsed_body)
 
     post claim_task_path(other), params: { owner_id: "exact" }, headers: @headers, as: :json
     assert_response :success
     assert_equal other.id, response.parsed_body.dig("task", "id")
+    assert_scheduler_action(response.parsed_body)
   end
 
   test "rejects exact claims for blocked tasks and owner collisions" do
@@ -294,17 +301,19 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     get tasks_show_owned_path, params: { project_id: @project.id, owner_id: "session" }, headers: @headers
     assert_response :success
     assert_equal active.id, response.parsed_body.dig("task", "id")
+    assert_scheduler_state(response.parsed_body)
 
     get tasks_resumable_path, params: { project_id: @project.id, task_type_key: @task_type.key }, headers: @headers
     assert_response :success
     assert_equal [ active.id ], response.parsed_body.map { |item| item.dig("task", "id") }
+    response.parsed_body.each { |item| assert_scheduler_selection(item) }
     assert_equal 1, active.reload.claim_version
 
     get tasks_show_owned_path, params: { project_id: @project.id, owner_id: "missing" }, headers: @headers
     assert_response :no_content
   end
 
-  test "projects advanced tiers throughout a persisted legacy workflow" do
+  test "projects effective execution fields without exposing a persisted legacy workflow" do
     definition = valid_workflow_definition.deep_dup
     definition["steps"].each { |step| step.delete("model_tier"); step.delete("execution_mode") }
     workflow = Workflow.new(name: "Legacy", definition_json: definition)
@@ -317,12 +326,7 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "advanced", response.parsed_body.dig("step", "model_tier")
     assert_equal "subagent", response.parsed_body.dig("step", "execution_mode")
-    assert response.parsed_body.dig("workflow", "definition_json", "steps").all? do |step|
-      step["model_tier"] == "advanced"
-    end
-    assert response.parsed_body.dig("workflow", "definition_json", "steps").all? do |step|
-      step["execution_mode"] == "subagent"
-    end
+    assert_scheduler_state(response.parsed_body)
   end
 
   test "updates an unclaimed definition and rolls back all changes when a blocker is invalid" do
@@ -374,6 +378,7 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     }, headers: @headers, as: :json
     assert_response :success
     claim_version = response.parsed_body.dig("task", "claim_version")
+    assert_scheduler_action(response.parsed_body)
 
     get context_task_path(task), headers: @headers, as: :json
     assert_equal "Option A", response.parsed_body.dig("pause", "answer")
@@ -541,6 +546,31 @@ class TasksApiTest < ActionDispatch::IntegrationTest
   end
 
   private
+
+  def assert_scheduler_state(body)
+    assert_equal %w[artifacts pause step task], body.keys.sort
+    assert_equal %w[claim_version current_step id lease_expires_at owner_id status title], body.fetch("task").keys.sort
+    assert_equal %w[execution_mode id model_tier], body.fetch("step").keys.sort
+    assert_no_executor_bodies(body)
+  end
+
+  def assert_scheduler_action(body)
+    assert_equal [ "task" ], body.keys
+    assert_equal %w[claim_version current_step id lease_expires_at owner_id status], body.fetch("task").keys.sort
+    assert_no_executor_bodies(body)
+  end
+
+  def assert_scheduler_selection(body)
+    assert_equal [ "task" ], body.keys
+    assert_equal %w[claim_version current_step id lease_expires_at owner_id status title], body.fetch("task").keys.sort
+    assert_no_executor_bodies(body)
+  end
+
+  def assert_no_executor_bodies(body)
+    %w[description_markdown workflow definition_json instruction artifact_template allowed_outcomes].each do |field|
+      refute_includes body.to_json, field
+    end
+  end
 
   def task_parameters
     {

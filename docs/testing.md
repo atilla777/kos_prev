@@ -28,6 +28,10 @@
   reporting. A controllable scheduler harness executes crash,
   rejected-report, lease-expiry, progress, pause, and terminal paths against fake
   CLI and step runners.
+- Runtime-boundary tests verify focused scheduler responses omit task and
+  workflow bodies, separate Rails and OpenCode environments resolve the same
+  nondefault data home, and server boot and the packaged CLI accept the same
+  HTTP-safe bearer-token values.
 - Git tests use temporary source repositories, task worktrees, and bare remotes.
 - Migration and recovery tests use isolated persistent SQLite databases, data
   homes, subprocesses, repositories, remotes, and OpenCode configuration homes.

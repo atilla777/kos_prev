@@ -34,9 +34,11 @@ or create a registration.
 
 Accept only a positive task ID. Load `kos-cli` and derive the project ID,
 registered identity, remote, default branch, and task title from `task context
-ID`. Never accept paths, commands, a diff, changed
+ID`. Require `KOS_DATA_HOME` in the OpenCode process environment to be the same
+absolute local path configured for Rails. Refuse a missing or relative value.
+Never accept paths, commands, a diff, changed
 files, project identity, or Git facts from the dispatcher. Derive the worktree
-as `<kos-data-home>/worktrees/<project-id>/<task-id>` and verify it belongs to
+as `$KOS_DATA_HOME/worktrees/<project-id>/<task-id>` and verify it belongs to
 the registered repository and remote. Refuse symlinks, foreign registrations,
 ambiguous remotes, identity mismatches, invalid branches, active Git operations, or divergent
 history without repairing or deleting anything.

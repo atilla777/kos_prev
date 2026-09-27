@@ -473,7 +473,8 @@ class RestartRecoveryScenarioTest < ActiveSupport::TestCase
       accepted = run_kos_json(system, "task", "artifact", task.fetch("id").to_s, "--step", "plan")
 
       assert_equal [ "active", "implement", 2 ], shown.fetch("task").values_at("status", "current_step", "claim_version")
-      assert_equal resources.fetch(:workflow_id), shown.dig("task", "workflow_id")
+      assert_equal %w[artifacts pause step task], shown.keys.sort
+      refute_includes shown.to_json, "workflow_id"
       assert_equal "# Plan\n\nReady.\n", accepted.fetch("markdown")
       assert_equal "planned", accepted.fetch("outcome")
       refute_predicate system.fetch(:data_home).join("tasks"), :exist?
@@ -546,9 +547,9 @@ class RestartRecoveryScenarioTest < ActiveSupport::TestCase
 
         observed = run_kos_json(system, "task", "show-owned", "--project-id", project.fetch("id").to_s,
           "--owner-id", "first-owner")
-        assert_equal [ "fix", "active", "diagnose", 1 ],
-          [ observed.dig("task", "task_type_key"), observed.dig("task", "status"),
-            observed.dig("task", "current_step"), observed.dig("task", "claim_version") ]
+        assert_equal [ "active", "diagnose", 1 ],
+          observed.fetch("task").values_at("status", "current_step", "claim_version")
+        refute_includes observed.to_json, "task_type_key"
 
         recovered = run_kos_json(system, "task", "create-or-get", "--project-id", project.fetch("id").to_s,
           "--kind", "fix", "--request-file", request_file.path, "--owner-id", "retry-owner")
@@ -653,8 +654,9 @@ class RestartRecoveryScenarioTest < ActiveSupport::TestCase
           observed = run_kos_json(system, "task", "children", task_id.to_s)
           assert_match(/\Asha256:[0-9a-f]{64}\z/, observed.fetch("digest"))
           child = observed.fetch("children").sole
+          child_context = run_kos_json(system, "task", "context", child.dig("task", "id").to_s)
           assert_equal [ "Recovered child", "Implement", [] ],
-            [ child.dig("task", "title"), child.dig("task", "description_markdown"),
+            [ child.dig("task", "title"), child_context.dig("task", "description_markdown"),
               child.fetch("sibling_blocker_ids") ]
         end
       end

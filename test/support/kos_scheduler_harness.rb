@@ -1,7 +1,7 @@
 require "time"
 
 class KosSchedulerHarness
-  Result = Data.define(:reason, :context)
+  Result = Data.define(:reason, :state)
 
   def initialize(cli:, main_runner:, subagent_runner:, clock: -> { Time.now.utc })
     @cli = cli
@@ -11,47 +11,47 @@ class KosSchedulerHarness
   end
 
   def run(task_id:, owner_id:)
-    context = @cli.context(task_id)
+    state = @cli.show(task_id)
     recovered = false
 
     loop do
-      task = context.fetch("task")
+      task = state.fetch("task")
       status = task.fetch("status")
-      return Result.new(reason: status, context:) if %w[completed cancelled needs_human blocked].include?(status)
-      return Result.new(reason: "invalid_context", context:) unless status == "active"
+      return Result.new(reason: status, state:) if %w[completed cancelled needs_human blocked].include?(status)
+      return Result.new(reason: "invalid_state", state:) unless status == "active"
 
       if lease_expired?(task)
-        return Result.new(reason: "recovery_exhausted", context:) if recovered
+        return Result.new(reason: "recovery_exhausted", state:) if recovered
 
         begin
           @cli.resume(task_id:, owner_id:, claim_version: task.fetch("claim_version"),
             step: task.fetch("current_step"))
         rescue StandardError
-          return Result.new(reason: "resume_failed", context:)
+          return Result.new(reason: "resume_failed", state:)
         end
-        resumed = @cli.context(task_id)
+        resumed = @cli.show(task_id)
         resumed_status = resumed.fetch("task").fetch("status")
-        return Result.new(reason: resumed_status, context: resumed) if terminal?(resumed_status)
+        return Result.new(reason: resumed_status, state: resumed) if terminal?(resumed_status)
         unless resume_confirmed?(task, resumed, owner_id)
-          return Result.new(reason: "resume_unconfirmed", context: resumed)
+          return Result.new(reason: "resume_unconfirmed", state: resumed)
         end
 
         recovered = true
-        context = resumed
+        state = resumed
         next
       end
 
-      before = context
-      return Result.new(reason: "invalid_context", context:) unless dispatch(task_id, context)
+      before = state
+      return Result.new(reason: "invalid_state", state:) unless dispatch(task_id, state)
 
-      context = @cli.context(task_id)
-      next if progress?(before, context)
-      next if lease_expired?(context.fetch("task")) && !recovered
+      state = @cli.show(task_id)
+      next if progress?(before, state)
+      next if lease_expired?(state.fetch("task")) && !recovered
 
-      return Result.new(reason: "unchanged", context:)
+      return Result.new(reason: "unchanged", state:)
     end
   rescue KeyError, ArgumentError
-    Result.new(reason: "invalid_context", context: context)
+    Result.new(reason: "invalid_state", state: state)
   end
 
   def run_custom(project_id:, task_type_key:, owner_id:, answer: nil)
@@ -60,7 +60,7 @@ class KosSchedulerHarness
 
     selected = @cli.resumable(project_id:, task_type_key:).first
     selected ||= @cli.claim_next(project_id:, task_type_key:, owner_id:)
-    return Result.new(reason: "unavailable", context: nil) unless selected
+    return Result.new(reason: "unavailable", state: nil) unless selected
 
     task = selected.fetch("task")
     if task.fetch("status") == "needs_human" && answer
@@ -72,8 +72,8 @@ class KosSchedulerHarness
 
   private
 
-  def dispatch(task_id, context)
-    step = context.fetch("step")
+  def dispatch(task_id, state)
+    step = state.fetch("step")
 
     case step.fetch("execution_mode")
     when "main"
@@ -110,8 +110,8 @@ class KosSchedulerHarness
     %w[completed cancelled needs_human blocked].include?(status)
   end
 
-  def current_step_evidence(context, step = context.fetch("task").fetch("current_step"))
-    context.fetch("artifacts").find { |artifact| artifact.fetch("step") == step }
+  def current_step_evidence(state, step = state.fetch("task").fetch("current_step"))
+    state.fetch("artifacts").find { |artifact| artifact.fetch("step") == step }
   end
 
   def lease_expired?(task)

@@ -76,9 +76,13 @@ The slash-command skills are schedulers, not step executors. `/kos` resumes or
 claims development work; `/kos-fix` and `/kos-brief` recover or atomically
 create and claim their request-bound task; `/kos-task` resumes or claims an
 existing custom task by exact stable task-type key. Once they have a positive
-task ID, they retain only that ID. For every iteration a scheduler:
+task ID, they retain only that ID. Scheduler lifecycle operations and `task
+show` return only task selection and fence state, current execution mode and
+tier, accepted artifact index metadata, and pause state. They never return task
+Markdown, workflow definitions, instructions, templates, or outcome bodies.
+For every iteration a scheduler:
 
-1. reads authoritative task context;
+1. reads authoritative focused scheduler state;
 2. stops on `completed`, `needs_human`, or `blocked` as directed by persisted state;
 3. reads the current step's authoritative `execution_mode` and `model_tier`;
 4. executes a `main` step in the command agent, or launches one fresh generic
@@ -285,7 +289,7 @@ The CLI exposes these as `task context`, `task artifact`, and
 `task report-attempt`. Installed per-command help is authoritative for invocation
 syntax and options.
 
-`context` returns exactly these projections:
+Executor-only `context` returns exactly these projections:
 
 - `task`: `id`, `project_id`, `title`, `description_markdown`, `status`,
   `current_step`, `owner_id`, `claim_version`, and `lease_expires_at`;
@@ -351,6 +355,14 @@ without requiring `KOS_API_TOKEN`. Every application operation requires the
 configured shared token. Its holders are trusted for all such operations;
 ownership and fencing coordinate their concurrent writes but do not authorize
 them separately.
+
+Rails and OpenCode run on the same host with the same absolute
+`KOS_DATA_HOME`. Executors derive task worktrees as
+`$KOS_DATA_HOME/worktrees/<project-id>/<task-id>` and reject a missing or
+relative client value. The path remains machine-local configuration and is not
+stored in a project row. API tokens must be nonempty valid UTF-8 HTTP header
+values without controls or surrounding whitespace; server boot and the CLI use
+the same validation.
 
 ## Recovery And Upgrade
 

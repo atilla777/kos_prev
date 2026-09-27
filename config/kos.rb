@@ -1,4 +1,5 @@
 require "pathname"
+require_relative "../lib/kos/api_token"
 
 module Kos
   class ConfigurationError < StandardError; end
@@ -23,9 +24,10 @@ module Kos
     end
 
     def validate_api_token!(token)
-      return token unless blank?(token)
+      normalized = Kos::ApiToken.normalize(token)
+      return normalized if normalized
 
-      raise ConfigurationError, "KOS_API_TOKEN must be set to a non-empty value"
+      raise ConfigurationError, "KOS_API_TOKEN must be a non-empty HTTP header value"
     end
 
     def lease_duration(environment = ENV)

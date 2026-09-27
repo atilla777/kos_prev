@@ -1,23 +1,27 @@
 # Status
 
-State: planned
-Updated: 2026-09-26
+State: done
+Updated: 2026-09-27
 
 ## Current
 
-The implementation relies on agent discipline to ignore broad lifecycle
-responses, and a nondefault server data home is not reliably available to the
-OpenCode worktree process.
+Scheduler action, selection, and state responses now expose only the fields
+needed by each operation. Rails and the packaged CLI share one HTTP-safe token
+validator, and Rails and OpenCode use the same explicit absolute
+`KOS_DATA_HOME` worktree-root contract.
 
 ## Next
 
-After task 021 is done, derive the minimal scheduler projections and settle the
-client worktree-root environment contract.
+Task 023 may add deterministic execution coverage against the tightened runtime
+boundary.
 
 ## Blockers
 
-Depends on task 021.
+None.
 
 ## Checks
 
-Not started.
+- Focused API, configuration, CLI, skill, scheduler, package, and recovery tests
+  pass.
+- Independent read-only review completed; all findings were resolved.
+- `bin/check` passes: 276 tests, 4182 assertions, 0 failures, 0 errors.

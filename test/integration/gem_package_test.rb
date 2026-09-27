@@ -74,7 +74,7 @@ class GemPackageTest < ActiveSupport::TestCase
 
   test "installed CLI drives a prepared server through the core lifecycle" do
     with_installed_cli do |cli, cli_environment, root|
-      system = { data_home: root.join("data"), token: "smoke-secret", log: root.join("server.log") }
+      system = { data_home: root.join("data"), token: "smoke secret._~+/=", log: root.join("server.log") }
       _output, error, status = Open3.capture3(server_environment(system), Rails.root.join("bin/rails").to_s,
         "db:prepare")
       assert_predicate status, :success?, error

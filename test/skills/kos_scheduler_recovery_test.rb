@@ -2,9 +2,9 @@ require "test_helper"
 require_relative "../support/kos_scheduler_harness"
 
 class KosSchedulerRecoveryTest < ActiveSupport::TestCase
-  FakeCli = Struct.new(:contexts, :resumes) do
-    def context(_task_id)
-      contexts.shift || raise("unexpected context read")
+  FakeCli = Struct.new(:states, :resumes) do
+    def show(_task_id)
+      states.shift || raise("unexpected scheduler-state read")
     end
 
     def resume(**arguments)

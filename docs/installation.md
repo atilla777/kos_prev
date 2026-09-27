@@ -97,6 +97,7 @@ In another terminal, expose the same API and installed CLI, verify readiness,
 and explicitly register the repository:
 
 ```sh
+export KOS_DATA_HOME="$HOME/.local/share/kos"
 export KOS_API_TOKEN="<installation-token>"
 export KOS_API_URL="http://127.0.0.1:3000"
 export KOS_CLI_PATH="$(realpath "$(command -v kos)")"
@@ -110,10 +111,20 @@ export KOS_CLI_PATH="$(realpath "$(command -v kos)")"
   --repository-identity "github.com/example/my-project"
 ```
 
+The process that starts OpenCode must inherit the same absolute
+`KOS_DATA_HOME` as Rails. `kos-git` derives every task checkout as
+`$KOS_DATA_HOME/worktrees/<project-id>/<task-id>` and refuses a missing or
+relative value. The installer copies integration assets but does not persist
+the launch environment. Rails and OpenCode may run as separate processes on
+the same host, but their configured data-home paths must identify the same
+local directory.
+
 `health` uses `KOS_API_URL` to call the public `GET /up` endpoint and does not
 require a token. `session-id` is entirely local and requires neither API
 setting. All other CLI operations use the same `KOS_API_URL` and require the
-`KOS_API_TOKEN` configured when Rails started. This shared bearer token
+`KOS_API_TOKEN` configured when Rails started. Tokens must be valid UTF-8,
+nonempty, free of HTTP control characters, and have no surrounding whitespace.
+This shared bearer token
 trusts its holders for every application operation. Owner IDs, leases, and
 claim-version fences coordinate concurrent trusted operations; they do not
 provide per-agent authorization.

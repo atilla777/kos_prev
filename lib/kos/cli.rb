@@ -4,6 +4,7 @@ require "openssl"
 require "optparse"
 require "securerandom"
 require "uri"
+require "kos/api_token"
 require_relative "version"
 
 module Kos
@@ -503,9 +504,8 @@ module Kos
     end
 
     def api_token
-      token = @environment["KOS_API_TOKEN"]
-      token = normalize_utf8(token, "KOS_API_TOKEN", kind: "configuration_error") if token
-      return token if token && !token.strip.empty? && !token.match?(/[\r\n]/)
+      token = Kos::ApiToken.normalize(@environment["KOS_API_TOKEN"])
+      return token if token
 
       raise Error.new("configuration_error", "KOS_API_TOKEN must be a non-empty HTTP header value")
     end

@@ -28,7 +28,7 @@ require its exact registered project through `kos-cli`.
   use `task claim-next` with the same key. Never create a task. Preserve every
   key byte; do not trim, split, infer argv, or interpret or unescape delimiters.
 
-Read authoritative context. Keep a completed or cancelled task terminal; otherwise use the
+Read authoritative scheduler state with `task show`. Keep a completed or cancelled task terminal; otherwise use the
 public claim or resume operations when needed to make the chosen task active for
 this owner. Present persisted pause information and require the corresponding
 human answer, confirmed resolution, or confirmed stopped-owner takeover before
@@ -39,12 +39,14 @@ only the resulting positive decimal task ID.
 
 Repeat:
 
-1. Read `task context` for the task ID.
+1. Read `task show` for the task ID. This focused scheduler projection contains
+   lifecycle and fence state, current execution mode and tier, the accepted
+   artifact index, and pause state, but no task Markdown or workflow body.
 2. Stop successfully on `completed` or `cancelled`. On `needs_human` or `blocked`, show the
    persisted question or reason and stop.
 3. Require `active`. Before dispatch, if its server timestamp says the lease is
    expired, use `task resume` once for this invocation with the exact observed
-   claim version and current step plus this command's owner, then reread context.
+   claim version and current step plus this command's owner, then reread scheduler state.
    Require the result to be active for that owner at the same step with claim
    version incremented by one and a renewed valid lease. Stop explicitly if
    that fenced recovery is rejected, ambiguous, unconfirmed, or would be needed
@@ -61,7 +63,7 @@ Repeat:
 6. For `subagent`, launch one fresh foreground `kos-step-standard` or
    `kos-step-advanced` child selected only by `model_tier`; its complete prompt
    is only the positive decimal task ID. Ignore its text and claimed result.
-7. After either path, leave the step phase and reread context. Progress requires
+7. After either path, leave the step phase and reread scheduler state. Progress requires
    an authoritative change in status, current step, claim version, or the
    snapshotted current-step artifact-index entry. Continue from changed state.
    If state is unchanged while the lease remains valid, stop explicitly without

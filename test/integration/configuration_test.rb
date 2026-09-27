@@ -48,8 +48,37 @@ class ConfigurationTest < ActiveSupport::TestCase
       Kos::Configuration.validate_api_token!(nil)
     end
 
-    assert_equal "KOS_API_TOKEN must be set to a non-empty value", error.message
+    assert_equal "KOS_API_TOKEN must be a non-empty HTTP header value", error.message
     assert_raises(Kos::ConfigurationError) { Kos::Configuration.validate_api_token!("  ") }
+  end
+
+  test "accepts only token values that can be used unchanged in an HTTP header" do
+    token = "token value._~+/="
+
+    assert_equal token, Kos::Configuration.validate_api_token!(token)
+    [ " leading", "trailing ", "tab\tvalue", "line\rbreak", "line\nbreak", "delete\x7f", "\xff".b ].each do |value|
+      assert_raises(Kos::ConfigurationError) { Kos::Configuration.validate_api_token!(value) }
+    end
+  end
+
+  test "separate server and OpenCode environments derive the same nondefault worktree path" do
+    data_home = "/srv/kos-instance"
+    server_environment = { "KOS_DATA_HOME" => data_home, "KOS_API_TOKEN" => "server-token" }
+    opencode_environment = { "KOS_DATA_HOME" => data_home, "KOS_API_URL" => "http://127.0.0.1:3000" }
+
+    server_home = Kos::Configuration.data_home(server_environment, home: "/server-default")
+    output, error, status = Open3.capture3(opencode_environment, RbConfig.ruby,
+      Rails.root.join("test/support/worktree_path_process.rb").to_s, "7", "19")
+
+    assert_predicate status, :success?, error
+    assert_equal "#{File.join(server_home, "worktrees", "7", "19")}\n", output
+
+    [ {}, { "KOS_DATA_HOME" => "relative" } ].each do |invalid_environment|
+      _output, error, status = Open3.capture3(invalid_environment, RbConfig.ruby,
+        Rails.root.join("test/support/worktree_path_process.rb").to_s, "7", "19")
+      refute_predicate status, :success?
+      assert_match(/KOS_DATA_HOME/, error)
+    end
   end
 
   test "uses a configurable positive lease duration" do
@@ -102,7 +131,7 @@ class ConfigurationTest < ActiveSupport::TestCase
       )
 
       refute_predicate status, :success?
-      assert_includes error, "KOS_API_TOKEN must be set to a non-empty value"
+      assert_includes error, "KOS_API_TOKEN must be a non-empty HTTP header value"
     end
   end
 
@@ -122,7 +151,21 @@ class ConfigurationTest < ActiveSupport::TestCase
       )
 
       refute_predicate status, :success?
-      assert_includes error, "KOS_API_TOKEN must be set to a non-empty value"
+      assert_includes error, "KOS_API_TOKEN must be a non-empty HTTP header value"
+    end
+  end
+
+  test "refuses to boot with a token that cannot be used as an HTTP header" do
+    Dir.mktmpdir("kos-data") do |data_home|
+      [ "line\nbreak", "tab\tvalue" ].each do |token|
+        environment = { "RAILS_ENV" => "development", "KOS_API_TOKEN" => token, "KOS_DATA_HOME" => data_home }
+        _output, error, status = Open3.capture3(
+          environment, Rails.root.join("bin/rails").to_s, "runner", "print 'booted'"
+        )
+
+        refute_predicate status, :success?
+        assert_includes error, "KOS_API_TOKEN must be a non-empty HTTP header value"
+      end
     end
   end
 

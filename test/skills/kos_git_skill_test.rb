@@ -30,7 +30,9 @@ class KosGitSkillTest < ActiveSupport::TestCase
       assert_match(/^## #{heading}$/, source)
     end
     assert_includes source, "Accept only a positive task ID"
-    assert_includes source, "<kos-data-home>/worktrees/<project-id>/<task-id>"
+    assert_includes source, "$KOS_DATA_HOME/worktrees/<project-id>/<task-id>"
+    assert_includes source, "same\nabsolute local path configured for Rails"
+    assert_includes source, "Refuse a missing or relative value"
     assert_includes source, "Preserve staged,\nunstaged, and untracked task work"
     assert_includes compact, "workflow instruction alone decides whether repository access is read-only"
     assert_includes source, "Never infer Git\nauthority from a step ID"
