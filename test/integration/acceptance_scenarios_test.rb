@@ -144,7 +144,8 @@ class AcceptanceScenariosTest < ActiveSupport::TestCase
     end
 
     brief = lifecycle.report_attempt!(task_id: brief.id, owner_id: brief.owner_id,
-      claim_version: brief.claim_version, step: "review", outcome: "approved", artifact: "# Review\n")
+      claim_version: brief.claim_version, step: "review", outcome: "approved", artifact: "# Review\n",
+      brief_graph: { "children" => children })
     publish_fence = brief.claim_version
     assert_equal [ "active", "publish", "brief-owner" ], brief.values_at(:status, :current_step, :owner_id)
 
@@ -360,16 +361,20 @@ class AcceptanceScenariosTest < ActiveSupport::TestCase
       materialize_acceptance_child(task) if type_key == "brief" && step == "publish"
       task = lifecycle.report_attempt!(task_id: task.id, owner_id: task.owner_id,
         claim_version: task.claim_version, step:, outcome: successful_outcome(type_key, step), artifact: "# #{step}\n",
-        required_checks: ("passed" if step == "implement" && %w[development fix].include?(type_key)))
+        required_checks: ("passed" if step == "implement" && %w[development fix].include?(type_key)),
+        brief_graph: ({ "children" => acceptance_children } if type_key == "brief" && step == "review"))
     end
     task
   end
 
   def materialize_acceptance_child(task)
-    children = [ { "key" => "work", "title" => "Work", "description_markdown" => "Implement work",
-      "blocker_keys" => [] } ]
     BriefTaskGraph.new.materialize!(parent_id: task.id, owner_id: task.owner_id,
-      claim_version: task.claim_version, children:)
+      claim_version: task.claim_version, children: acceptance_children)
+  end
+
+  def acceptance_children
+    [ { "key" => "work", "title" => "Work", "description_markdown" => "Implement work",
+      "blocker_keys" => [] } ]
   end
 
   def run_read_only_plan(lifecycle, task, worktree, root)
@@ -617,16 +622,15 @@ class RestartRecoveryScenarioTest < ActiveSupport::TestCase
           "--claim-version", claim.fetch("claim_version").to_s, "--step", "brief", "--outcome", "specified",
           "--artifact-file", description_file.path)
           .fetch("task")
-        claim = run_kos_json(system, "task", "report-attempt", task_id.to_s, "--owner-id", "brief-owner",
-          "--claim-version", claim.fetch("claim_version").to_s, "--step", "review", "--outcome", "approved",
-          "--artifact-file", description_file.path)
-          .fetch("task")
-
         Tempfile.create([ "children", ".json" ]) do |graph_file|
           graph_file.write(JSON.generate(children: [ {
             key: "child", title: "Recovered child", description_markdown: "Implement", blocker_keys: []
           } ]))
           graph_file.flush
+          claim = run_kos_json(system, "task", "report-attempt", task_id.to_s, "--owner-id", "brief-owner",
+            "--claim-version", claim.fetch("claim_version").to_s, "--step", "review", "--outcome", "approved",
+            "--artifact-file", description_file.path, "--brief-graph-file", graph_file.path)
+            .fetch("task")
           proxy = dropping_proxy(system.fetch(:port))
 
           _output, error, status = run_kos(system, "task", "materialize-children", task_id.to_s,
@@ -642,9 +646,9 @@ class RestartRecoveryScenarioTest < ActiveSupport::TestCase
           output, retry_error, retry_status = run_kos(system, "task", "materialize-children", task_id.to_s,
             "--definition-file", graph_file.path, "--owner-id", "brief-owner", "--claim-version",
             claim.fetch("claim_version").to_s)
-          assert_equal 1, retry_status.exitstatus
+          assert_predicate retry_status, :success?, retry_error
           assert_empty retry_error
-          assert_equal "conflict", JSON.parse(output).fetch("error")
+          assert_equal "unchanged", JSON.parse(output).fetch("materialization")
 
           observed = run_kos_json(system, "task", "children", task_id.to_s)
           assert_match(/\Asha256:[0-9a-f]{64}\z/, observed.fetch("digest"))

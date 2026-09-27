@@ -58,7 +58,8 @@ and `task_dependencies`. PLAN-022 adds execution context to `tasks`, not a new
 artifact or attempt table. `accepted_artifacts` is a JSON map keyed by step ID;
 each value contains `outcome`, complete `markdown`, `accepted_claim_version`,
 and `reconstructed`. Development and fix implementation entries may also contain
-the closed `required_checks` assertion. Pause state uses `pause_message`,
+the closed `required_checks` assertion. Approved brief review entries contain the
+normalized `brief_graph` and server-derived `graph_digest`. Pause state uses `pause_message`,
 `pause_step`, and `pause_claim_version`; answer state uses `human_answer`,
 `human_answer_step`, and `human_answer_claim_version`.
 Request-bound tasks may also store an immutable nullable `creation_key`. A
@@ -78,10 +79,14 @@ older revisions execute with effective `subagent` and `advanced` defaults where
 those fields are absent. Public administration cannot repoint reserved built-in
 task types; catalog installation owns their canonical workflow revisions.
 Built-in completion is additionally constrained to the `published` outcome at
-`publish`. Brief materialization takes a SQLite write lock, verifies the exact
-active publication fence, and then normalizes, validates, digests, and creates
-the graph in that transaction. Materialization and reporting serialize; `published`
-requires children, while a materialized graph forbids publication rewinds.
+`publish`. Brief materialization performs bounded normalization and validation
+before taking SQLite's writer lock. It then verifies the exact active publication
+fence, compares with the accepted identity, and creates the graph in that
+transaction. Materialization,
+reporting, correction, and cancellation serialize. `published` requires observed
+and approved graph digests to match. Exact retries are idempotent; `graph_invalid`
+may atomically retract only an unclaimed pending graph, and cancellation terminates
+unfinished children.
 
 The artifact limit is 1 MiB by UTF-8 bytes. Artifacts must be nonempty valid
 UTF-8 strings. KOS stores their exact Markdown but does not parse template
@@ -209,7 +214,8 @@ Focused agents validate predecessor evidence and use explicit correction routes:
 - Fix adds plan `diagnosis_invalid` to `diagnose`; all later routes match
   development.
 - Brief uses review `changes_requested` to `brief`; publish `review_invalid` to
-  `review`, and `base_moved` or `graph_invalid` to `brief`.
+  `review`, and `base_moved` or `graph_invalid` to `brief`. After materialization,
+  only `graph_invalid` may rewind, retracting the safe graph in the same transaction.
 
 Every built-in step also supports fenced `needs_human` and `blocked` pauses.
 Backward execution replaces only artifacts for steps actually rerun. Later

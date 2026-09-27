@@ -7,7 +7,8 @@
 - Request tests cover exact REST projections, authentication, error codes,
   persistence effects, and transaction rollback.
 - Concurrency tests cover selection, ownership and request-creation uniqueness,
-  leases, claim fencing, report fencing, dependencies, and graph materialization.
+  leases, claim fencing, report fencing, dependencies, and graph materialization,
+  correction, cancellation, and exact recovery.
 - CLI tests execute the packaged public command and validate help discoverability,
   argument-to-request mapping, health, standard-input handling, output
   preservation, and exit statuses.
@@ -95,10 +96,10 @@ Deterministic brief E2E runs briefing in the `/kos-brief` main agent, verifies
 OKF conformance, independently reviews the specification and exact graph in a
 fresh advanced subagent, observes
 remote publication of the exact reviewed range before one fenced atomic materialization operation, and
-completes only after observing the materialized graph. One-child and acyclic
+completes only after the observed graph digest equals structured review evidence. One-child and acyclic
 multi-child graphs, sibling blockers, parent availability, every backward
-outcome, invalid-graph rollback, repeated materialization, and post-publication graph
-conflict are covered.
+outcome, invalid-graph rollback, idempotent exact retry, conflicting retry,
+bounded size/depth/density, safe correction, cancellation, and post-publication graph conflict are covered.
 
 State recovery tests restart the server after accepted reports and between
 question, answer, resume, and next report. They drop responses before and after

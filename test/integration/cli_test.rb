@@ -40,7 +40,9 @@ class CliTest < ActiveSupport::TestCase
       %w[task context] => [],
       %w[task artifact] => %w[--step],
       %w[task resume] => %w[--owner-id --claim-version --step --answer-file],
-      %w[task report-attempt] => %w[--owner-id --claim-version --step --outcome --artifact-file --required-checks],
+      %w[task report-attempt] => %w[
+        --owner-id --claim-version --step --outcome --artifact-file --required-checks --brief-graph-file
+      ],
       %w[task materialize-children] => %w[--definition-file --owner-id --claim-version]
     }.each do |command, options|
       command_output, command_error, command_status = run_cli(*command, "--help", environment: {})
@@ -181,9 +183,12 @@ class CliTest < ActiveSupport::TestCase
               "answer" => "# Task\n\nMultiline description.\n", "takeover_confirmed" => false } ],
           [ [ "task", "report-attempt", "9", "--owner-id", "session-2", "--claim-version", "6",
             "--step", "develop", "--outcome", "ready", "--artifact-file", description_file.path,
-            "--required-checks", "passed" ],
+            "--required-checks", "passed", "--brief-graph-file", children_file.path ],
             "POST", "/tasks/9/report-attempt", { "owner_id" => "session-2", "claim_version" => 6,
               "step" => "develop", "outcome" => "ready", "required_checks" => "passed",
+              "brief_graph" => { "children" => [ {
+                "key" => "child", "title" => "Child", "description_markdown" => "Work", "blocker_keys" => []
+              } ] },
               "artifact" => "# Task\n\nMultiline description.\n" } ],
             [ [ "task", "cancel", "9" ], "POST", "/tasks/9/cancel", {} ],
             [ [ "task", "materialize-children", "9", "--definition-file", children_file.path,

@@ -61,7 +61,8 @@ class TasksController < ApplicationController
     accepted = task.accepted_artifacts[required_query_string(:step)]
     raise ActiveRecord::RecordNotFound unless accepted
 
-    render json: accepted.slice("outcome", "markdown", "required_checks", "accepted_claim_version", "reconstructed")
+    render json: accepted.slice("outcome", "markdown", "required_checks", "brief_graph", "graph_digest",
+      "accepted_claim_version", "reconstructed")
   end
 
   def update
@@ -130,7 +131,8 @@ class TasksController < ApplicationController
       outcome: required_string(:outcome),
       artifact: required_text(:artifact),
       message: optional_string(:message),
-      required_checks: optional_string(:required_checks)
+      required_checks: optional_string(:required_checks),
+      brief_graph: optional_brief_graph
     )
     render json: serialize(task)
   end
@@ -147,8 +149,9 @@ class TasksController < ApplicationController
       claim_version: required_integer(:claim_version),
       children: required_children
     )
-    render json: { digest: result.fetch(:digest), children: result.fetch(:children).map { |task| serialize(task) } },
-      status: :created
+    render json: { digest: result.fetch(:digest), materialization: result.fetch(:created) ? "created" : "unchanged",
+                   children: result.fetch(:children).map { |task| serialize(task) } },
+      status: result.fetch(:created) ? :created : :ok
   end
 
   def children
@@ -173,7 +176,8 @@ class TasksController < ApplicationController
 
   def artifact_index(task)
     task.accepted_artifacts.map do |step, artifact|
-      artifact.slice("outcome", "required_checks", "accepted_claim_version", "reconstructed").merge("step" => step)
+      artifact.slice("outcome", "required_checks", "graph_digest", "accepted_claim_version", "reconstructed")
+        .merge("step" => step)
     end
   end
 
@@ -202,6 +206,15 @@ class TasksController < ApplicationController
     raise ActionController::BadRequest, "children must be an array" unless value.is_a?(Array)
 
     value.map { |child| child.respond_to?(:to_unsafe_h) ? child.to_unsafe_h : child }
+  end
+
+  def optional_brief_graph
+    return unless params.key?(:brief_graph)
+
+    value = params[:brief_graph]
+    raise ActionController::BadRequest, "brief_graph must be an object" unless value.respond_to?(:to_unsafe_h) || value.is_a?(Hash)
+
+    value.respond_to?(:to_unsafe_h) ? value.to_unsafe_h : value
   end
 
   def find_optional_task(name)

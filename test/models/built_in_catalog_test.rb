@@ -60,6 +60,8 @@ class BuiltInCatalogTest < ActiveSupport::TestCase
 
     assert_includes publish.fetch("instruction"), "reviewed specification"
     assert_includes publish.fetch("instruction"), "exact approved commits and trees remotely"
+    assert_includes steps.dig("review", "instruction"), "brief_graph"
+    assert_includes publish.fetch("instruction"), "approved graph_digest"
     assert_equal({ "complete_task" => true }, publish.dig("outcomes", "published"))
     assert_equal({ "next_step" => "review" }, publish.dig("outcomes", "review_invalid"))
     assert_equal({ "next_step" => "brief" }, publish.dig("outcomes", "base_moved"))

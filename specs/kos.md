@@ -85,12 +85,17 @@ reading the task instead of reconstructing progress from local execution files.
 - Publication validates and pushes the exact reviewed sequence without force or
   history rewriting, observes that sequence remotely, and completes the built-in
   task with `published`.
-- Brief publication includes remote publication followed by atomic
-  materialization of the reviewed child graph before reporting `published`.
+- Brief review submits the exact bounded child graph as structured evidence. KOS
+  normalizes it and records one authoritative `graph_digest`. Publication
+  includes remote publication followed by atomic materialization of that exact
+  approved graph before reporting `published`.
 - The server accepts built-in completion only from the `published` publication
   outcome. A brief cannot complete publication until its child graph exists,
   and an existing graph cannot be combined with a rewind to briefing or review.
 - Incomplete blockers keep dependent tasks unavailable.
+- A materialized brief graph is limited to 64 children, 256 sibling edges, depth
+  32, 100-byte keys, 200-byte titles, 16 KiB descriptions, and a 1 MiB canonical
+  definition. Invalid input creates no rows and validation does not recurse.
 - Request-bound brief and fix creation sends the exact command kind and request
   to one create-or-get operation. The server derives the deterministic key and
   immutable task definition, and returns the one exact task even if its owner
@@ -109,6 +114,10 @@ reading the task instead of reconstructing progress from local execution files.
 - Invalid transitions, stale claims, expired ownership, unavailable tasks,
   oversized or invalid artifacts, and contradictory child graphs fail explicitly
   without a partial state change.
+- An exact materialization retry returns the existing graph identity. A different
+  graph conflicts. `graph_invalid` atomically retracts only an unclaimed pending
+  graph before briefing repeats; cancellation atomically cancels every unfinished
+  materialized child, so no child remains stranded behind a terminal parent.
 - Missing project registration reports the canonical repository identity and the
   administrative registration action; KOS never substitutes another project.
 - Discovery stops before task, worktree, or creation-recovery mutation when
@@ -148,7 +157,8 @@ reading the task instead of reconstructing progress from local execution files.
   a repeated step supersedes its prior accepted artifact.
 - Brief-created children remain unavailable until their parent completes at
   publication. The complete child graph is materialized atomically after remote
-  publication and before the `published` report.
+  publication and before the `published` report. Completion compares its observed
+  digest with the accepted review identity rather than testing only for children.
 
 # Acceptance Criteria
 

@@ -10,7 +10,8 @@ defines the complete system contract and public protocol.
 KOS is a small task-state and coordination service for AI agents. It persists
 projects, immutable workflow revisions, task types, tasks and descriptions,
 parent and blocking relationships, current workflow position, ownership,
-accepted step evidence, pauses, and answers. Rails and SQLite provide the
+accepted step evidence including an approved brief graph identity, pauses, and
+answers. Rails and SQLite provide the
 transactional state core; the thin `kos` CLI is the only agent interface to it.
 Rails never starts OpenCode, Git, project checks, or agent processes.
 
@@ -148,7 +149,9 @@ its owner, status, lease, step, fence, or artifacts; a mismatch conflicts.
 
 `accepted_artifacts` is the authoritative last accepted artifact map by step.
 Each value contains the accepted `outcome`, complete `markdown`,
-`accepted_claim_version`, and boolean `reconstructed`. Development and fix
+`accepted_claim_version`, and boolean `reconstructed`. An approved built-in brief
+review additionally contains normalized `brief_graph` and `graph_digest`.
+Development and fix
 implementation entries may additionally contain `required_checks`, whose closed
 values are `passed`, `not_required`, `missing`, `blocked`, and `failed`.
 Reporting a repeated step replaces that step's value. This JSON representation
@@ -215,10 +218,13 @@ implicit authority from their names.
 
 Briefing runs in the `/kos-brief` command agent and updates OKF behavior while
 proposing a minimal acyclic graph. Review runs independently in a fresh advanced
-subagent and checks both. Publication inspects the accepted graph, publishes the reviewed
+subagent, checks both, and submits the exact graph as structured `brief_graph`
+evidence. The server normalizes it and stores its `graph_digest`. Publication
+inspects the accepted graph, publishes the reviewed
 specification, observes remote success, and then submits the exact graph to one
-fenced operation that atomically normalizes, validates, digests, and materializes
-it. Children are development tasks with the brief as parent and
+fenced operation. It performs bounded normalization, validation, and digesting
+before the SQLite writer lock, then atomically compares and materializes it under
+the publication fence. Children are development tasks with the brief as parent and
 blocker, plus declared sibling blockers. Only then does the publisher report
 `published`, completing the brief.
 
@@ -275,18 +281,20 @@ syntax and options.
 - `step`: `id`, `name`, `instruction`, `artifact_template`, `execution_mode`,
   `model_tier`, and `allowed_outcomes`;
 - `artifacts`: one index entry per accepted step containing `step`, `outcome`,
-  applicable `required_checks`, `accepted_claim_version`, and `reconstructed`,
+  applicable `required_checks` or `graph_digest`, `accepted_claim_version`, and `reconstructed`,
   never Markdown; and
 - `pause`: null or `step`, `claim_version`, `message`, and an `answer` only when
   exactly bound to that pause.
 
 `artifact` requires one step and returns `outcome`, `markdown`, applicable
-`required_checks`, `accepted_claim_version`, and `reconstructed`; an absent step
+`required_checks`, `brief_graph`, `graph_digest`, `accepted_claim_version`, and
+`reconstructed`; an absent step
 is not an empty artifact.
 
 `report-attempt` accepts task ID plus top-level `owner_id`, `claim_version`,
-`step`, `outcome`, `artifact`, optional `message`, and optional
-`required_checks`. The CLI reads `artifact` from `--artifact-file`; `-` means
+`step`, `outcome`, `artifact`, optional `message`, optional `required_checks`,
+and the required `brief_graph` for an approved built-in brief review. The CLI
+reads `artifact` from `--artifact-file`; `-` means
 standard input. An artifact must be a nonempty valid UTF-8 string of at most 1
 MiB. A pause message must be a nonblank string.
 In one database transaction KOS validates the outcome and pause requirement,
@@ -298,10 +306,12 @@ sets pause/answer state. For built-in development and fix work,
 require that assertion in accepted implementation evidence. Rails does not
 select, run, or parse checks or their Markdown output. A built-in `complete_task`
 action is rejected unless the reported step and outcome are `publish` and
-`published`. For a brief at
-`publish`, the transaction serializes with materialization, requires children
-before accepting `published`, and rejects `base_moved`, `graph_invalid`, or
-`review_invalid` after children exist. Rejection stores no artifact. It returns
+`published`. For a brief at `publish`, the transaction serializes with
+materialization and requires the observed graph digest to equal accepted review
+identity before accepting `published`. `base_moved` and `review_invalid` remain
+invalid after materialization. `graph_invalid` atomically retracts the graph only
+while every child is pending and unclaimed and no unrelated task references it.
+Rejection stores no artifact. It returns
 the ordinary task envelope.
 
 The broader CLI also exposes project create/show/update; workflow create; task
@@ -346,6 +356,12 @@ dual-run path. The effective mode and tier defaults preserve already-persisted
 immutable workflow revisions that omit those fields; other incompatible local
 database state will be reset rather than translated.
 
+Graph materialization accepts at most 64 children, 256 sibling edges, depth 32,
+100-byte keys, 200-byte titles, 16 KiB descriptions, and 1 MiB of canonical JSON.
+Validation is iterative and completes before persistence. An exact retry returns
+the unchanged observed graph; a different identity conflicts. Cancelling a
+materialized brief atomically cancels all unfinished direct children.
+
 Git recovery remains observation-oriented. Publication observes the approved
 base, ordered commit sequence, tip, trees, paths, diff digest, and remote before retrying,
 never force-pushes, and never duplicates a confirmed push. A moved base leaves
@@ -353,7 +369,8 @@ history and content unchanged and returns to implementation or briefing as the
 workflow specifies; that content agent integrates before checks, documentation,
 and review repeat. An ambiguous push is resolved by fetching and observing the
 exact sequence remotely. Brief graph creation recovers by observing the complete
-materialized graph and its server-derived digest.
+materialized graph and its server-derived digest, which must equal accepted
+review evidence.
 
 ## Publication
 
@@ -381,9 +398,9 @@ cherry-picks, and appends no commit. It pushes the exact reviewed tip and range
 without force, fetches regardless of push output, and reports success only after
 observing the exact ordered sequence unchanged in remote history. A brief
 publisher then atomically materializes its reviewed graph. The server will not
-accept `published` until those children exist, and after they exist it permits a
-technical `blocked` pause but no publication outcome that rewinds to briefing or
-review.
+accept `published` until the observed and approved graph digests match. After
+children exist it permits a technical `blocked` pause and the explicit
+`graph_invalid` atomic retraction path, but no other publication rewind.
 
 The publisher reports `published` only after observing the exact reviewed range
 in remote history and, for a brief, after the exact child graph exists. The server

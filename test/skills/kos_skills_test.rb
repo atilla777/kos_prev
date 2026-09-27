@@ -219,6 +219,8 @@ class KosSkillsTest < ActiveSupport::TestCase
     assert_includes development.dig("publish", "instruction"), "observing the exact approved sequence remotely"
     brief = definitions.fetch("brief").fetch("steps").index_by { |step| step.fetch("id") }
     assert_includes brief.dig("review", "instruction"), "proposed minimal acyclic graph"
+    assert_includes brief.dig("review", "instruction"), "brief_graph"
+    assert_includes brief.dig("publish", "instruction"), "graph_digest"
     assert_includes brief.dig("publish", "instruction"), "nonempty contiguous linear single-parent sequence"
     assert_includes brief.dig("publish", "instruction"), "exactly one raw line KOS-Task: <task-id>"
     assert all_steps.all? { |step| step.fetch("instruction").present? }

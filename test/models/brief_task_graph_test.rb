@@ -80,18 +80,18 @@ class BriefTaskGraphTest < ActiveSupport::TestCase
         claim_version: claim.claim_version, step: "publish", outcome: "published", artifact: "# Publish")
     end
 
-    assert_match(/before its child graph is materialized/, error.message)
+    assert_match(/before its approved child graph is materialized/, error.message)
     assert_equal before, claim.reload.attributes
     assert_not claim.accepted_artifacts.key?("publish")
   end
 
-  test "rejects backward publication outcomes after materialization without accepting an artifact" do
+  test "rejects non-graph backward publication outcomes after materialization without accepting an artifact" do
     claim = advance_brief_to_publish
     @graph.materialize!(parent_id: @brief.id, owner_id: "brief-owner", claim_version: claim.claim_version,
       children: @definitions)
     before = claim.reload.attributes
 
-    %w[base_moved graph_invalid review_invalid].each do |outcome|
+    %w[base_moved review_invalid].each do |outcome|
       error = assert_raises(TaskLifecycle::InvalidTransition) do
         TaskLifecycle.new.report_attempt!(task_id: @brief.id, owner_id: "brief-owner",
           claim_version: claim.claim_version, step: "publish", outcome:, artifact: "# Backward")
@@ -100,6 +100,20 @@ class BriefTaskGraphTest < ActiveSupport::TestCase
       assert_equal before, claim.reload.attributes
       assert_not claim.accepted_artifacts.key?("publish")
     end
+  end
+
+  test "graph_invalid atomically retracts an unstarted graph for correction" do
+    claim = advance_brief_to_publish
+    @graph.materialize!(parent_id: @brief.id, owner_id: "brief-owner", claim_version: claim.claim_version,
+      children: @definitions)
+
+    assert_difference -> { Task.count }, -2 do
+      corrected = TaskLifecycle.new.report_attempt!(task_id: @brief.id, owner_id: "brief-owner",
+        claim_version: claim.claim_version, step: "publish", outcome: "graph_invalid", artifact: "# Invalid graph")
+      assert_equal [ "active", "brief" ], corrected.values_at(:status, :current_step)
+    end
+    assert_empty @brief.children.reload
+    assert_nil @graph.observe(parent: @brief)[:digest]
   end
 
   test "accepts materialization followed by terminal publication" do
@@ -113,7 +127,7 @@ class BriefTaskGraphTest < ActiveSupport::TestCase
     assert_equal [ "completed", "publish", nil ], completed.values_at(:status, :current_step, :owner_id)
   end
 
-  test "requires the exact fence and rejects repeated materialization without partial children" do
+  test "requires the exact fence and distinguishes exact retries from conflicts" do
     claim = advance_brief_to_publish
 
     assert_no_difference -> { Task.count } do
@@ -130,14 +144,113 @@ class BriefTaskGraphTest < ActiveSupport::TestCase
       end
     end
 
-    @graph.materialize!(parent_id: @brief.id, owner_id: "brief-owner", claim_version: claim.claim_version,
+    first = @graph.materialize!(parent_id: @brief.id, owner_id: "brief-owner", claim_version: claim.claim_version,
       children: @definitions)
     assert_no_difference -> { Task.count } do
+      retry_result = @graph.materialize!(parent_id: @brief.id, owner_id: "brief-owner",
+        claim_version: claim.claim_version, children: @definitions)
+      assert_equal false, retry_result[:created]
+      assert_equal first[:digest], retry_result[:digest]
+    end
+    assert_no_difference -> { Task.count } do
+      assert_raises(TaskLifecycle::Conflict) do
+        @graph.materialize!(parent_id: @brief.id, owner_id: "brief-owner", claim_version: claim.claim_version,
+          children: @definitions.map { |child| child.merge("title" => "Changed #{child.fetch("title")}") })
+      end
+    end
+  end
+
+  test "requires materialization to match the approved graph identity" do
+    claim = advance_brief_to_publish
+
+    assert_no_difference [ -> { Task.count }, -> { TaskDependency.count } ] do
+      assert_raises(TaskLifecycle::Conflict) do
+        @graph.materialize!(parent_id: @brief.id, owner_id: "brief-owner", claim_version: claim.claim_version,
+          children: [ @definitions.first.merge("title" => "Wrong") ])
+      end
+    end
+    review = @brief.reload.accepted_artifacts.fetch("review")
+    assert_equal review.fetch("graph_digest"), @graph.definition(parent: @brief, children: @definitions).fetch("digest")
+  end
+
+  test "does not replace an existing graph whose observed identity conflicts with approval" do
+    claim = advance_brief_to_publish
+    @graph.materialize!(parent_id: @brief.id, owner_id: "brief-owner", claim_version: claim.claim_version,
+      children: @definitions)
+    child_ids = @brief.children.order(:id).pluck(:id)
+    Task.where(id: child_ids.first).update_all(title: "Unexpected persisted title")
+    before = @graph.observe(parent: @brief)
+
+    assert_no_difference [ -> { Task.count }, -> { TaskDependency.count } ] do
       assert_raises(TaskLifecycle::Conflict) do
         @graph.materialize!(parent_id: @brief.id, owner_id: "brief-owner", claim_version: claim.claim_version,
           children: @definitions)
       end
     end
+    assert_equal child_ids, @brief.children.reload.order(:id).pluck(:id)
+    assert_equal before[:digest], @graph.observe(parent: @brief)[:digest]
+  end
+
+  test "bounds graph resources before persistence and validates depth iteratively" do
+    claim = advance_brief_to_publish
+    invalid = [
+      Array.new(BriefTaskGraph::MAX_CHILDREN + 1) { |index| child_definition("c#{index}") },
+      [ child_definition("k" * (BriefTaskGraph::MAX_KEY_BYTES + 1)) ],
+      [ child_definition("child", title: "t" * (BriefTaskGraph::MAX_TITLE_BYTES + 1)) ],
+      [ child_definition("child", description: "d" * (BriefTaskGraph::MAX_DESCRIPTION_BYTES + 1)) ],
+      Array.new(BriefTaskGraph::MAX_DEPTH + 1) do |index|
+        child_definition("depth#{index}", blockers: index.zero? ? [] : [ "depth#{index - 1}" ])
+      end,
+      Array.new(24) do |index|
+        child_definition("dense#{index}", blockers: Array.new(index) { |blocker| "dense#{blocker}" })
+      end,
+      Array.new(BriefTaskGraph::MAX_CHILDREN) do |index|
+        child_definition("large#{index}", description: "d" * BriefTaskGraph::MAX_DESCRIPTION_BYTES)
+      end
+    ]
+
+    invalid.each do |children|
+      assert_no_difference [ -> { Task.count }, -> { TaskDependency.count } ] do
+        assert_raises(BriefTaskGraph::InvalidDefinition) do
+          @graph.definition(parent: @brief, children:)
+        end
+      end
+    end
+    assert_equal claim.claim_version, @brief.reload.claim_version
+  end
+
+  test "rejects an oversized blocker list before acquiring the SQLite writer lock" do
+    claim = advance_brief_to_publish
+    lock_attempted = false
+    graph_class = Class.new(BriefTaskGraph) do
+      define_method(:initialize) { |callback| @callback = callback }
+
+      private
+
+      define_method(:lock_parent!) do |parent_id|
+        @callback.call
+        super(parent_id)
+      end
+    end
+    children = [ child_definition("child", blockers: Array.new(BriefTaskGraph::MAX_EDGES + 1) { |index| "b#{index}" }) ]
+
+    assert_raises(BriefTaskGraph::InvalidDefinition) do
+      graph_class.new(-> { lock_attempted = true }).materialize!(parent_id: @brief.id, owner_id: "brief-owner",
+        claim_version: claim.claim_version, children:)
+    end
+    assert_equal false, lock_attempted
+  end
+
+  test "cancelling a materialized brief cancels every child atomically" do
+    claim = advance_brief_to_publish
+    @graph.materialize!(parent_id: @brief.id, owner_id: "brief-owner", claim_version: claim.claim_version,
+      children: @definitions)
+
+    cancelled = TaskLifecycle.new.cancel!(task_id: @brief.id)
+
+    assert_equal "cancelled", cancelled.status
+    assert_equal [ "cancelled" ], @brief.children.reload.pluck(:status).uniq
+    assert_nil TaskLifecycle.new.claim_next!(project: @project, task_type: @development_type, owner_id: "worker")
   end
 
   test "rolls back every child when persistence fails partway through materialization" do
@@ -174,7 +287,7 @@ class BriefTaskGraphTest < ActiveSupport::TestCase
     claim = lifecycle.report_attempt!(task_id: claim.id, owner_id: "brief-owner", claim_version: claim.claim_version,
       step: "brief", outcome: "specified", artifact: "# Brief")
     claim = lifecycle.report_attempt!(task_id: claim.id, owner_id: "brief-owner", claim_version: claim.claim_version,
-      step: "review", outcome: "approved", artifact: "# Review")
+      step: "review", outcome: "approved", artifact: "# Review", brief_graph: { "children" => @definitions })
     Task.where(id: claim.id).update_all(lease_expires_at: 1.minute.ago)
     assert_raises(TaskLifecycle::Conflict) do
       @graph.materialize!(parent_id: @brief.id, owner_id: "brief-owner", claim_version: claim.claim_version,
@@ -190,7 +303,12 @@ class BriefTaskGraphTest < ActiveSupport::TestCase
     task = lifecycle.report_attempt!(task_id: task.id, owner_id: "brief-owner", claim_version: task.claim_version,
       step: "brief", outcome: "specified", artifact: "# Brief")
     lifecycle.report_attempt!(task_id: task.id, owner_id: "brief-owner", claim_version: task.claim_version,
-      step: "review", outcome: "approved", artifact: "# Review")
+      step: "review", outcome: "approved", artifact: "# Review", brief_graph: { "children" => @definitions })
+  end
+
+
+  def child_definition(key, title: "Child", description: "Work", blockers: [])
+    { "key" => key, "title" => title, "description_markdown" => description, "blocker_keys" => blockers }
   end
 end
 
@@ -222,10 +340,10 @@ class BriefTaskGraphConcurrencyTest < ActiveSupport::TestCase
     claim = lifecycle.claim!(task_id: brief.id, owner_id: "brief-owner")
     claim = lifecycle.report_attempt!(task_id: brief.id, owner_id: "brief-owner", claim_version: claim.claim_version,
       step: "brief", outcome: "specified", artifact: "# Brief")
-    claim = lifecycle.report_attempt!(task_id: brief.id, owner_id: "brief-owner", claim_version: claim.claim_version,
-      step: "review", outcome: "approved", artifact: "# Review")
     children = [ { "key" => "child", "title" => "Child", "description_markdown" => "Work",
       "blocker_keys" => [] } ]
+    claim = lifecycle.report_attempt!(task_id: brief.id, owner_id: "brief-owner", claim_version: claim.claim_version,
+      step: "review", outcome: "approved", artifact: "# Review", brief_graph: { "children" => children })
     locked = Queue.new
     release = Queue.new
     results = Queue.new
@@ -267,8 +385,8 @@ class BriefTaskGraphConcurrencyTest < ActiveSupport::TestCase
     second.join
     outcomes = 2.times.map { results.pop }
 
-    assert_equal 1, outcomes.grep(Hash).size
-    assert_equal 1, outcomes.grep(TaskLifecycle::Conflict).size
+    assert_equal 2, outcomes.grep(Hash).size
+    assert_equal [ false, true ], outcomes.map { |outcome| outcome.fetch(:created) }.sort_by(&:to_s)
     assert_equal 1, brief.children.count
     assert_equal outcomes.grep(Hash).first.fetch(:digest), BriefTaskGraph.new.observe(parent: brief)[:digest]
   end
@@ -345,6 +463,84 @@ class BriefTaskGraphConcurrencyTest < ActiveSupport::TestCase
     assert_safe_unreported_graph(backward_case)
   end
 
+  test "materialization serializes with cancellation without stranding children" do
+    test_case = concurrent_brief
+    graph_locked = Queue.new
+    release_graph = Queue.new
+    coordinated_graph = Class.new(BriefTaskGraph) do
+      define_method(:initialize) do
+        @graph_locked = graph_locked
+        @release_graph = release_graph
+      end
+
+      private
+
+      define_method(:lock_parent!) do |parent_id|
+        parent = super(parent_id)
+        @graph_locked << true
+        @release_graph.pop
+        parent
+      end
+    end
+
+    materialize_thread = run_concurrently(test_case[:results]) do
+      coordinated_graph.new.materialize!(**test_case[:materialize])
+    end
+    Timeout.timeout(5) { graph_locked.pop }
+    cancel_thread = run_concurrently(test_case[:results]) do
+      TaskLifecycle.new.cancel!(task_id: test_case.fetch(:brief).id)
+    end
+    assert_raises(Timeout::Error) { Timeout.timeout(0.1) { test_case[:results].pop } }
+    release_graph << true
+    [ materialize_thread, cancel_thread ].each(&:join)
+    outcomes = 2.times.map { test_case[:results].pop }
+
+    assert_equal 1, outcomes.count { |outcome| outcome.is_a?(Hash) }
+    assert_equal 1, outcomes.count { |outcome| outcome.is_a?(Task) && outcome.status == "cancelled" }
+    assert_equal "cancelled", test_case.fetch(:brief).reload.status
+    assert_equal [ "cancelled" ], test_case.fetch(:brief).children.pluck(:status).uniq
+  end
+
+  test "materialization serializes with graph correction without partial children" do
+    test_case = concurrent_brief
+    graph_locked = Queue.new
+    release_graph = Queue.new
+    coordinated_graph = Class.new(BriefTaskGraph) do
+      define_method(:initialize) do
+        @graph_locked = graph_locked
+        @release_graph = release_graph
+      end
+
+      private
+
+      define_method(:lock_parent!) do |parent_id|
+        parent = super(parent_id)
+        @graph_locked << true
+        @release_graph.pop
+        parent
+      end
+    end
+
+    materialize_thread = run_concurrently(test_case[:results]) do
+      coordinated_graph.new.materialize!(**test_case[:materialize])
+    end
+    Timeout.timeout(5) { graph_locked.pop }
+    correction_thread = run_concurrently(test_case[:results]) do
+      TaskLifecycle.new.report_attempt!(**test_case[:report].merge(outcome: "graph_invalid"))
+    end
+    assert_raises(Timeout::Error) { Timeout.timeout(0.1) { test_case[:results].pop } }
+    release_graph << true
+    [ materialize_thread, correction_thread ].each(&:join)
+    outcomes = 2.times.map { test_case[:results].pop }
+
+    assert_equal 1, outcomes.count { |outcome| outcome.is_a?(Hash) }
+    corrected = outcomes.find { |outcome| outcome.is_a?(Task) }
+    assert_equal [ "active", "brief", 4 ], corrected.values_at(:status, :current_step, :claim_version)
+    assert_equal "graph_invalid", corrected.accepted_artifacts.dig("publish", "outcome")
+    assert_empty test_case.fetch(:brief).children.reload
+    assert_nil BriefTaskGraph.new.observe(parent: test_case.fetch(:brief))[:digest]
+  end
+
   private
 
   def concurrent_brief
@@ -357,10 +553,11 @@ class BriefTaskGraphConcurrencyTest < ActiveSupport::TestCase
     claim = lifecycle.claim!(task_id: brief.id, owner_id:)
     claim = lifecycle.report_attempt!(task_id: brief.id, owner_id:,
       claim_version: claim.claim_version, step: "brief", outcome: "specified", artifact: "# Brief")
-    claim = lifecycle.report_attempt!(task_id: brief.id, owner_id:,
-      claim_version: claim.claim_version, step: "review", outcome: "approved", artifact: "# Review")
     children = [ { "key" => "child", "title" => "Child", "description_markdown" => "Work",
       "blocker_keys" => [] } ]
+    claim = lifecycle.report_attempt!(task_id: brief.id, owner_id:,
+      claim_version: claim.claim_version, step: "review", outcome: "approved", artifact: "# Review",
+      brief_graph: { "children" => children })
     {
       brief:, results: Queue.new,
       materialize: { parent_id: brief.id, owner_id:, claim_version: claim.claim_version, children: },

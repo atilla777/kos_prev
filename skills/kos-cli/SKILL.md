@@ -45,7 +45,7 @@ Each bracketed value below is one separate process argument. Supply file value
 - Resume: `task resume [ID] --owner-id [OWNER] --claim-version [VERSION] --step [STEP]`; add `--answer-file -` or `--takeover-confirmed` only when required.
 - Context: `task context [ID]`.
 - Artifact: `task artifact [ID] --step [STEP]`.
-- Report: `task report-attempt [ID] --owner-id [OWNER] --claim-version [VERSION] --step [STEP] --outcome [OUTCOME] --artifact-file -`; add `--message [MESSAGE]` or `--required-checks [STATUS]` only when required.
+- Report: `task report-attempt [ID] --owner-id [OWNER] --claim-version [VERSION] --step [STEP] --outcome [OUTCOME] --artifact-file [FILE]`; add `--message [MESSAGE]`, `--required-checks [STATUS]`, or `--brief-graph-file [FILE]` only when required. Artifact and graph need separate file inputs; use standard input for at most one of them.
 - Child observation: `task children [ID]`.
 - Child materialization: `task materialize-children [ID] --owner-id [OWNER] --claim-version [VERSION] --definition-file -`.
 
@@ -80,8 +80,11 @@ only when help or the server contract makes it idempotent, or observation proves
 it did not occur and the same fenced input remains valid. `task create-or-get`
 allows one identical retry because the server enforces request identity. If
 success or a safe retry cannot be established, stop as `blocked`. After an
-ambiguous brief graph materialization, compare the complete `task children`
-observation with the reviewed graph before considering any retry.
+ambiguous brief graph materialization, compare the `task children` digest with
+the accepted review `graph_digest`. An identical fenced materialization retry is
+idempotent and returns `materialization: unchanged`; a conflicting identity must
+not be retried. Use `graph_invalid` to retract a wrong unstarted graph before a
+new brief and review.
 
 Do not expose administrative project/workflow/task-type operations, task
 creation, claim, takeover, resume, cancellation, graph mutation, or arbitrary

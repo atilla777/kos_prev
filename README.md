@@ -207,16 +207,19 @@ GET   /tasks/:id/children
 - `project`: `id`, `name`, `repository_identity`, `remote_url`, `default_branch`;
 - `step`: `id`, `name`, `instruction`, `artifact_template`, `execution_mode`,
   `model_tier`, `allowed_outcomes`;
-- `artifacts`: entries with `step`, `outcome`, applicable `required_checks`,
+- `artifacts`: entries with `step`, `outcome`, applicable `required_checks` or
+  `graph_digest`,
   `accepted_claim_version`, and `reconstructed`, without Markdown; and
 - `pause`: null or `step`, `claim_version`, `message`, and exactly bound `answer`.
 
-`artifact` returns `outcome`, `markdown`, applicable `required_checks`,
+`artifact` returns `outcome`, `markdown`, applicable `required_checks`, approved
+`brief_graph` and `graph_digest`,
 `accepted_claim_version`, and `reconstructed` for one accepted step. Absence is
 an error, not empty evidence.
 
 `report-attempt` accepts top-level `owner_id`, `claim_version`, `step`, `outcome`,
-`artifact`, optional `message`, and optional `required_checks`. Artifact Markdown
+`artifact`, optional `message`, optional `required_checks`, and an approved brief
+review's required `brief_graph`. Artifact Markdown
 must be nonempty valid
 UTF-8 and at most 1 MiB. A pause requires a nonblank message. One transaction
 checks the active unexpired fence and allowed action, replaces that step's
@@ -226,15 +229,18 @@ pause/answer state. A stale or invalid report changes nothing. The server also
   Built-in development and fix work cannot report `implemented`, `approved`, or `published` without
 accepted `passed` or `not_required` required-check evidence. Rails never parses
 the Markdown or check output. A brief `published` report
-requires an already materialized child graph under the same serialized
-transaction boundary, and a materialized graph cannot coexist with a
-publication rewind.
+requires an observed child graph whose digest equals the accepted review identity
+under the same serialized transaction boundary.
 
 `materialize-children` accepts `owner_id`, `claim_version`, and the complete
-child definition. Under the exact active publication fence, one transaction
-normalizes, validates, digests, and creates the whole graph or creates nothing.
-The returned server-derived digest and `children` observation support
-lost-response recovery; the digest is output rather than mutation input.
+child definition. KOS performs bounded normalization and validation before
+acquiring SQLite's writer lock. Under the exact active publication fence, one
+transaction compares with accepted review evidence and creates the whole graph
+or creates nothing. Limits are 64 children, 256 sibling edges, depth
+32, 100-byte keys, 200-byte titles, 16 KiB descriptions, and 1 MiB canonical JSON.
+An exact retry returns `materialization: unchanged`; a different identity
+conflicts. `graph_invalid` atomically retracts a still-unclaimed pending graph,
+and cancelling the brief cancels all unfinished children.
 
 Task responses for broader lifecycle operations contain `task`, `workflow`, and
 `step`. `claim-next` and `show-owned` return `204 No Content` when absent. Known
@@ -269,8 +275,8 @@ Use stable built-in task-type keys in user commands. Resume and mutation
 operations supply the exact persisted fence required by command help. Prefer
 standard input for exact request, answer, artifact, description, workflow, and
 child-graph content wherever help permits `-`; never interpolate structured
-content into shell syntax. Brief validation returns a canonical digest, and
-materialization uses that digest and the current fence.
+content into shell syntax. Brief review supplies `--brief-graph-file`; the server
+records its canonical digest, and materialization uses that identity and the current fence.
 
 Server bodies are written unchanged to stdout. HTTP errors exit 1; local usage,
 configuration, and input errors are JSON on stderr and exit 2; transport errors

@@ -13,7 +13,7 @@ class TaskLifecycle
   CHECKED_TASK_KEYS = %w[development fix].freeze
   REQUIRED_CHECK_STATES = %w[passed not_required missing blocked failed].freeze
   SUCCESSFUL_REQUIRED_CHECK_STATES = %w[passed not_required].freeze
-  BRIEF_POST_MATERIALIZATION_BACKWARD_OUTCOMES = %w[base_moved graph_invalid review_invalid].freeze
+  BRIEF_POST_MATERIALIZATION_BACKWARD_OUTCOMES = %w[base_moved review_invalid].freeze
   MAX_ARTIFACT_BYTES = 1.megabyte
   MAX_CREATION_KEY_BYTES = 200
   CREATION_KEY_PATTERN = /\A[A-Za-z0-9][A-Za-z0-9._:-]*\z/
@@ -32,6 +32,7 @@ class TaskLifecycle
   def create!(project:, task_type:, title:, description_markdown:, parent: nil, blockers: [])
     Task.transaction do
       reject_brief_child_definition!(parent)
+      reject_materialized_brief_child_blockers!(blockers)
       task_type = TaskType.find(task_type.id)
       task = Task.create!(project:, task_type:, workflow: task_type.workflow, parent:, title:, description_markdown:,
         current_step: task_type.workflow.first_step_id)
@@ -56,6 +57,7 @@ class TaskLifecycle
       task.save! if task.changed?
 
       unless blockers.equal?(UNCHANGED)
+        reject_materialized_brief_child_blockers!(blockers)
         task.task_dependencies.each(&:destroy!)
         blockers.each { |blocker| TaskDependency.create!(task:, blocker:) }
       end
@@ -197,7 +199,7 @@ class TaskLifecycle
   end
 
   def report_attempt!(task_id:, owner_id:, claim_version:, step:, outcome:, artifact:, message: nil,
-    required_checks: nil)
+    required_checks: nil, brief_graph: nil)
     validate_artifact!(artifact)
     Task.transaction do
       task = Task.includes(:task_type, :workflow).find(task_id)
@@ -207,6 +209,7 @@ class TaskLifecycle
       reject_invalid_builtin_completion!(task, step, outcome, action)
       validate_required_checks!(task, step, action, required_checks)
       validate_brief_publication_order!(task, step, outcome, owner_id:, claim_version:)
+      approved_graph = validate_brief_graph!(task, step, outcome, brief_graph)
 
       now = @clock.call
       artifacts = task.accepted_artifacts.deep_dup
@@ -217,6 +220,7 @@ class TaskLifecycle
         "reconstructed" => false
       }
       artifacts[step]["required_checks"] = required_checks unless required_checks.nil?
+      artifacts[step].merge!(approved_graph) if approved_graph
       changes = transition_changes(action, task, now, message:).merge(accepted_artifacts: artifacts)
       current_claim = Task.where(id: task_id, status: "active", owner_id:, claim_version:, current_step: step)
         .where("lease_expires_at > ?", now)
@@ -229,9 +233,13 @@ class TaskLifecycle
 
   def cancel!(task_id:)
     now = @clock.call
-    task = Task.where(id: task_id).where.not(status: %w[completed cancelled])
     Task.transaction do
-      updated = task.update_all(
+      locked = Task.where(id: task_id).where.not(status: %w[completed cancelled])
+      raise Conflict, "task cannot be cancelled from its current state" unless locked.update_all("updated_at = updated_at") == 1
+
+      task = Task.includes(:task_type).find(task_id)
+      BriefTaskGraph.new.cancel_children_locked!(parent: task, now:) if task.task_type.key == "brief"
+      updated = Task.where(id: task_id).where.not(status: %w[completed cancelled]).update_all(
         status: "cancelled",
         owner_id: nil,
         lease_expires_at: nil,
@@ -308,6 +316,7 @@ class TaskLifecycle
   def create_claimed_task!(project:, task_type:, title:, description_markdown:, owner_id:, parent:, blockers:,
     creation_key:)
     reject_brief_child_definition!(parent)
+    reject_materialized_brief_child_blockers!(blockers)
     ensure_blockers_completed!(blockers)
     task_type = TaskType.find(task_type.id)
     now = @clock.call
@@ -328,6 +337,13 @@ class TaskLifecycle
     return unless parent&.task_type&.key == "brief"
 
     raise Conflict, "brief child graphs can change only through materialization"
+  end
+
+  def reject_materialized_brief_child_blockers!(blockers)
+    protected = blockers.any? do |blocker|
+      blocker.parent&.task_type&.key == "brief" && !%w[completed cancelled].include?(blocker.parent.status)
+    end
+    raise Conflict, "materialized brief children cannot block unrelated tasks before the brief terminates" if protected
   end
 
   def transition_changes(action, task, now, message:)
@@ -401,13 +417,29 @@ class TaskLifecycle
 
     lock_brief_publication_fence!(task, step:, owner_id:, claim_version:)
 
-    children_exist = Task.where(parent_id: task.id).exists?
-    if outcome == "published" && !children_exist
-      raise InvalidTransition, "a brief cannot report published before its child graph is materialized"
+    observed = BriefTaskGraph.new.observe(parent: task)
+    approved_digest = task.accepted_artifacts.dig("review", "graph_digest")
+    if outcome == "published" && (observed.fetch(:digest).nil? || observed.fetch(:digest) != approved_digest)
+      raise InvalidTransition, "a brief cannot report published before its approved child graph is materialized"
     end
-    if children_exist && BRIEF_POST_MATERIALIZATION_BACKWARD_OUTCOMES.include?(outcome)
+    children_exist = observed.fetch(:digest).present?
+    if children_exist && outcome == "graph_invalid"
+      BriefTaskGraph.new.retract_locked!(parent: task)
+    elsif children_exist && BRIEF_POST_MATERIALIZATION_BACKWARD_OUTCOMES.include?(outcome)
       raise InvalidTransition, "a materialized brief graph cannot return publication to an earlier step"
     end
+  end
+
+  def validate_brief_graph!(task, step, outcome, brief_graph)
+    approved = task.task_type.key == "brief" && step == "review" && outcome == "approved"
+    if brief_graph && !approved
+      raise InvalidInput, "brief_graph is allowed only for an approved built-in brief review"
+    end
+    return unless approved
+    raise InvalidInput, "an approved built-in brief review requires brief_graph" unless brief_graph.is_a?(Hash)
+
+    definition = BriefTaskGraph.new.definition(parent: task, children: brief_graph["children"] || brief_graph[:children])
+    { "brief_graph" => { "children" => definition.fetch("children") }, "graph_digest" => definition.fetch("digest") }
   end
 
   def lock_brief_publication_fence!(task, step:, owner_id:, claim_version:)

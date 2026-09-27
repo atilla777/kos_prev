@@ -294,6 +294,7 @@ module Kos
         "--step STEP" => [ :step, String, "Current workflow step" ],
         "--outcome OUTCOME" => [ :outcome, String, "Reported step outcome" ],
         "--artifact-file FILE" => [ :artifact_file, String, "Accepted Markdown artifact, or - for STDIN" ],
+        "--brief-graph-file FILE" => [ :brief_graph_file, String, "Approved brief graph JSON file, or - for STDIN" ],
         "--required-checks STATUS" => [ :required_checks, String, "Required checks status for built-in implementation" ],
         "--message MESSAGE" => [ :message, String, "Question or technical reason for a pause" ]
       ))
@@ -301,6 +302,8 @@ module Kos
       artifact_file = values.delete(:artifact_file)
       values[:artifact] = read_file(artifact_file)
       validate_artifact!(values[:artifact])
+      brief_graph_file = values.delete(:brief_graph_file)
+      values[:brief_graph] = read_json(brief_graph_file) if brief_graph_file
       [ :post, "/tasks/#{id}/report-attempt", values ]
     end
 

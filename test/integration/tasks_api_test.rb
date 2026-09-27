@@ -182,6 +182,7 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     end
     assert_response :created
     digest = response.parsed_body.fetch("digest")
+    assert_equal "created", response.parsed_body.fetch("materialization")
     assert_match(/\Asha256:[0-9a-f]{64}\z/, digest)
     materialized = response.parsed_body.fetch("children")
     assert_equal [ "Core", "Surface" ], materialized.map { |entry| entry.dig("task", "title") }
@@ -200,6 +201,21 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     core_id = observed.find { |entry| entry.dig("task", "title") == "Core" }.dig("task", "id")
     surface = observed.find { |entry| entry.dig("task", "title") == "Surface" }
     assert_equal [ core_id ], surface.fetch("sibling_blocker_ids")
+
+    assert_no_difference -> { Task.count } do
+      post materialize_children_task_path(brief), params: {
+        owner_id: "brief-owner", claim_version: claim.claim_version, children:
+      }, headers: @headers, as: :json
+    end
+    assert_response :success
+    assert_equal "unchanged", response.parsed_body.fetch("materialization")
+    assert_equal digest, response.parsed_body.fetch("digest")
+
+    get context_task_path(brief), headers: @headers, as: :json
+    assert_equal digest, response.parsed_body.fetch("artifacts").find { |entry| entry["step"] == "review" }
+      .fetch("graph_digest")
+    get artifact_task_path(brief), params: { step: "review" }, headers: @headers
+    assert_equal children.map(&:stringify_keys), response.parsed_body.dig("brief_graph", "children")
   end
 
   test "child graph materialization returns stable errors without partial writes" do
@@ -544,7 +560,11 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     claim = lifecycle.report_attempt!(task_id: brief.id, owner_id: "brief-owner", claim_version: claim.claim_version,
       step: "brief", outcome: "specified", artifact: "# Brief")
     claim = lifecycle.report_attempt!(task_id: brief.id, owner_id: "brief-owner", claim_version: claim.claim_version,
-      step: "review", outcome: "approved", artifact: "# Review")
+      step: "review", outcome: "approved", artifact: "# Review", brief_graph: { "children" => [
+        { "key" => "core", "title" => "Core", "description_markdown" => "Build core", "blocker_keys" => [] },
+        { "key" => "surface", "title" => "Surface", "description_markdown" => "Build surface",
+          "blocker_keys" => [ "core" ] }
+      ] })
     [ brief, claim ]
   end
 end
