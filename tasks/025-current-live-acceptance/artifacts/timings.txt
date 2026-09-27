@@ -1,0 +1,10 @@
+/kos-brief: 533.663 seconds
+/kos initial: 345.042 seconds
+/kos confirmed-stopped continuation: 494.081 seconds
+/kos-fix initial: 581.061 seconds
+/kos-fix confirmed-stopped continuation: 332.237 seconds
+/kos-task custom-live-025: 257.171 seconds
+/kos-task expired recovery initial: 212.254 seconds
+/kos-task expired recovery continuation: 68.278 seconds
+
+Total live elapsed: 2824.787 seconds

@@ -1,0 +1,6 @@
+{
+  "outcome": "documented",
+  "markdown": "# Documentation\n\n## Product behavior\n\n`specs/greeting.md` already documents the implemented `--shout` behavior: default and named greetings are uppercased only when the optional flag is present, normal greetings remain unchanged, and unsupported arguments are rejected. The implementation and its deterministic CLI tests match those scenarios, so no additional product-behavior documentation change is needed.\n\n`bin/check` passed: both Ruby syntax checks passed and Minitest completed 4 runs with 29 assertions and no failures, errors, or skips.\n\nThe clean, linear task-owned range from `origin/main` contains only `5cea009fd6e2b73521d4b0a1d54d3539aa000d59` (`Implement greeting shout mode`), whose message contains exactly one raw `KOS-Task: 2` line with no duplicate or case variant. No documentation commit was needed, and nothing was pushed.\n",
+  "accepted_claim_version": 3,
+  "reconstructed": false
+}

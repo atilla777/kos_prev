@@ -1,0 +1,6 @@
+{
+  "outcome": "finished",
+  "markdown": "# Advanced probe\n\n## Evidence\n\nAuthoritative task context identified `advanced_probe` as the active step for task 4, with execution mode `subagent` and model tier `advanced`. This attempt observed that declared advanced subagent profile.\n\nThe accepted `main_probe` artifact has outcome `ready` and records successful repository-identity verification with no repository or Git-state changes. The accepted `standard_probe` artifact has outcome `inspected` and records the standard subagent profile, its review of the main artifact, and no repository or Git-state changes.\n\nThe invoking checkout's fetch and push URLs both normalize to the registered repository identity `kos-live.invalid/acceptance/greeting`. Before and after this read-only work, HEAD remained `4c77a16a4ece939cacdcd58852518b901a55b0d3` and the working tree had no staged, unstaged, or untracked changes. This attempt did not modify repository or Git state.\n",
+  "accepted_claim_version": 3,
+  "reconstructed": false
+}

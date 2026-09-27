@@ -1,0 +1,12 @@
+agents/kos-step-advanced.md
+agents/kos-step-standard.md
+commands/kos-brief.md
+commands/kos-fix.md
+commands/kos-task.md
+commands/kos.md
+kos-installation.json
+skills/kos-cli/SKILL.md
+skills/kos-git/SKILL.md
+skills/kos-step/SKILL.md
+skills/kos/SKILL.md
+skills/okf/SKILL.md

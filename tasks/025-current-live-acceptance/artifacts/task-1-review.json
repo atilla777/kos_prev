@@ -1,0 +1,17 @@
+{
+  "outcome": "approved",
+  "markdown": "# Review\n\n## Graph identity\n\n- One development child: key `implement-shout-mode`, title `Implement greeting shout mode`.\n- Its submitted description requires implementing `--shout` from `specs/greeting.md`, uppercasing the complete final greeting, preserving behavior without the flag, rejecting unsupported arguments, adding deterministic coverage, retaining dependency-free Ruby 3.4 compatibility, and running `bin/check`.\n- Sibling blocker keys: none. The graph is acyclic with one child, zero sibling edges, and depth one, within all server limits.\n\n## Findings\n\nNo actionable findings. The specification precisely records named and default shout output, complete-final-greeting uppercasing, unchanged behavior without the flag, rejection of unsupported arguments, and deterministic acceptance through `bin/check`. The two-file OKF bundle is valid and its index remains accurate. The proposed single-child graph is minimal and matches the request for exactly one development child with no sibling blockers.\n\nThe registered task worktree is clean, detached, and has no active Git operation. The reviewed history is a nonempty contiguous linear single-parent sequence:\n\n- Base: `1ebd822f0939f83121b8cc21857e72addfd2781e`\n- Ordered commits:\n  1. `05a4f8bd59a9d4218ff597aa17c3a2089f2bb536` — `Specify shout greeting behavior`\n- Tip: `05a4f8bd59a9d4218ff597aa17c3a2089f2bb536`\n\nThe commit contains exactly one raw `KOS-Task: 1` line and no case variant or duplicate.\n\n- Base tree: `be36a3532057d0e1337d5140092e13ed45537578`\n- Commit `05a4f8bd59a9d4218ff597aa17c3a2089f2bb536` tree: `9c3f6ce23f06b4429ec7677caf15864a4929fcb8`\n- Changed path: `specs/greeting.md`\n- Complete `git diff --no-ext-diff --no-textconv --binary` SHA-256: `a25fd9b0ce870b2d076e9ef0a911b2d5d1b9291ab7df0b724346b9d474eeddb6`\n\n`git diff --check` passed. HEAD, refs, index, worktree bytes, and status remained unchanged during review.\n\n## Decision\n\nApproved.\n",
+  "brief_graph": {
+    "children": [
+      {
+        "key": "implement-shout-mode",
+        "title": "Implement greeting shout mode",
+        "description_markdown": "Implement `--shout` in the greeting CLI according to `specs/greeting.md`. Uppercase the complete final greeting in shout mode; preserve exact default and named behavior without it; reject unsupported arguments; add deterministic tests for named/default shout behavior, unchanged behavior, and argument rejection; keep the CLI dependency-free and Ruby 3.4-compatible; run `bin/check`.",
+        "blocker_keys": []
+      }
+    ]
+  },
+  "graph_digest": "sha256:0410b947cc9d12560d6fca5577ca882afbbbbd053aefae5098d4c7f1e1f75c09",
+  "accepted_claim_version": 2,
+  "reconstructed": false
+}

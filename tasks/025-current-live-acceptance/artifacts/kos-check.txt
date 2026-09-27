@@ -1,0 +1,44 @@
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=websocket-driver version=0.8.2 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=rbs version=4.2.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=racc version=1.8.1 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=prism version=1.9.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=nio4r version=2.7.5 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=erb version=6.0.7 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=bigdecimal version=4.1.3 platform=ruby> because it is missing extensions
+Inspecting 96 files
+................................................................................................
+
+96 files inspected, no offenses detected
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=websocket-driver version=0.8.2 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=rbs version=4.2.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=racc version=1.8.1 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=prism version=1.9.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=nio4r version=2.7.5 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=erb version=6.0.7 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=bigdecimal version=4.1.3 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=websocket-driver version=0.8.2 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=rbs version=4.2.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=racc version=1.8.1 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=prism version=1.9.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=nio4r version=2.7.5 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=erb version=6.0.7 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=bigdecimal version=4.1.3 platform=ruby> because it is missing extensions
+Hold on, I am eager loading the application.
+All is good!
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=websocket-driver version=0.8.2 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=rbs version=4.2.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=racc version=1.8.1 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=prism version=1.9.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=nio4r version=2.7.5 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=erb version=6.0.7 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=bigdecimal version=4.1.3 platform=ruby> because it is missing extensions
+Running 283 tests in parallel using 16 processes
+Run options: --seed 51025
+
+# Running:
+
+................................................................................................................................................................................................................................../home/aleksei/.local/share/gem/ruby/3.4.0/gems/rack-3.2.7/lib/rack/mock_request.rb:148: warning: literal string will be frozen in the future (run with --debug-frozen-string-literal for more information)
+.........................................................
+
+Finished in 6.016064s, 47.0407 runs/s, 706.6081 assertions/s.
+283 runs, 4251 assertions, 0 failures, 0 errors, 0 skips

@@ -1,0 +1,6 @@
+{
+  "outcome": "ready",
+  "markdown": "# Main probe\n\n## Authoritative context\n\nTask 4 is active at `main_probe` for project 1, registered as `kos-live.invalid/acceptance/greeting`, with claim version 1 and owner `kos-session-1816b32375b4e681e88969cc8136e524`.\n\n## Execution observation\n\nThe step executed in the custom command's fixed main agent. The registered repository identity matches the invoking checkout, and no repository or Git state was changed.\n",
+  "accepted_claim_version": 1,
+  "reconstructed": false
+}

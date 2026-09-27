@@ -1,0 +1,9 @@
+{
+  "candidate_commit": "eb68ba7e57abcdb3c26849652ab5bb9ac344b057",
+  "version": "0.1.0",
+  "source_id": "sha256:3f6ac183442224f1ac77bd6debb032d4bf83bc8ceec3f95f7c856dae7fe2ff6c",
+  "ruby": "3.4.10",
+  "bundler": "4.0.20",
+  "opencode": "1.18.26",
+  "remote_main": "aa287ffb70634b5b52172d7100c9bbe3868e1d88"
+}

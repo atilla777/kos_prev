@@ -1,0 +1,6 @@
+{
+  "outcome": "specified",
+  "markdown": "# Brief\n\n## Specification\n\n- Updated `specs/greeting.md` to define exact named and default output with `--shout`.\n- Specified that shout mode uppercases the complete final greeting, behavior without the flag remains unchanged, and unsupported arguments are rejected.\n\n## Proposed task graph\n\n- One development child implements the specified CLI behavior and deterministic coverage.\n- The child has no dependencies and no sibling blockers.\n\n## Commit sequence\n\n- `05a4f8bd59a9d4218ff597aa17c3a2089f2bb536` Specify shout greeting behavior\n",
+  "accepted_claim_version": 1,
+  "reconstructed": false
+}

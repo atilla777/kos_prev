@@ -1,0 +1,76 @@
+PASS installed generic inventory
+PASS common source identity
+PASS task 1 completed with released ownership
+PASS task 1 brief matches index
+PASS task 1 review matches index
+PASS task 1 publish matches index
+PASS task 2 completed with released ownership
+PASS task 2 plan matches index
+PASS task 2 implement matches index
+PASS task 2 document matches index
+PASS task 2 review matches index
+PASS task 2 publish matches index
+PASS task 3 completed with released ownership
+PASS task 3 diagnose matches index
+PASS task 3 plan matches index
+PASS task 3 implement matches index
+PASS task 3 document matches index
+PASS task 3 review matches index
+PASS task 3 publish matches index
+PASS task 4 completed with released ownership
+PASS task 4 main_probe matches index
+PASS task 4 standard_probe matches index
+PASS task 4 advanced_probe matches index
+PASS task 2 required checks passed
+PASS task 3 required checks passed
+PASS brief graph identity
+PASS brief child completed without sibling blockers
+PASS all dispatched prompts are ID-only
+PASS standard profile uses Terra
+PASS advanced profile uses Sol
+PASS custom main uses fixed Sol agent
+PASS main observations are bound to successful live reports
+PASS unchanged executions are retained
+PASS launch observations retain raw stream audit commitments
+PASS installed source declares custom Sol main
+PASS installed source declares generic model tiers
+PASS kos-development stale dispatch has unchanged authoritative observation
+PASS kos-expired-recovery-resume stale dispatch has unchanged authoritative observation
+PASS kos-expired-recovery stale dispatch has unchanged authoritative observation
+PASS kos-fix stale dispatch has unchanged authoritative observation
+PASS expired lease resumed exactly once
+PASS expired lease observation proves one exact resume
+PASS recovery probe released ownership
+PASS recovery did not change remote
+PASS bundle remote main
+PASS task 1 reviewed tip is remote
+PASS task 1 nonempty reviewed range
+PASS task 1 review lists 05a4f8bd59a9d4218ff597aa17c3a2089f2bb536
+PASS task 1 05a4f8bd59a9d4218ff597aa17c3a2089f2bb536 canonical trailer
+PASS task 1 05a4f8bd59a9d4218ff597aa17c3a2089f2bb536 linear parent
+PASS task 1 trees
+PASS task 1 binary diff digest
+PASS task 1 changed paths
+PASS task 2 reviewed tip is remote
+PASS task 2 nonempty reviewed range
+PASS task 2 review lists 5cea009fd6e2b73521d4b0a1d54d3539aa000d59
+PASS task 2 5cea009fd6e2b73521d4b0a1d54d3539aa000d59 canonical trailer
+PASS task 2 5cea009fd6e2b73521d4b0a1d54d3539aa000d59 linear parent
+PASS task 2 trees
+PASS task 2 binary diff digest
+PASS task 2 changed paths
+PASS task 3 reviewed tip is remote
+PASS task 3 nonempty reviewed range
+PASS task 3 review lists aa287ffb70634b5b52172d7100c9bbe3868e1d88
+PASS task 3 aa287ffb70634b5b52172d7100c9bbe3868e1d88 canonical trailer
+PASS task 3 aa287ffb70634b5b52172d7100c9bbe3868e1d88 linear parent
+PASS task 3 trees
+PASS task 3 binary diff digest
+PASS task 3 changed paths
+PASS remote contains deliberate regression
+PASS retained bundle fixture passes
+PASS fixture checks passed
+PASS production smoke passed
+PASS candidate bin/check passed
+PASS bundle verified
+PASS live server source identity

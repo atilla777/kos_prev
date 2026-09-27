@@ -1,0 +1,6 @@
+{
+  "outcome": "inspected",
+  "markdown": "# Standard probe\n\n## Evidence\n\nTask 4 authoritative context identifies the active `standard_probe` step with execution mode `subagent` and model tier `standard`.\n\nThe accepted `main_probe` artifact was retrieved and records the task as active for project 1 with registered identity `kos-live.invalid/acceptance/greeting`.\n\nThis attempt made no repository or Git-state changes.\n",
+  "accepted_claim_version": 2,
+  "reconstructed": false
+}

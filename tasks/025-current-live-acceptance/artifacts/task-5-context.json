@@ -1,0 +1,40 @@
+{
+  "task": {
+    "id": 5,
+    "project_id": 1,
+    "title": "Task 025 expired lease recovery probe",
+    "description_markdown": "# Custom live execution probe\n\nExercise the installed custom scheduler through one main step followed by\nstandard and advanced subagent steps. Do not change repository or Git state.\n",
+    "status": "cancelled",
+    "current_step": "standard_probe",
+    "owner_id": null,
+    "claim_version": 4,
+    "lease_expires_at": null
+  },
+  "project": {
+    "id": 1,
+    "name": "KOS current live acceptance fixture",
+    "repository_identity": "kos-live.invalid/acceptance/greeting",
+    "remote_url": "git@kos-live.invalid:acceptance/greeting.git",
+    "default_branch": "main"
+  },
+  "step": {
+    "id": "standard_probe",
+    "name": "Standard subagent probe",
+    "instruction": "Do not modify the repository or Git state. Read authoritative context and the accepted main_probe artifact, record the standard profile observation, and report inspected.",
+    "artifact_template": "# Standard probe\n\n## Evidence",
+    "execution_mode": "subagent",
+    "model_tier": "standard",
+    "allowed_outcomes": [
+      "inspected"
+    ]
+  },
+  "artifacts": [
+    {
+      "outcome": "ready",
+      "accepted_claim_version": 2,
+      "reconstructed": false,
+      "step": "main_probe"
+    }
+  ],
+  "pause": null
+}

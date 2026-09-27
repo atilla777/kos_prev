@@ -1,0 +1,6 @@
+{
+  "outcome": "published",
+  "markdown": "# Publication\n\n## Reviewed commit sequence\n\n- Reviewed base: `05a4f8bd59a9d4218ff597aa17c3a2089f2bb536`.\n- Published ordered commit: `5cea009fd6e2b73521d4b0a1d54d3539aa000d59` (`Implement greeting shout mode`), with the reviewed base as its sole parent.\n- Published tip: `5cea009fd6e2b73521d4b0a1d54d3539aa000d59`.\n\n## Remote observation\n\n- Fetched `origin/main` before publishing and observed the reviewed base exactly.\n- Pushed the exact reviewed tip to `refs/heads/main` without force.\n- Fetched `origin/main` after the push and observed the exact approved one-commit sequence at `5cea009fd6e2b73521d4b0a1d54d3539aa000d59`.\n",
+  "accepted_claim_version": 5,
+  "reconstructed": false
+}

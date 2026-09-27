@@ -1,0 +1,6 @@
+{
+  "outcome": "published",
+  "markdown": "# Publication\n\n## Reviewed commit sequence\n\n- Base: `1ebd822f0939f83121b8cc21857e72addfd2781e` (tree `be36a3532057d0e1337d5140092e13ed45537578`)\n- Commit: `05a4f8bd59a9d4218ff597aa17c3a2089f2bb536` (parent `1ebd822f0939f83121b8cc21857e72addfd2781e`, tree `9c3f6ce23f06b4429ec7677caf15864a4929fcb8`)\n- Tip: `05a4f8bd59a9d4218ff597aa17c3a2089f2bb536`\n- Path: `specs/greeting.md`\n- Binary diff SHA-256: `a25fd9b0ce870b2d076e9ef0a911b2d5d1b9291ab7df0b724346b9d474eeddb6`\n- The sequence is nonempty, contiguous, linear, and single-parent. The commit has exactly one raw `KOS-Task: 1` line with no variant or duplicate. `git diff --check` passed; the detached worktree was clean with no active Git operation.\n\n## Remote observation\n\nFetched `origin/main` at the reviewed base, then pushed the exact reviewed tip without force. A post-push fetch observed `origin/main` at `05a4f8bd59a9d4218ff597aa17c3a2089f2bb536` with the approved parent and tree `9c3f6ce23f06b4429ec7677caf15864a4929fcb8`.\n\n## Child graph\n\nMaterialized the approved one-child graph with digest `sha256:0410b947cc9d12560d6fca5577ca882afbbbbd053aefae5098d4c7f1e1f75c09`; server observation returned `created` and child `implement-shout-mode` (task 2).\n",
+  "accepted_claim_version": 3,
+  "reconstructed": false
+}

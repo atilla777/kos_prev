@@ -1,0 +1,6 @@
+/home/aleksei/plums/kos/tasks/025-current-live-acceptance/artifacts/fixture-remote.bundle is okay
+The bundle contains these 2 refs:
+aa287ffb70634b5b52172d7100c9bbe3868e1d88 refs/heads/main
+aa287ffb70634b5b52172d7100c9bbe3868e1d88 HEAD
+The bundle records a complete history.
+The bundle uses this hash algorithm: sha1

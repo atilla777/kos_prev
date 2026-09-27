@@ -32,6 +32,7 @@ development records and are not read by the KOS server or CLI.
 | 022 | [Tighten runtime boundaries](022-tighten-runtime-boundaries/task.md) | done | 021 |
 | 023 | [Test real scheduling](023-test-real-scheduling/task.md) | done | 022 |
 | 024 | [Complete production operations](024-complete-operations/task.md) | done | 023 |
+| 025 | [Run current live acceptance](025-current-live-acceptance/task.md) | done | 024 |
 
 ## Planned
 
@@ -43,7 +44,8 @@ acceptance criteria so a new session can continue from the first unblocked row.
 
 | ID | Task | Status | Dependencies |
 | --- | --- | --- | --- |
-| 025 | [Run current live acceptance](025-current-live-acceptance/task.md) | planned | 024 |
+| 026 | [Diagnose live stale reports](026-diagnose-live-stale-reports/task.md) | planned | 025 |
+| 027 | [Evaluate document consolidation](027-evaluate-document-consolidation/task.md) | planned | 025, 026 |
 
 ## Resolved Decisions
 

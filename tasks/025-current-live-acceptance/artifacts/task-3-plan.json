@@ -1,0 +1,6 @@
+{
+  "outcome": "planned",
+  "markdown": "# Plan\n\n## Fix\n\nChange only `lib/greeting.rb`: restore the shared base string in `Greeting.message` from `Goodbye, #{name}!` to `Hello, #{name}!`. Leave argument parsing, default-name handling, shout uppercasing, the product specification, and existing tests unchanged. The accepted diagnosis is sound: the current commit changes only this line, and both normal and shout output derive from it.\n\n## Regression check\n\nUse the existing assertions in `test/greeting_test.rb` as regression coverage; they already require exact normal and shouted `Hello` output through both `Greeting.message` and the CLI, including named and default greetings. On the unchanged defect, `bin/check` currently exits 1 with three failures showing `Goodbye`/`GOODBYE` instead of `Hello`/`HELLO`, so this check detects the diagnosed defect. After the one-line fix, run `bin/check` and require syntax checks plus all four Minitest tests to pass with no failures or errors.\n",
+  "accepted_claim_version": 2,
+  "reconstructed": false
+}

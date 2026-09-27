@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "version": "0.1.0",
+  "source_id": "sha256:3f6ac183442224f1ac77bd6debb032d4bf83bc8ceec3f95f7c856dae7fe2ff6c",
+  "commands": [
+    "kos-brief.md",
+    "kos-fix.md",
+    "kos-task.md",
+    "kos.md"
+  ],
+  "agents": [
+    "kos-step-advanced.md",
+    "kos-step-standard.md"
+  ],
+  "skills": [
+    "kos",
+    "kos-cli",
+    "kos-git",
+    "kos-step",
+    "okf"
+  ]
+}

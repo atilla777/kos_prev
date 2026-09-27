@@ -1,0 +1,23 @@
+kos 0.1.0 source=sha256:3f6ac183442224f1ac77bd6debb032d4bf83bc8ceec3f95f7c856dae7fe2ff6c
+Usage: kos <resource> <action> [options]
+
+KOS task coordination CLI
+
+Resources and actions:
+  health
+  session-id
+  project create | show | update
+  workflow create
+  task-type create | update
+  task create | create-or-get | create-and-claim | update | show | context | artifact | show-owned | claim-next | claim | resumable | resume | report-attempt | cancel
+  task materialize-children | children
+
+Options:
+  -v, --version             Show the installed CLI version
+
+Run `kos <resource> <action> --help` for command options.
+Usage: kos task context ID [options]
+    -h, --help                       Show this help
+Usage: kos task artifact ID [options]
+    -h, --help                       Show this help
+        --step STEP                  Accepted workflow step

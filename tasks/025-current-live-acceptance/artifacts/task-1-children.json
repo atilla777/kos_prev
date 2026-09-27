@@ -1,0 +1,39 @@
+{
+  "parent_id": 1,
+  "digest": "sha256:0410b947cc9d12560d6fca5577ca882afbbbbd053aefae5098d4c7f1e1f75c09",
+  "children": [
+    {
+      "task": {
+        "id": 2,
+        "project_id": 1,
+        "task_type_id": 2,
+        "workflow_id": 2,
+        "parent_id": 1,
+        "title": "Implement greeting shout mode",
+        "status": "completed",
+        "current_step": "publish",
+        "owner_id": null,
+        "claim_version": 6,
+        "lease_expires_at": null,
+        "created_at": "2026-09-27T07:57:55.953Z",
+        "updated_at": "2026-09-27T08:13:39.848Z",
+        "task_type_key": "development",
+        "blocker_ids": [
+          1
+        ]
+      },
+      "workflow": {
+        "id": 2,
+        "name": "Built-in development",
+        "created_at": "2026-09-27T07:47:35.493Z"
+      },
+      "step": {
+        "id": "publish",
+        "name": "Publish",
+        "execution_mode": "subagent",
+        "model_tier": "standard"
+      },
+      "sibling_blocker_ids": []
+    }
+  ]
+}

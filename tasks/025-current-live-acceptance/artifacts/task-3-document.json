@@ -1,0 +1,6 @@
+{
+  "outcome": "documented",
+  "markdown": "# Documentation\n\n## Product behavior\n\nNo product behavior changed: the implementation restored the already-specified `Hello` greeting after a regression. `specs/greeting.md` already documents the exact normal, default, and shouted `Hello` outputs, so no OKF update was needed.\n\n## Verification\n\n`bin/check` passed: both Ruby syntax checks passed and Minitest reported 4 runs, 29 assertions, 0 failures, 0 errors, and 0 skips.\n\n## Commit sequence\n\nValidated the clean, linear task-owned sequence from `origin/main` to `HEAD`: `aa287ffb70634b5b52172d7100c9bbe3868e1d88 Restore greeting message` contains exactly one raw `KOS-Task: 3` line, with no case variant or duplicate. No documentation commit was needed.\n",
+  "accepted_claim_version": 5,
+  "reconstructed": false
+}

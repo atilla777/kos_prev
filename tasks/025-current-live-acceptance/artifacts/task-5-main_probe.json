@@ -1,0 +1,6 @@
+{
+  "outcome": "ready",
+  "markdown": "# Main probe\n\n## Authoritative context\n\n- Task: `5` (`Task 025 expired lease recovery probe`)\n- Project: `1`, repository identity `kos-live.invalid/acceptance/greeting`\n- Current step: `main_probe`\n- Execution mode: `main`\n- Owner: `kos-session-8de448cfc2a51d6a1a116e44d9f182b5`\n- Claim version: `2`\n\n## Execution observation\n\nThe custom command's fixed main agent read the authoritative task context and completed this read-only probe. No repository files or Git state were modified.\n",
+  "accepted_claim_version": 2,
+  "reconstructed": false
+}

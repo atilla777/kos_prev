@@ -1,0 +1,547 @@
+{
+  "streams": [
+    {
+      "source": "kos-brief",
+      "sha256": "f44211e6fdd1a9cbc3d161d1366860e2a8dadb939570a762a74ee0de1fdda8d2",
+      "bytes": 136182,
+      "lines": 131
+    },
+    {
+      "source": "kos-custom",
+      "sha256": "f81a0f43a4dd06a036611ea1718fbfb6af2bc240b13aec065d4dbf094894c76f",
+      "bytes": 70795,
+      "lines": 74
+    },
+    {
+      "source": "kos-development-resume",
+      "sha256": "30a7ab6b99056297d1553b3ad6d0d89ae973babe864c32510615a214a4a5fd7e",
+      "bytes": 24047,
+      "lines": 34
+    },
+    {
+      "source": "kos-development",
+      "sha256": "9b6278f1f6b3cb93b6ee9843acb23efd8b3019ecbc24c8749e27ee3f844cf624",
+      "bytes": 41085,
+      "lines": 42
+    },
+    {
+      "source": "kos-expired-recovery-resume",
+      "sha256": "1befafb5ba653e0c43855b94bbc370f289354d766bbc6d10e84c685961f2ae4b",
+      "bytes": 8455,
+      "lines": 13
+    },
+    {
+      "source": "kos-expired-recovery",
+      "sha256": "26f88e374f19b9d386cfb39ecc5fb5d8ad8b8d1b04440ae4092d3e2281de663a",
+      "bytes": 70202,
+      "lines": 79
+    },
+    {
+      "source": "kos-fix-resume",
+      "sha256": "b8f856b77567a2b89bb593fa490de5a7c2e2f0d7debad6c33fb635c78fdc559b",
+      "bytes": 48002,
+      "lines": 39
+    },
+    {
+      "source": "kos-fix",
+      "sha256": "fdaea1979046d4b9162b44a8b6194751bba2c0decbdc930212dd2240131d1712",
+      "bytes": 50244,
+      "lines": 52
+    }
+  ],
+  "main": [
+    {
+      "source": "kos-brief",
+      "timestamp": 1790495611285,
+      "raw_line_sha256": "bd849f77cb1e7abfd4c0a2aa38f1c1e91cf543d422f95fe9ed0b25d42718874b",
+      "mode": "main",
+      "prompt": "1",
+      "profile": "build",
+      "model": "gpt-5.6-sol",
+      "step": "brief",
+      "result": "reported"
+    },
+    {
+      "source": "kos-custom",
+      "timestamp": 1790497997095,
+      "raw_line_sha256": "1e69819b4f794b7c8757a0ad274f8dc64a82d8b457c756c563a37162e084b4df",
+      "mode": "main",
+      "prompt": "4",
+      "profile": "build",
+      "model": "gpt-5.6-sol",
+      "step": "main_probe",
+      "result": "reported"
+    },
+    {
+      "source": "kos-expired-recovery",
+      "timestamp": 1790498494702,
+      "raw_line_sha256": "51def7fd35467e87a9cf7dbd77457efd962a5b6171e9976b50e7ebf04fc481e7",
+      "mode": "main",
+      "prompt": "5",
+      "profile": "build",
+      "model": "gpt-5.6-sol",
+      "step": "main_probe",
+      "result": "reported"
+    }
+  ],
+  "calls": [
+    {
+      "source": "kos-brief",
+      "timestamp": 1790495782021,
+      "raw_line_sha256": "bd2a90bf46762edc33c86c308d952ee9bdb8a8b25c4b388fce905ea639a82a9a",
+      "mode": "subagent",
+      "prompt": "1",
+      "profile": "kos-step-advanced",
+      "model": "gpt-5.6-sol",
+      "result": "reported"
+    },
+    {
+      "source": "kos-brief",
+      "timestamp": 1790495896997,
+      "raw_line_sha256": "b153fa3174c28dba8fafc26b364f64ff522ce2ec8796df7a209a17991226bf80",
+      "mode": "subagent",
+      "prompt": "1",
+      "profile": "kos-step-standard",
+      "model": "gpt-5.6-terra",
+      "result": "reported"
+    },
+    {
+      "source": "kos-custom",
+      "timestamp": 1790498046888,
+      "raw_line_sha256": "0861db22ad03017ec4a0085f0494ea323f9d01c5990fd079c8cb03c3b7298176",
+      "mode": "subagent",
+      "prompt": "4",
+      "profile": "kos-step-standard",
+      "model": "gpt-5.6-terra",
+      "result": "reported"
+    },
+    {
+      "source": "kos-custom",
+      "timestamp": 1790498137199,
+      "raw_line_sha256": "6e05ae4be76a1300a84228fdccb798720faf85fd87d918f25446d9266494803d",
+      "mode": "subagent",
+      "prompt": "4",
+      "profile": "kos-step-advanced",
+      "model": "gpt-5.6-sol",
+      "result": "reported"
+    },
+    {
+      "source": "kos-development-resume",
+      "timestamp": 1790496429687,
+      "raw_line_sha256": "885b32c1b24dca3eacf3c4017b4ce802879b78461066bbe8acd45594a7e085b0",
+      "mode": "subagent",
+      "prompt": "2",
+      "profile": "kos-step-standard",
+      "model": "gpt-5.6-terra",
+      "result": "reported"
+    },
+    {
+      "source": "kos-development-resume",
+      "timestamp": 1790496524626,
+      "raw_line_sha256": "a3d8b3040b9dcf4f85a5f1ef0396bdd55e5f52e35665ce6ca7b28103f4af29ad",
+      "mode": "subagent",
+      "prompt": "2",
+      "profile": "kos-step-standard",
+      "model": "gpt-5.6-terra",
+      "result": "reported"
+    },
+    {
+      "source": "kos-development-resume",
+      "timestamp": 1790496726617,
+      "raw_line_sha256": "a29dc8081a769f4fabbeb050ec86a03852a2e314405c7d23e8e5514da0ba059c",
+      "mode": "subagent",
+      "prompt": "2",
+      "profile": "kos-step-advanced",
+      "model": "gpt-5.6-sol",
+      "result": "reported"
+    },
+    {
+      "source": "kos-development-resume",
+      "timestamp": 1790496822710,
+      "raw_line_sha256": "1bada31d87762ed16a230e637f8d1821337591577f38938a93c3b07fab9a7934",
+      "mode": "subagent",
+      "prompt": "2",
+      "profile": "kos-step-standard",
+      "model": "gpt-5.6-terra",
+      "result": "reported"
+    },
+    {
+      "source": "kos-development",
+      "timestamp": 1790496145169,
+      "raw_line_sha256": "6a04697cda164dd06ad1f7bf9cec227bb53f1a08b8549d3f30ee8bf5fd21f8e5",
+      "mode": "subagent",
+      "prompt": "2",
+      "profile": "kos-step-advanced",
+      "model": "gpt-5.6-sol",
+      "result": "reported"
+    },
+    {
+      "source": "kos-development",
+      "timestamp": 1790496268594,
+      "raw_line_sha256": "0eaf67f334445846ed2d15622fbf25c0617b424286f6bd961a6537571292afba",
+      "mode": "subagent",
+      "prompt": "2",
+      "profile": "kos-step-standard",
+      "model": "gpt-5.6-terra",
+      "result": "stale_rejected"
+    },
+    {
+      "source": "kos-expired-recovery-resume",
+      "timestamp": 1790498652460,
+      "raw_line_sha256": "789bccbad84ae26be5cf36a459af5d38b5a924c09e150400329a6c3a83924900",
+      "mode": "subagent",
+      "prompt": "5",
+      "profile": "kos-step-standard",
+      "model": "gpt-5.6-terra",
+      "result": "stale_rejected"
+    },
+    {
+      "source": "kos-expired-recovery",
+      "timestamp": 1790498557016,
+      "raw_line_sha256": "a12870fde39b1e6c6a86e94e50147c9cb86d3f1f5ed227980bc5f5910a3b47ea",
+      "mode": "subagent",
+      "prompt": "5",
+      "profile": "kos-step-standard",
+      "model": "gpt-5.6-terra",
+      "result": "stale_rejected"
+    },
+    {
+      "source": "kos-fix-resume",
+      "timestamp": 1790497597883,
+      "raw_line_sha256": "7539449ea6435749dfce4c87efd9f24078e2519ccea9dbc4b99f9d596901b719",
+      "mode": "subagent",
+      "prompt": "3",
+      "profile": "kos-step-standard",
+      "model": "gpt-5.6-terra",
+      "result": "reported"
+    },
+    {
+      "source": "kos-fix-resume",
+      "timestamp": 1790497738106,
+      "raw_line_sha256": "13a9d283b6e81b34f13ccb3f214e5726ed5f094b1ab2e9762b3d28f6c3abc570",
+      "mode": "subagent",
+      "prompt": "3",
+      "profile": "kos-step-advanced",
+      "model": "gpt-5.6-sol",
+      "result": "reported"
+    },
+    {
+      "source": "kos-fix-resume",
+      "timestamp": 1790497810713,
+      "raw_line_sha256": "974cd77a7172c1986c460d0cf7c3cc6d94d0dbc7a13464d316ebef4e51267d69",
+      "mode": "subagent",
+      "prompt": "3",
+      "profile": "kos-step-standard",
+      "model": "gpt-5.6-terra",
+      "result": "reported"
+    },
+    {
+      "source": "kos-fix",
+      "timestamp": 1790497154069,
+      "raw_line_sha256": "5cf559970d19f3360d65cbebb05a2bae0f419fa7aa2624f6714ab13aa6b29704",
+      "mode": "subagent",
+      "prompt": "3",
+      "profile": "kos-step-advanced",
+      "model": "gpt-5.6-sol",
+      "result": "reported"
+    },
+    {
+      "source": "kos-fix",
+      "timestamp": 1790497250299,
+      "raw_line_sha256": "28e6980fbe122479a53da03e29cecf496c296cae4c7b25d04aa700b216ded948",
+      "mode": "subagent",
+      "prompt": "3",
+      "profile": "kos-step-advanced",
+      "model": "gpt-5.6-sol",
+      "result": "reported"
+    },
+    {
+      "source": "kos-fix",
+      "timestamp": 1790497350788,
+      "raw_line_sha256": "a02cd9eee6748328603b02b83d1d9f5705b2406be1dc66bc613390c5cbd9d6d8",
+      "mode": "subagent",
+      "prompt": "3",
+      "profile": "kos-step-standard",
+      "model": "gpt-5.6-terra",
+      "result": "reported"
+    },
+    {
+      "source": "kos-fix",
+      "timestamp": 1790497444791,
+      "raw_line_sha256": "7142861520903b614a1880c19bbc897a7d0507cd5adad65dcfb02ed3b9412926",
+      "mode": "subagent",
+      "prompt": "3",
+      "profile": "kos-step-standard",
+      "model": "gpt-5.6-terra",
+      "result": "stale_rejected"
+    }
+  ],
+  "scheduler": [
+    {
+      "source": "kos-brief",
+      "timestamp": 1790495439428,
+      "raw_line_sha256": "5e69427376a70033b83070d9c3b22490474d1cec185ce1041af7850b61a5ab3f",
+      "command": "\"$KOS_CLI_PATH\" task show 1",
+      "output": "{\"task\":{\"id\":1,\"status\":\"active\",\"current_step\":\"brief\",\"owner_id\":\"kos-session-57ff5247a26bbb79565844c418be4919\",\"claim_version\":1,\"lease_expires_at\":\"2026-09-27T13:50:36.077Z\",\"title\":\"Brief: Add a shout mode to bin/greet selected by a double-hyphen-shout flag. Uppercase the complete final greeting in this mode\"},\"step\":{\"id\":\"brief\",\"execution_mode\":\"main\",\"model_tier\":\"advanced\"},\"artifacts\":[],\"pause\":null}"
+    },
+    {
+      "source": "kos-brief",
+      "timestamp": 1790495606481,
+      "raw_line_sha256": "a198a5e0c46c7fc5f8344dedd35757cbc0e828c6cad88175972707e5f160926e",
+      "command": "\"$KOS_CLI_PATH\" task show 1",
+      "output": "{\"task\":{\"id\":1,\"status\":\"active\",\"current_step\":\"brief\",\"owner_id\":\"kos-session-57ff5247a26bbb79565844c418be4919\",\"claim_version\":1,\"lease_expires_at\":\"2026-09-27T13:50:36.077Z\",\"title\":\"Brief: Add a shout mode to bin/greet selected by a double-hyphen-shout flag. Uppercase the complete final greeting in this mode\"},\"step\":{\"id\":\"brief\",\"execution_mode\":\"main\",\"model_tier\":\"advanced\"},\"artifacts\":[],\"pause\":null}"
+    },
+    {
+      "source": "kos-brief",
+      "timestamp": 1790495616757,
+      "raw_line_sha256": "a79047ebc1227ed102bbfd437d900336dd36c245353fc16271cd6d5010650694",
+      "command": "\"$KOS_CLI_PATH\" task show 1",
+      "output": "{\"task\":{\"id\":1,\"status\":\"active\",\"current_step\":\"review\",\"owner_id\":\"kos-session-57ff5247a26bbb79565844c418be4919\",\"claim_version\":2,\"lease_expires_at\":\"2026-09-27T13:50:36.077Z\",\"title\":\"Brief: Add a shout mode to bin/greet selected by a double-hyphen-shout flag. Uppercase the complete final greeting in this mode\"},\"step\":{\"id\":\"review\",\"execution_mode\":\"subagent\",\"model_tier\":\"advanced\"},\"artifacts\":[{\"outcome\":\"specified\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"brief\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-brief",
+      "timestamp": 1790495785517,
+      "raw_line_sha256": "b56f1c3cbb5abe9c6aa706e76174c1e24382ec8c7d9e9584eed4078f59eeeeb3",
+      "command": "\"$KOS_CLI_PATH\" task show 1",
+      "output": "{\"task\":{\"id\":1,\"status\":\"active\",\"current_step\":\"publish\",\"owner_id\":\"kos-session-57ff5247a26bbb79565844c418be4919\",\"claim_version\":3,\"lease_expires_at\":\"2026-09-27T13:50:36.077Z\",\"title\":\"Brief: Add a shout mode to bin/greet selected by a double-hyphen-shout flag. Uppercase the complete final greeting in this mode\"},\"step\":{\"id\":\"publish\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"specified\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"brief\"},{\"outcome\":\"approved\",\"graph_digest\":\"sha256:0410b947cc9d12560d6fca5577ca882afbbbbd053aefae5098d4c7f1e1f75c09\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"review\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-brief",
+      "timestamp": 1790495900881,
+      "raw_line_sha256": "33fdfbfb663831204dad0fa4bbcd422b1fe2ed42e1dabdefb254351aca9561f8",
+      "command": "\"$KOS_CLI_PATH\" task show 1",
+      "output": "{\"task\":{\"id\":1,\"status\":\"completed\",\"current_step\":\"publish\",\"owner_id\":null,\"claim_version\":4,\"lease_expires_at\":null,\"title\":\"Brief: Add a shout mode to bin/greet selected by a double-hyphen-shout flag. Uppercase the complete final greeting in this mode\"},\"step\":{\"id\":\"publish\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"specified\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"brief\"},{\"outcome\":\"approved\",\"graph_digest\":\"sha256:0410b947cc9d12560d6fca5577ca882afbbbbd053aefae5098d4c7f1e1f75c09\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"review\"},{\"outcome\":\"published\",\"accepted_claim_version\":3,\"reconstructed\":false,\"step\":\"publish\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-custom",
+      "timestamp": 1790497918264,
+      "raw_line_sha256": "bbf0506b0dbfdd5d9e2039d3b2bb04c02677f7033c31daf4c05ae4257fa813b9",
+      "command": "\"$KOS_CLI_PATH\" task resumable --project-id 1 --task-type-key custom-live-025",
+      "output": "[]"
+    },
+    {
+      "source": "kos-custom",
+      "timestamp": 1790497929729,
+      "raw_line_sha256": "04c7c09b2c8f2e3ef81742d6c4a54d606d749044f55d0ab517cebcb6a3163500",
+      "command": "\"$KOS_CLI_PATH\" task show 4",
+      "output": "{\"task\":{\"id\":4,\"status\":\"active\",\"current_step\":\"main_probe\",\"owner_id\":\"kos-session-1816b32375b4e681e88969cc8136e524\",\"claim_version\":1,\"lease_expires_at\":\"2026-09-27T14:32:06.773Z\",\"title\":\"Task 025 custom live execution probe\"},\"step\":{\"id\":\"main_probe\",\"execution_mode\":\"main\",\"model_tier\":\"standard\"},\"artifacts\":[],\"pause\":null}"
+    },
+    {
+      "source": "kos-custom",
+      "timestamp": 1790498002001,
+      "raw_line_sha256": "b940ff27e9f3aab19111220879e4f670554ddbc14654a276061bf7932aea999f",
+      "command": "\"$KOS_CLI_PATH\" task show 4",
+      "output": "{\"task\":{\"id\":4,\"status\":\"active\",\"current_step\":\"standard_probe\",\"owner_id\":\"kos-session-1816b32375b4e681e88969cc8136e524\",\"claim_version\":2,\"lease_expires_at\":\"2026-09-27T14:32:06.773Z\",\"title\":\"Task 025 custom live execution probe\"},\"step\":{\"id\":\"standard_probe\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"ready\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"main_probe\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-custom",
+      "timestamp": 1790498051381,
+      "raw_line_sha256": "4df3a4cbb8514a3d775266dd67357d4669e1b73f47ae025d0f293ff18387d3cd",
+      "command": "\"$KOS_CLI_PATH\" task show 4",
+      "output": "{\"task\":{\"id\":4,\"status\":\"active\",\"current_step\":\"advanced_probe\",\"owner_id\":\"kos-session-1816b32375b4e681e88969cc8136e524\",\"claim_version\":3,\"lease_expires_at\":\"2026-09-27T14:32:06.773Z\",\"title\":\"Task 025 custom live execution probe\"},\"step\":{\"id\":\"advanced_probe\",\"execution_mode\":\"subagent\",\"model_tier\":\"advanced\"},\"artifacts\":[{\"outcome\":\"ready\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"main_probe\"},{\"outcome\":\"inspected\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"standard_probe\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-custom",
+      "timestamp": 1790498140383,
+      "raw_line_sha256": "c5a96128de6d614204e191c237fd52a62d9a6434ffaa850097979930e07184f4",
+      "command": "\"$KOS_CLI_PATH\" task show 4",
+      "output": "{\"task\":{\"id\":4,\"status\":\"completed\",\"current_step\":\"advanced_probe\",\"owner_id\":null,\"claim_version\":4,\"lease_expires_at\":null,\"title\":\"Task 025 custom live execution probe\"},\"step\":{\"id\":\"advanced_probe\",\"execution_mode\":\"subagent\",\"model_tier\":\"advanced\"},\"artifacts\":[{\"outcome\":\"ready\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"main_probe\"},{\"outcome\":\"inspected\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"standard_probe\"},{\"outcome\":\"finished\",\"accepted_claim_version\":3,\"reconstructed\":false,\"step\":\"advanced_probe\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-development-resume",
+      "timestamp": 1790496344625,
+      "raw_line_sha256": "37e90445df39b1b3c0552bdbf817f739362f5cffb8cc39c8ca6850ec47f08a04",
+      "command": "\"$KOS_CLI_PATH\" task show \"2\"",
+      "output": "{\"task\":{\"id\":2,\"status\":\"active\",\"current_step\":\"implement\",\"owner_id\":\"kos-session-5ed46519dbbadd5de8b039f6086d6667\",\"claim_version\":2,\"lease_expires_at\":\"2026-09-27T13:59:21.938Z\",\"title\":\"Implement greeting shout mode\"},\"step\":{\"id\":\"implement\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"planned\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"plan\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-development-resume",
+      "timestamp": 1790496434016,
+      "raw_line_sha256": "2de07a022313cddd6e8d50d0103f82113cae0d4c47f57f7ec6d78a2d2bb2e569",
+      "command": "\"$KOS_CLI_PATH\" task show \"2\"",
+      "output": "{\"task\":{\"id\":2,\"status\":\"active\",\"current_step\":\"document\",\"owner_id\":\"kos-session-5ed46519dbbadd5de8b039f6086d6667\",\"claim_version\":3,\"lease_expires_at\":\"2026-09-27T13:59:21.938Z\",\"title\":\"Implement greeting shout mode\"},\"step\":{\"id\":\"document\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"planned\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"plan\"},{\"outcome\":\"implemented\",\"required_checks\":\"passed\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"implement\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-development-resume",
+      "timestamp": 1790496527429,
+      "raw_line_sha256": "0fab0ee2e446969bfcb02c628dcee0c65ab616b848414f9bee99bdbcfc46437e",
+      "command": "\"$KOS_CLI_PATH\" task show \"2\"",
+      "output": "{\"task\":{\"id\":2,\"status\":\"active\",\"current_step\":\"review\",\"owner_id\":\"kos-session-5ed46519dbbadd5de8b039f6086d6667\",\"claim_version\":4,\"lease_expires_at\":\"2026-09-27T13:59:21.938Z\",\"title\":\"Implement greeting shout mode\"},\"step\":{\"id\":\"review\",\"execution_mode\":\"subagent\",\"model_tier\":\"advanced\"},\"artifacts\":[{\"outcome\":\"planned\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"plan\"},{\"outcome\":\"implemented\",\"required_checks\":\"passed\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"implement\"},{\"outcome\":\"documented\",\"accepted_claim_version\":3,\"reconstructed\":false,\"step\":\"document\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-development-resume",
+      "timestamp": 1790496732093,
+      "raw_line_sha256": "02219dbf3681080122f73e0d9d536d96d140ec8e923d662bf4585172441711f3",
+      "command": "\"$KOS_CLI_PATH\" task show \"2\"",
+      "output": "{\"task\":{\"id\":2,\"status\":\"active\",\"current_step\":\"publish\",\"owner_id\":\"kos-session-5ed46519dbbadd5de8b039f6086d6667\",\"claim_version\":5,\"lease_expires_at\":\"2026-09-27T13:59:21.938Z\",\"title\":\"Implement greeting shout mode\"},\"step\":{\"id\":\"publish\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"planned\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"plan\"},{\"outcome\":\"implemented\",\"required_checks\":\"passed\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"implement\"},{\"outcome\":\"documented\",\"accepted_claim_version\":3,\"reconstructed\":false,\"step\":\"document\"},{\"outcome\":\"approved\",\"accepted_claim_version\":4,\"reconstructed\":false,\"step\":\"review\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-development-resume",
+      "timestamp": 1790496826511,
+      "raw_line_sha256": "0f74ecc6661b6308d17bfcd1e7dd3fa0e8987b2526422ed935f6cb5f579a1444",
+      "command": "\"$KOS_CLI_PATH\" task show \"2\"",
+      "output": "{\"task\":{\"id\":2,\"status\":\"completed\",\"current_step\":\"publish\",\"owner_id\":null,\"claim_version\":6,\"lease_expires_at\":null,\"title\":\"Implement greeting shout mode\"},\"step\":{\"id\":\"publish\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"planned\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"plan\"},{\"outcome\":\"implemented\",\"required_checks\":\"passed\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"implement\"},{\"outcome\":\"documented\",\"accepted_claim_version\":3,\"reconstructed\":false,\"step\":\"document\"},{\"outcome\":\"approved\",\"accepted_claim_version\":4,\"reconstructed\":false,\"step\":\"review\"},{\"outcome\":\"published\",\"accepted_claim_version\":5,\"reconstructed\":false,\"step\":\"publish\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-development",
+      "timestamp": 1790495957739,
+      "raw_line_sha256": "37b57edb2c9493b1fc2d954b4e1e147e086095bbb42f4f010b763fd8b6e8c34c",
+      "command": "\"$KOS_CLI_PATH\" task resumable --project-id \"1\" --task-type-key \"development\"",
+      "output": "[]"
+    },
+    {
+      "source": "kos-development",
+      "timestamp": 1790495965661,
+      "raw_line_sha256": "4384c37d0cc767523640dc9e381ce0952e1bb338a0a5bb874b69306830fa47a6",
+      "command": "\"$KOS_CLI_PATH\" task show \"2\"",
+      "output": "{\"task\":{\"id\":2,\"status\":\"active\",\"current_step\":\"plan\",\"owner_id\":\"kos-session-5ed46519dbbadd5de8b039f6086d6667\",\"claim_version\":1,\"lease_expires_at\":\"2026-09-27T13:59:21.938Z\",\"title\":\"Implement greeting shout mode\"},\"step\":{\"id\":\"plan\",\"execution_mode\":\"subagent\",\"model_tier\":\"advanced\"},\"artifacts\":[],\"pause\":null}"
+    },
+    {
+      "source": "kos-development",
+      "timestamp": 1790496150064,
+      "raw_line_sha256": "ca4ae5a0f1b3651d97d4c3148f6cbb2ec5b912ce7b9e5f6c2ce545657b2c12a3",
+      "command": "\"$KOS_CLI_PATH\" task show \"2\"",
+      "output": "{\"task\":{\"id\":2,\"status\":\"active\",\"current_step\":\"implement\",\"owner_id\":\"kos-session-5ed46519dbbadd5de8b039f6086d6667\",\"claim_version\":2,\"lease_expires_at\":\"2026-09-27T13:59:21.938Z\",\"title\":\"Implement greeting shout mode\"},\"step\":{\"id\":\"implement\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"planned\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"plan\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-development",
+      "timestamp": 1790496271986,
+      "raw_line_sha256": "9774550088869b4af4a5a7c39941d6c82f4d084d42fbd5d072e595a2abb83460",
+      "command": "\"$KOS_CLI_PATH\" task show \"2\"",
+      "output": "{\"task\":{\"id\":2,\"status\":\"active\",\"current_step\":\"implement\",\"owner_id\":\"kos-session-5ed46519dbbadd5de8b039f6086d6667\",\"claim_version\":2,\"lease_expires_at\":\"2026-09-27T13:59:21.938Z\",\"title\":\"Implement greeting shout mode\"},\"step\":{\"id\":\"implement\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"planned\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"plan\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-expired-recovery-resume",
+      "timestamp": 1790498605455,
+      "raw_line_sha256": "d23fc54d86496f3fc9c3426c1ae13aa9651fcb4844bec65adcf6ba3fa2195b4c",
+      "command": "\"$KOS_CLI_PATH\" task show 5",
+      "output": "{\"task\":{\"id\":5,\"status\":\"active\",\"current_step\":\"standard_probe\",\"owner_id\":\"kos-session-8de448cfc2a51d6a1a116e44d9f182b5\",\"claim_version\":3,\"lease_expires_at\":\"2026-09-27T14:40:16.200Z\",\"title\":\"Task 025 expired lease recovery probe\"},\"step\":{\"id\":\"standard_probe\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"ready\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"main_probe\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-expired-recovery-resume",
+      "timestamp": 1790498655956,
+      "raw_line_sha256": "9c2e52d03dbcfd1d7c55e4d85fc028c94860ab2362019be7a869c4c511bbeac6",
+      "command": "\"$KOS_CLI_PATH\" task show 5",
+      "output": "{\"task\":{\"id\":5,\"status\":\"active\",\"current_step\":\"standard_probe\",\"owner_id\":\"kos-session-8de448cfc2a51d6a1a116e44d9f182b5\",\"claim_version\":3,\"lease_expires_at\":\"2026-09-27T14:40:16.200Z\",\"title\":\"Task 025 expired lease recovery probe\"},\"step\":{\"id\":\"standard_probe\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"ready\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"main_probe\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-expired-recovery",
+      "timestamp": 1790498396859,
+      "raw_line_sha256": "ff9c8413a0329c177d213e12e77112ed638d573bcc013dcff2cefac41f047035",
+      "command": "\"$KOS_CLI_PATH\" task resumable --project-id 1 --task-type-key custom-live-025",
+      "output": "[{\"task\":{\"id\":5,\"status\":\"active\",\"current_step\":\"main_probe\",\"owner_id\":\"expired-probe-owner\",\"claim_version\":1,\"lease_expires_at\":\"2026-09-27T08:38:55.939Z\",\"title\":\"Task 025 expired lease recovery probe\"}}]"
+    },
+    {
+      "source": "kos-expired-recovery",
+      "timestamp": 1790498401903,
+      "raw_line_sha256": "ba166a2db12a4d4c6e0f71e3a15ec6224fab4eaf74a743e5a5791b49dc0e3eb6",
+      "command": "\"$KOS_CLI_PATH\" task show 5",
+      "output": "{\"task\":{\"id\":5,\"status\":\"active\",\"current_step\":\"main_probe\",\"owner_id\":\"expired-probe-owner\",\"claim_version\":1,\"lease_expires_at\":\"2026-09-27T08:38:55.939Z\",\"title\":\"Task 025 expired lease recovery probe\"},\"step\":{\"id\":\"main_probe\",\"execution_mode\":\"main\",\"model_tier\":\"standard\"},\"artifacts\":[],\"pause\":null}"
+    },
+    {
+      "source": "kos-expired-recovery",
+      "timestamp": 1790498416256,
+      "raw_line_sha256": "96c8b4b4f2671e2f2c2ae6bebecd935d340cc90b501c7a0908ff1732217502c5",
+      "command": "\"$KOS_CLI_PATH\" task resume 5 --owner-id kos-session-8de448cfc2a51d6a1a116e44d9f182b5 --claim-version 1 --step main_probe",
+      "output": "{\"task\":{\"id\":5,\"status\":\"active\",\"current_step\":\"main_probe\",\"owner_id\":\"kos-session-8de448cfc2a51d6a1a116e44d9f182b5\",\"claim_version\":2,\"lease_expires_at\":\"2026-09-27T14:40:16.200Z\"}}"
+    },
+    {
+      "source": "kos-expired-recovery",
+      "timestamp": 1790498421817,
+      "raw_line_sha256": "f1b2d75b6ef384dbf15a193ff2c6fe0a1515140da3441be1e67e265a5e48cc59",
+      "command": "\"$KOS_CLI_PATH\" task show 5",
+      "output": "{\"task\":{\"id\":5,\"status\":\"active\",\"current_step\":\"main_probe\",\"owner_id\":\"kos-session-8de448cfc2a51d6a1a116e44d9f182b5\",\"claim_version\":2,\"lease_expires_at\":\"2026-09-27T14:40:16.200Z\",\"title\":\"Task 025 expired lease recovery probe\"},\"step\":{\"id\":\"main_probe\",\"execution_mode\":\"main\",\"model_tier\":\"standard\"},\"artifacts\":[],\"pause\":null}"
+    },
+    {
+      "source": "kos-expired-recovery",
+      "timestamp": 1790498498087,
+      "raw_line_sha256": "e337ff74e9681635a465264270581dae05cb10211a2234f7550f7b30bbcdb725",
+      "command": "\"$KOS_CLI_PATH\" task show 5",
+      "output": "{\"task\":{\"id\":5,\"status\":\"active\",\"current_step\":\"standard_probe\",\"owner_id\":\"kos-session-8de448cfc2a51d6a1a116e44d9f182b5\",\"claim_version\":3,\"lease_expires_at\":\"2026-09-27T14:40:16.200Z\",\"title\":\"Task 025 expired lease recovery probe\"},\"step\":{\"id\":\"standard_probe\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"ready\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"main_probe\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-expired-recovery",
+      "timestamp": 1790498560074,
+      "raw_line_sha256": "93ca8d8e1e6d1d96ede9b4b1d3dc6464596ca0661688d62324b60bb40962e10b",
+      "command": "\"$KOS_CLI_PATH\" task show 5",
+      "output": "{\"task\":{\"id\":5,\"status\":\"active\",\"current_step\":\"standard_probe\",\"owner_id\":\"kos-session-8de448cfc2a51d6a1a116e44d9f182b5\",\"claim_version\":3,\"lease_expires_at\":\"2026-09-27T14:40:16.200Z\",\"title\":\"Task 025 expired lease recovery probe\"},\"step\":{\"id\":\"standard_probe\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"ready\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"main_probe\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-fix-resume",
+      "timestamp": 1790497500943,
+      "raw_line_sha256": "5a1d4413cb5240c78e608af57ae90ec4fe973962c0613d7b8833a721f309ffa1",
+      "command": "\"$KOS_CLI_PATH\" task context \"3\" && \"$KOS_CLI_PATH\" task show \"3\"",
+      "output": "{\"task\":{\"id\":3,\"project_id\":1,\"title\":\"Fix: The greeting CLI now prints Goodbye instead of Hello for normal and shout greetings, and bin/check fails. Restore the sp\",\"description_markdown\":\"# Problem\\n\\nThe greeting CLI now prints Goodbye instead of Hello for normal and shout greetings, and bin/check fails. Restore the specified greeting behavior and retain regression coverage.\\n\",\"status\":\"active\",\"current_step\":\"document\",\"owner_id\":\"kos-session-1e00e8226a60b2aec4edddba966a932a\",\"claim_version\":4,\"lease_expires_at\":\"2026-09-27T14:15:17.424Z\"},\"project\":{\"id\":1,\"name\":\"KOS current live acceptance fixture\",\"repository_identity\":\"kos-live.invalid/acceptance/greeting\",\"remote_url\":\"git@kos-live.invalid:acceptance/greeting.git\",\"default_branch\":\"main\"},\"step\":{\"id\":\"document\",\"name\":\"Document\",\"instruction\":\"Confirm the implementation and required checks support documentation, or choose implementation_invalid. Use okf to update affected product behavior, or explain why behavior did not change. Commit documentation changes locally when needed, validate the complete clean linear task-owned sequence and exactly one raw line KOS-Task: <task-id> with no case variant or duplicate per commit, and never push.\",\"artifact_template\":\"# Documentation\\n\\n## Product behavior\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\",\"allowed_outcomes\":[\"documented\",\"implementation_invalid\",\"needs_human\",\"blocked\"]},\"artifacts\":[{\"outcome\":\"diagnosed\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"diagnose\"},{\"outcome\":\"planned\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"plan\"},{\"outcome\":\"implemented\",\"required_checks\":\"passed\",\"accepted_claim_version\":3,\"reconstructed\":false,\"step\":\"implement\"}],\"pause\":null}{\"task\":{\"id\":3,\"status\":\"active\",\"current_step\":\"document\",\"owner_id\":\"kos-session-1e00e8226a60b2aec4edddba966a932a\",\"claim_version\":4,\"lease_expires_at\":\"2026-09-27T14:15:17.424Z\",\"title\":\"Fix: The greeting CLI now prints Goodbye instead of Hello for normal and shout greetings, and bin/check fails. Restore the sp\"},\"step\":{\"id\":\"document\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"diagnosed\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"diagnose\"},{\"outcome\":\"planned\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"plan\"},{\"outcome\":\"implemented\",\"required_checks\":\"passed\",\"accepted_claim_version\":3,\"reconstructed\":false,\"step\":\"implement\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-fix-resume",
+      "timestamp": 1790497507793,
+      "raw_line_sha256": "34e4eeea531909614ccdf97f8cd6917820efa3ee74ebd7be5f75e3af24f27de1",
+      "command": "\"$KOS_CLI_PATH\" task resume \"3\" --owner-id \"kos-session-da9982bb8325806d52d4441e54f822b7\" --claim-version \"4\" --step \"document\" --takeover-confirmed",
+      "output": "{\"task\":{\"id\":3,\"status\":\"active\",\"current_step\":\"document\",\"owner_id\":\"kos-session-da9982bb8325806d52d4441e54f822b7\",\"claim_version\":5,\"lease_expires_at\":\"2026-09-27T14:25:07.785Z\"}}"
+    },
+    {
+      "source": "kos-fix-resume",
+      "timestamp": 1790497512411,
+      "raw_line_sha256": "9ee58f21c6cb552144220993496ee1c85965e775ff13a1f10960e11780712615",
+      "command": "\"$KOS_CLI_PATH\" task show \"3\"",
+      "output": "{\"task\":{\"id\":3,\"status\":\"active\",\"current_step\":\"document\",\"owner_id\":\"kos-session-da9982bb8325806d52d4441e54f822b7\",\"claim_version\":5,\"lease_expires_at\":\"2026-09-27T14:25:07.785Z\",\"title\":\"Fix: The greeting CLI now prints Goodbye instead of Hello for normal and shout greetings, and bin/check fails. Restore the sp\"},\"step\":{\"id\":\"document\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"diagnosed\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"diagnose\"},{\"outcome\":\"planned\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"plan\"},{\"outcome\":\"implemented\",\"required_checks\":\"passed\",\"accepted_claim_version\":3,\"reconstructed\":false,\"step\":\"implement\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-fix-resume",
+      "timestamp": 1790497604900,
+      "raw_line_sha256": "c94c9f44c15dac3700d04e680e7d7fcaebe16904eb807a52a7dd232ca6db857d",
+      "command": "\"$KOS_CLI_PATH\" task show \"3\"",
+      "output": "{\"task\":{\"id\":3,\"status\":\"active\",\"current_step\":\"review\",\"owner_id\":\"kos-session-da9982bb8325806d52d4441e54f822b7\",\"claim_version\":6,\"lease_expires_at\":\"2026-09-27T14:25:07.785Z\",\"title\":\"Fix: The greeting CLI now prints Goodbye instead of Hello for normal and shout greetings, and bin/check fails. Restore the sp\"},\"step\":{\"id\":\"review\",\"execution_mode\":\"subagent\",\"model_tier\":\"advanced\"},\"artifacts\":[{\"outcome\":\"diagnosed\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"diagnose\"},{\"outcome\":\"planned\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"plan\"},{\"outcome\":\"implemented\",\"required_checks\":\"passed\",\"accepted_claim_version\":3,\"reconstructed\":false,\"step\":\"implement\"},{\"outcome\":\"documented\",\"accepted_claim_version\":5,\"reconstructed\":false,\"step\":\"document\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-fix-resume",
+      "timestamp": 1790497741649,
+      "raw_line_sha256": "f096618983b481f36cb948fff4d567248cc35cea6283189146b73f9744aa1ea4",
+      "command": "\"$KOS_CLI_PATH\" task show \"3\"",
+      "output": "{\"task\":{\"id\":3,\"status\":\"active\",\"current_step\":\"publish\",\"owner_id\":\"kos-session-da9982bb8325806d52d4441e54f822b7\",\"claim_version\":7,\"lease_expires_at\":\"2026-09-27T14:25:07.785Z\",\"title\":\"Fix: The greeting CLI now prints Goodbye instead of Hello for normal and shout greetings, and bin/check fails. Restore the sp\"},\"step\":{\"id\":\"publish\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"diagnosed\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"diagnose\"},{\"outcome\":\"planned\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"plan\"},{\"outcome\":\"implemented\",\"required_checks\":\"passed\",\"accepted_claim_version\":3,\"reconstructed\":false,\"step\":\"implement\"},{\"outcome\":\"documented\",\"accepted_claim_version\":5,\"reconstructed\":false,\"step\":\"document\"},{\"outcome\":\"approved\",\"accepted_claim_version\":6,\"reconstructed\":false,\"step\":\"review\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-fix-resume",
+      "timestamp": 1790497814807,
+      "raw_line_sha256": "d4866661322fc4d8634a026f4018e5c67907006e631751a1d5ae2688a3753055",
+      "command": "\"$KOS_CLI_PATH\" task show \"3\"",
+      "output": "{\"task\":{\"id\":3,\"status\":\"completed\",\"current_step\":\"publish\",\"owner_id\":null,\"claim_version\":8,\"lease_expires_at\":null,\"title\":\"Fix: The greeting CLI now prints Goodbye instead of Hello for normal and shout greetings, and bin/check fails. Restore the sp\"},\"step\":{\"id\":\"publish\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"diagnosed\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"diagnose\"},{\"outcome\":\"planned\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"plan\"},{\"outcome\":\"implemented\",\"required_checks\":\"passed\",\"accepted_claim_version\":3,\"reconstructed\":false,\"step\":\"implement\"},{\"outcome\":\"documented\",\"accepted_claim_version\":5,\"reconstructed\":false,\"step\":\"document\"},{\"outcome\":\"approved\",\"accepted_claim_version\":6,\"reconstructed\":false,\"step\":\"review\"},{\"outcome\":\"published\",\"accepted_claim_version\":7,\"reconstructed\":false,\"step\":\"publish\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-fix",
+      "timestamp": 1790496923135,
+      "raw_line_sha256": "06dd5d440377dbc8b9ffb78715000efdce0854142d215b6a7268c45013068c38",
+      "command": "\"$KOS_CLI_PATH\" task show \"3\"",
+      "output": "{\"task\":{\"id\":3,\"status\":\"active\",\"current_step\":\"diagnose\",\"owner_id\":\"kos-session-1e00e8226a60b2aec4edddba966a932a\",\"claim_version\":1,\"lease_expires_at\":\"2026-09-27T14:15:17.424Z\",\"title\":\"Fix: The greeting CLI now prints Goodbye instead of Hello for normal and shout greetings, and bin/check fails. Restore the sp\"},\"step\":{\"id\":\"diagnose\",\"execution_mode\":\"subagent\",\"model_tier\":\"advanced\"},\"artifacts\":[],\"pause\":null}"
+    },
+    {
+      "source": "kos-fix",
+      "timestamp": 1790497157991,
+      "raw_line_sha256": "680be2a74a5e23bdbaf5519bd4d7a289172feda84751137f8a0139244d6a8c0e",
+      "command": "\"$KOS_CLI_PATH\" task show \"3\"",
+      "output": "{\"task\":{\"id\":3,\"status\":\"active\",\"current_step\":\"plan\",\"owner_id\":\"kos-session-1e00e8226a60b2aec4edddba966a932a\",\"claim_version\":2,\"lease_expires_at\":\"2026-09-27T14:15:17.424Z\",\"title\":\"Fix: The greeting CLI now prints Goodbye instead of Hello for normal and shout greetings, and bin/check fails. Restore the sp\"},\"step\":{\"id\":\"plan\",\"execution_mode\":\"subagent\",\"model_tier\":\"advanced\"},\"artifacts\":[{\"outcome\":\"diagnosed\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"diagnose\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-fix",
+      "timestamp": 1790497253335,
+      "raw_line_sha256": "833ba4e851d2377413440767834e988859a6b5e66f9d772e87627627b3455472",
+      "command": "\"$KOS_CLI_PATH\" task show \"3\"",
+      "output": "{\"task\":{\"id\":3,\"status\":\"active\",\"current_step\":\"implement\",\"owner_id\":\"kos-session-1e00e8226a60b2aec4edddba966a932a\",\"claim_version\":3,\"lease_expires_at\":\"2026-09-27T14:15:17.424Z\",\"title\":\"Fix: The greeting CLI now prints Goodbye instead of Hello for normal and shout greetings, and bin/check fails. Restore the sp\"},\"step\":{\"id\":\"implement\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"diagnosed\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"diagnose\"},{\"outcome\":\"planned\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"plan\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-fix",
+      "timestamp": 1790497355173,
+      "raw_line_sha256": "38ac568c82d46c8e08d1b1d37bb934e5e87383ed932f8b3ad447ff395f5f8d67",
+      "command": "\"$KOS_CLI_PATH\" task show \"3\"",
+      "output": "{\"task\":{\"id\":3,\"status\":\"active\",\"current_step\":\"document\",\"owner_id\":\"kos-session-1e00e8226a60b2aec4edddba966a932a\",\"claim_version\":4,\"lease_expires_at\":\"2026-09-27T14:15:17.424Z\",\"title\":\"Fix: The greeting CLI now prints Goodbye instead of Hello for normal and shout greetings, and bin/check fails. Restore the sp\"},\"step\":{\"id\":\"document\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"diagnosed\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"diagnose\"},{\"outcome\":\"planned\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"plan\"},{\"outcome\":\"implemented\",\"required_checks\":\"passed\",\"accepted_claim_version\":3,\"reconstructed\":false,\"step\":\"implement\"}],\"pause\":null}"
+    },
+    {
+      "source": "kos-fix",
+      "timestamp": 1790497449703,
+      "raw_line_sha256": "e5c56f81441d096afbee71eb2d6d7a539786ab537985438959180a006413b05f",
+      "command": "\"$KOS_CLI_PATH\" task show \"3\"",
+      "output": "{\"task\":{\"id\":3,\"status\":\"active\",\"current_step\":\"document\",\"owner_id\":\"kos-session-1e00e8226a60b2aec4edddba966a932a\",\"claim_version\":4,\"lease_expires_at\":\"2026-09-27T14:15:17.424Z\",\"title\":\"Fix: The greeting CLI now prints Goodbye instead of Hello for normal and shout greetings, and bin/check fails. Restore the sp\"},\"step\":{\"id\":\"document\",\"execution_mode\":\"subagent\",\"model_tier\":\"standard\"},\"artifacts\":[{\"outcome\":\"diagnosed\",\"accepted_claim_version\":1,\"reconstructed\":false,\"step\":\"diagnose\"},{\"outcome\":\"planned\",\"accepted_claim_version\":2,\"reconstructed\":false,\"step\":\"plan\"},{\"outcome\":\"implemented\",\"required_checks\":\"passed\",\"accepted_claim_version\":3,\"reconstructed\":false,\"step\":\"implement\"}],\"pause\":null}"
+    }
+  ]
+}

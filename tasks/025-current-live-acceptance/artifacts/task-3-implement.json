@@ -1,0 +1,7 @@
+{
+  "outcome": "implemented",
+  "markdown": "# Implementation\n\n## Changes\n\nRestored `Greeting.message` to build `Hello, #{name}!`, which supplies the specified normal greeting and, through the existing uppercasing path, the specified shouted greeting.\n\n## Checks\n\n`bin/check` passed: both syntax checks passed and Minitest reported 4 runs, 29 assertions, 0 failures, and 0 errors.\n\n## Commit sequence\n\n`aa287ffb70634b5b52172d7100c9bbe3868e1d88 Restore greeting message` (`KOS-Task: 3`)\n",
+  "required_checks": "passed",
+  "accepted_claim_version": 3,
+  "reconstructed": false
+}

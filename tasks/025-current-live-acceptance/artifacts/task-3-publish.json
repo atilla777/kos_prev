@@ -1,0 +1,6 @@
+{
+  "outcome": "published",
+  "markdown": "# Publication\n\n## Reviewed commit sequence\n\nValidated the approved linear sequence: base `4c77a16a4ece939cacdcd58852518b901a55b0d3`, followed by `aa287ffb70634b5b52172d7100c9bbe3868e1d88` (`Restore greeting message`). Its base and tip trees, sole changed path `lib/greeting.rb`, binary diff SHA-256 `f0dd64ca57f4b045e5cf7cbb1a1e0d566cf1f9eaa5b02d0e4805c17f5d0b5f72`, linear parent, clean detached worktree, and canonical single `KOS-Task: 3` trailer exactly match the accepted review. Accepted implementation evidence records required checks as passed.\n\n## Remote observation\n\nFetched `origin/main` before publication and observed the reviewed base `4c77a16a4ece939cacdcd58852518b901a55b0d3`. Pushed the reviewed tip without force, then fetched `origin/main` again and observed exactly `aa287ffb70634b5b52172d7100c9bbe3868e1d88`.\n",
+  "accepted_claim_version": 7,
+  "reconstructed": false
+}

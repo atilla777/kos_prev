@@ -1,0 +1,58 @@
+{
+  "task": {
+    "id": 1,
+    "project_id": 1,
+    "title": "Brief: Add a shout mode to bin/greet selected by a double-hyphen-shout flag. Uppercase the complete final greeting in this mode",
+    "description_markdown": "# Request\n\nAdd a shout mode to bin/greet selected by a double-hyphen-shout flag. Uppercase the complete final greeting in this mode, preserve default and named behavior without it, reject unsupported arguments, include deterministic tests, and produce exactly one development child with no sibling blockers.\n",
+    "status": "completed",
+    "current_step": "publish",
+    "owner_id": null,
+    "claim_version": 4,
+    "lease_expires_at": null
+  },
+  "project": {
+    "id": 1,
+    "name": "KOS current live acceptance fixture",
+    "repository_identity": "kos-live.invalid/acceptance/greeting",
+    "remote_url": "git@kos-live.invalid:acceptance/greeting.git",
+    "default_branch": "main"
+  },
+  "step": {
+    "id": "publish",
+    "name": "Publish",
+    "instruction": "Never change local history or content. Validate the reviewed specification and graph plus the clean worktree, nonempty contiguous linear single-parent sequence, exact base, ordered commits, tip, base and per-commit trees, paths, recomputed binary diff digest, and exactly one raw line KOS-Task: <task-id> with no case variant or duplicate per commit; mismatch returns review_invalid. Fetch the default branch, accept an exact reviewed remote tip and sequence, or push the exact tip without force only from the reviewed base; a remote matching neither returns base_moved without mutation. Fetch after every push result and require the exact approved commits and trees remotely. Then atomically materialize the approved child graph through the fenced KOS operation. An exact retry returns unchanged; a conflicting identity stops, and an observed wrong graph returns graph_invalid so KOS atomically retracts only the unstarted graph. Report published only after observation equals the approved graph_digest.",
+    "artifact_template": "# Publication\n\n## Reviewed commit sequence\n\n## Remote observation\n\n## Child graph",
+    "execution_mode": "subagent",
+    "model_tier": "standard",
+    "allowed_outcomes": [
+      "published",
+      "review_invalid",
+      "base_moved",
+      "graph_invalid",
+      "needs_human",
+      "blocked"
+    ]
+  },
+  "artifacts": [
+    {
+      "outcome": "specified",
+      "accepted_claim_version": 1,
+      "reconstructed": false,
+      "step": "brief"
+    },
+    {
+      "outcome": "approved",
+      "graph_digest": "sha256:0410b947cc9d12560d6fca5577ca882afbbbbd053aefae5098d4c7f1e1f75c09",
+      "accepted_claim_version": 2,
+      "reconstructed": false,
+      "step": "review"
+    },
+    {
+      "outcome": "published",
+      "accepted_claim_version": 3,
+      "reconstructed": false,
+      "step": "publish"
+    }
+  ],
+  "pause": null
+}

@@ -1,0 +1,52 @@
+{
+  "task": {
+    "id": 4,
+    "project_id": 1,
+    "title": "Task 025 custom live execution probe",
+    "description_markdown": "# Custom live execution probe\n\nExercise the installed custom scheduler through one main step followed by\nstandard and advanced subagent steps. Do not change repository or Git state.\n",
+    "status": "completed",
+    "current_step": "advanced_probe",
+    "owner_id": null,
+    "claim_version": 4,
+    "lease_expires_at": null
+  },
+  "project": {
+    "id": 1,
+    "name": "KOS current live acceptance fixture",
+    "repository_identity": "kos-live.invalid/acceptance/greeting",
+    "remote_url": "git@kos-live.invalid:acceptance/greeting.git",
+    "default_branch": "main"
+  },
+  "step": {
+    "id": "advanced_probe",
+    "name": "Advanced subagent probe",
+    "instruction": "Do not modify the repository or Git state. Read authoritative context and both accepted predecessor artifacts, record the advanced profile observation, and report finished.",
+    "artifact_template": "# Advanced probe\n\n## Evidence",
+    "execution_mode": "subagent",
+    "model_tier": "advanced",
+    "allowed_outcomes": [
+      "finished"
+    ]
+  },
+  "artifacts": [
+    {
+      "outcome": "ready",
+      "accepted_claim_version": 1,
+      "reconstructed": false,
+      "step": "main_probe"
+    },
+    {
+      "outcome": "inspected",
+      "accepted_claim_version": 2,
+      "reconstructed": false,
+      "step": "standard_probe"
+    },
+    {
+      "outcome": "finished",
+      "accepted_claim_version": 3,
+      "reconstructed": false,
+      "step": "advanced_probe"
+    }
+  ],
+  "pause": null
+}

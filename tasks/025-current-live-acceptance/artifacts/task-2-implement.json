@@ -1,0 +1,7 @@
+{
+  "outcome": "implemented",
+  "markdown": "# Implementation\n\n## Changes\n\n- Verified the task worktree implementation parses one optional `--shout` flag and one optional name, rejects unsupported arguments without stdout, and uppercases the completed greeting only in shout mode.\n- Verified deterministic Open3 CLI coverage for default/named normal and shout greetings plus rejected arguments.\n\n## Checks\n\n- `bin/check` — passed (Ruby syntax checks and 4 Minitest runs, 29 assertions).\n\n## Commit sequence\n\n- `5cea009fd6e2b73521d4b0a1d54d3539aa000d59 Implement greeting shout mode` (exactly one `KOS-Task: 2` trailer).\n",
+  "required_checks": "passed",
+  "accepted_claim_version": 2,
+  "reconstructed": false
+}

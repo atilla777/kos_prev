@@ -1,0 +1,44 @@
+{
+  "unchanged_executions": [
+    {
+      "task_id": 2,
+      "step": "implement",
+      "result": "stale_rejected",
+      "scheduler_action": "stopped_without_retry",
+      "operator_action": "confirmed_stopped_executor_and_continued_same_session"
+    },
+    {
+      "task_id": 3,
+      "step": "document",
+      "result": "stale_rejected",
+      "scheduler_action": "stopped_without_retry",
+      "operator_action": "confirmed_stopped_executor_and_continued_same_session"
+    },
+    {
+      "task_id": 5,
+      "step": "standard_probe",
+      "result": "stale_rejected_twice",
+      "scheduler_action": "stopped_without_retry_each_time",
+      "operator_action": "cancelled_nonrelease_recovery_probe"
+    }
+  ],
+  "expired_lease_recovery": {
+    "task_id": 5,
+    "before": {
+      "owner_id": "expired-probe-owner",
+      "claim_version": 1,
+      "step": "main_probe",
+      "lease_expires_at": "2026-09-27T08:38:55.939Z"
+    },
+    "resume": {
+      "owner_changed": true,
+      "claim_version": 2,
+      "step": "main_probe",
+      "lease_expires_at": "2026-09-27T14:40:16.200Z"
+    },
+    "accepted_main_probe_claim_version": 2,
+    "resume_operations": 1,
+    "remote_main_before": "aa287ffb70634b5b52172d7100c9bbe3868e1d88",
+    "remote_main_after": "aa287ffb70634b5b52172d7100c9bbe3868e1d88"
+  }
+}
