@@ -25,6 +25,25 @@ development records and are not read by the KOS server or CLI.
 | 015 | [Preserve exact slash-command arguments](015-preserve-slash-command-arguments/task.md) | done | 014 |
 | 016 | [Record post-acceptance decisions](016-record-observation-decisions/task.md) | done | 015 |
 | 017 | [Make workflow execution generic](017-generic-workflow-execution/task.md) | done | 016 |
+| 018 | [Restore production boot](018-restore-production-boot/task.md) | done | 017 |
+
+## Planned
+
+The ordered remediation backlog below comes from the 2026-09-26 readiness
+review retained at
+[`tasks/018-restore-production-boot/artifacts/readiness-review-2026-09-26.md`](018-restore-production-boot/artifacts/readiness-review-2026-09-26.md).
+Each task preserves its own stable scope, plan, status, source evidence, and
+acceptance criteria so a new session can continue from the first unblocked row.
+
+| ID | Task | Status | Dependencies |
+| --- | --- | --- | --- |
+| 019 | [Bound scheduler recovery](019-bound-scheduler-recovery/task.md) | planned | 018 |
+| 020 | [Harden brief graphs](020-harden-brief-graphs/task.md) | planned | 019 |
+| 021 | [Resolve custom workflow execution](021-resolve-custom-execution/task.md) | planned | 020 |
+| 022 | [Tighten runtime boundaries](022-tighten-runtime-boundaries/task.md) | planned | 021 |
+| 023 | [Test real scheduling](023-test-real-scheduling/task.md) | planned | 022 |
+| 024 | [Complete production operations](024-complete-operations/task.md) | planned | 023 |
+| 025 | [Run current live acceptance](025-current-live-acceptance/task.md) | planned | 024 |
 
 ## Resolved Decisions
 

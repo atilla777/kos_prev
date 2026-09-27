@@ -141,7 +141,8 @@ failing.
 - `bin/test` runs the automated suite.
 - `bin/lint` performs the non-mutating style check.
 - `bin/format` applies automatic formatting fixes.
-- `bin/check` prepares the isolated test database, lints, and runs every
+- `bin/check` prepares the isolated test database, lints, verifies eager loading,
+  and runs every
   deterministic catalog, API, CLI, migration, lifecycle, skill, Git, recovery,
   installation, and scenario test required for a change.
 

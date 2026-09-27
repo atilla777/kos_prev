@@ -3,4 +3,5 @@ set -eu
 
 bin/lint
 RAILS_ENV=test bin/rails db:prepare
+RAILS_ENV=test bin/rails zeitwerk:check
 bin/test

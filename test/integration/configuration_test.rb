@@ -126,6 +126,30 @@ class ConfigurationTest < ActiveSupport::TestCase
     end
   end
 
+  test "boots production with eager-loaded application and library constants" do
+    Dir.mktmpdir("kos-data") do |temporary_directory|
+      data_home = File.join(temporary_directory, "data")
+      environment = {
+        "RAILS_ENV" => "production",
+        "KOS_API_TOKEN" => "production-token",
+        "KOS_DATA_HOME" => data_home,
+        "SECRET_KEY_BASE" => "production-secret-key-base"
+      }
+
+      output, error, status = Open3.capture3(
+        environment,
+        Rails.root.join("bin/rails").to_s,
+        "runner",
+        "print [Rails.application.config.eager_load, Kos::CLI.name, " \
+          "Rails.application.config.database_configuration.fetch('production').fetch('database')].join('|')"
+      )
+
+      assert_predicate status, :success?, error
+      assert_equal "true|Kos::CLI|#{File.join(data_home, "production.sqlite3")}", output
+      assert_path_exists data_home
+    end
+  end
+
   test "keeps the test database inside the isolated temporary directory" do
     database = Rails.application.config.database_configuration.fetch("test").fetch("database")
 

@@ -120,7 +120,7 @@ class Plan022AcceptanceMatrixTest < ActiveSupport::TestCase
 
     check = Rails.root.join("bin/check")
     assert_predicate check, :executable?
-    assert_equal [ "bin/lint", "RAILS_ENV=test bin/rails db:prepare", "bin/test" ],
+    assert_equal [ "bin/lint", "RAILS_ENV=test bin/rails db:prepare", "RAILS_ENV=test bin/rails zeitwerk:check", "bin/test" ],
       check.readlines(chomp: true).reject { |line| line.empty? || line.start_with?("#!", "set ") }
   end
 
