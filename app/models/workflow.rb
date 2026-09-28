@@ -1,18 +1,16 @@
 class Workflow < ApplicationRecord
   ROOT_KEYS = %w[steps].freeze
-  STEP_KEYS = %w[artifact_template execution_mode id instruction model_tier name outcomes].freeze
-  PREVIOUS_STEP_KEYS = %w[artifact_template id instruction model_tier name outcomes].freeze
-  LEGACY_STEP_KEYS = %w[artifact_template id instruction name outcomes].freeze
+  STEP_KEYS = %w[id instruction name outcomes].freeze
   ACTION_KEYS = %w[complete_task next_step pause].freeze
   PAUSES = %w[blocked needs_human].freeze
-  MODEL_TIERS = %w[standard advanced].freeze
-  EXECUTION_MODES = %w[main subagent].freeze
 
-  has_many :task_types
   has_many :tasks
 
+  validates :key, presence: true, format: { with: /\A[a-z][a-z0-9_-]*\z/ }, uniqueness: { scope: :revision }
+  validates :name, presence: true
+  validates :revision, numericality: { only_integer: true, greater_than: 0 }
   validate :definition_json_is_valid
-  validate :definition_json_is_immutable, on: :update
+  validate :revision_is_immutable, on: :update
 
   def step_ids
     return [] unless definition_json.is_a?(Hash) && definition_json["steps"].is_a?(Array)
@@ -30,16 +28,7 @@ class Workflow < ApplicationRecord
   end
 
   def step_for(step_id)
-    definition_for_execution["steps"].find { |candidate| candidate["id"] == step_id }
-  end
-
-  def definition_for_execution
-    definition_json.merge("steps" => definition_json["steps"].map do |step|
-      step.merge(
-        "model_tier" => step.fetch("model_tier", "advanced"),
-        "execution_mode" => step.fetch("execution_mode", "subagent")
-      )
-    end)
+    definition_json["steps"].find { |candidate| candidate["id"] == step_id }
   end
 
   private
@@ -70,7 +59,7 @@ class Workflow < ApplicationRecord
   end
 
   def validate_step(step, index, ids, targets)
-    unless step.is_a?(Hash) && valid_step_keys?(step.keys.sort)
+    unless step.is_a?(Hash) && step.keys.sort == STEP_KEYS
       errors.add(:definition_json, "step #{index} must contain exactly the required fields")
       return
     end
@@ -80,25 +69,10 @@ class Workflow < ApplicationRecord
     errors.add(:definition_json, "step #{index} id must be a non-empty string") unless id.is_a?(String) && id.present?
     errors.add(:definition_json, "step #{index} name must be a non-empty string") unless step["name"].is_a?(String) && step["name"].present?
 
-    %w[instruction artifact_template].each do |field|
-      errors.add(:definition_json, "step #{index} #{field} must be a string") unless step[field].is_a?(String)
-    end
-    unless MODEL_TIERS.include?(step.fetch("model_tier", "advanced"))
-      errors.add(:definition_json, "step #{index} model_tier must be standard or advanced")
-    end
-    unless EXECUTION_MODES.include?(step.fetch("execution_mode", "subagent"))
-      errors.add(:definition_json, "step #{index} execution_mode must be main or subagent")
-    end
+    errors.add(:definition_json, "step #{index} instruction must be a non-empty string") unless
+      step["instruction"].is_a?(String) && step["instruction"].present?
 
     validate_outcomes(step["outcomes"], index, targets)
-  end
-
-  def valid_step_keys?(keys)
-    keys == STEP_KEYS || legacy_definition_unchanged? && [ PREVIOUS_STEP_KEYS, LEGACY_STEP_KEYS ].include?(keys)
-  end
-
-  def legacy_definition_unchanged?
-    persisted? && !will_save_change_to_definition_json?
   end
 
   def validate_outcomes(outcomes, step_index, targets)
@@ -165,9 +139,9 @@ class Workflow < ApplicationRecord
     visited
   end
 
-  def definition_json_is_immutable
-    return unless will_save_change_to_definition_json? && tasks.exists?
-
-    errors.add(:definition_json, "cannot change after the workflow is used by a task")
+  def revision_is_immutable
+    %w[key name revision definition_json].each do |attribute|
+      errors.add(attribute, "cannot change on an immutable workflow revision") if will_save_change_to_attribute?(attribute)
+    end
   end
 end

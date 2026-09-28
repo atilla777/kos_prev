@@ -35,10 +35,10 @@ class GemPackageTest < ActiveSupport::TestCase
       assert_equal "kos #{Kos::VERSION} source=#{expected_source_id}\n", output
       assert_empty error
 
-      session_id, error, status = Open3.capture3(environment.merge("KOS_API_URL" => "invalid"),
-        bin_dir.join("kos").to_s, "session-id", chdir: directory)
+      claim_id, error, status = Open3.capture3(environment.merge("KOS_API_URL" => "invalid"),
+        bin_dir.join("kos").to_s, "claim-id", chdir: directory)
       assert_predicate status, :success?, error
-      assert_match(/\Akos-session-[0-9a-f]{32}\n\z/, session_id)
+      assert_match(/\Akos-claim-[0-9a-f]{32}\n\z/, claim_id)
       assert_empty error
 
       output, error, status = Open3.capture3(environment, bin_dir.join("kos").to_s, "--help", chdir: directory)
@@ -47,11 +47,8 @@ class GemPackageTest < ActiveSupport::TestCase
       {
         "project" => %w[create show update],
         "workflow" => %w[create],
-        "task-type" => %w[create update],
-        "task" => %w[
-          create create-or-get create-and-claim update show context artifact show-owned claim-next claim resumable resume
-          report-attempt cancel materialize-children children
-        ]
+        "plan" => %w[put show],
+        "task" => %w[ready show context result claim takeover report answer]
       }.each do |resource, actions|
         inventory = output.lines.grep(/^\s*#{Regexp.escape(resource)}\s+/).join
         assert_not_empty inventory
@@ -60,8 +57,8 @@ class GemPackageTest < ActiveSupport::TestCase
 
       {
         %w[task context] => [],
-        %w[task artifact] => %w[--step],
-        %w[task report-attempt] => %w[--claim-version --artifact-file]
+        %w[task result] => %w[--step],
+        %w[task report] => %w[--claim-id --version --result-file]
       }.each do |command, options|
         command_output, command_error, command_status = Open3.capture3(
           environment, bin_dir.join("kos").to_s, *command, "--help", chdir: directory
@@ -95,7 +92,7 @@ class GemPackageTest < ActiveSupport::TestCase
 
       database = system.fetch(:data_home).join("production.sqlite3")
       _output, error, status = Open3.capture3("sqlite3", database.to_s,
-        "UPDATE task_types SET key = 'development-unavailable' WHERE key = 'development';")
+        "UPDATE workflows SET key = 'development-unavailable' WHERE key = 'development';")
       assert_predicate status, :success?, error
       uri = URI("#{system.fetch(:api_url)}/ready")
       request = Net::HTTP::Get.new(uri)
@@ -104,7 +101,7 @@ class GemPackageTest < ActiveSupport::TestCase
       unavailable = Net::HTTP.start(uri.host, uri.port) { |http| http.request(request) }
       assert_equal "503", unavailable.code
       _output, error, status = Open3.capture3("sqlite3", database.to_s,
-        "UPDATE task_types SET key = 'development' WHERE key = 'development-unavailable';")
+        "UPDATE workflows SET key = 'development' WHERE key = 'development-unavailable';")
       assert_predicate status, :success?, error
       Timeout.timeout(2) do
         sleep 0.05 until system.fetch(:log).read.include?("operations-smoke-request")
@@ -121,32 +118,63 @@ class GemPackageTest < ActiveSupport::TestCase
         "example.test/test/smoke").fetch("project")
       assert_equal project.fetch("id"), shown.fetch("id")
 
-      Tempfile.create([ "smoke-task", ".md" ], root.to_s) do |artifact|
-        artifact.write("# Smoke task\n")
-        artifact.flush
-        task = run_installed_json(cli, authenticated, root, "task", "create", "--project-id",
-          project.fetch("id").to_s, "--task-type-key", "development", "--title", "Smoke lifecycle",
-          "--description-file", artifact.path).fetch("task")
-        task = run_installed_json(cli, authenticated, root, "task", "claim", task.fetch("id").to_s,
-          "--owner-id", "smoke-owner").fetch("task")
+      task = nil
+      paused_task = nil
+      active_task = nil
+      Tempfile.create([ "smoke-plan", ".json" ], root.to_s) do |plan_file|
+        plan_file.write(JSON.generate(key: "smoke", title: "Smoke", tasks: [
+          {
+            key: "lifecycle", title: "Smoke lifecycle", description_markdown: "Run the lifecycle",
+            workflow_key: "development", blocker_keys: []
+          },
+          {
+            key: "paused", title: "Smoke pause", description_markdown: "Pause the lifecycle",
+            workflow_key: "development", blocker_keys: []
+          },
+          {
+            key: "active", title: "Smoke active claim", description_markdown: "Keep the claim active",
+            workflow_key: "development", blocker_keys: []
+          }
+        ]))
+        plan_file.flush
+        run_installed_json(cli, authenticated, root, "plan", "put", "--project-id", project.fetch("id").to_s,
+          "--definition-file", plan_file.path)
+        task = run_installed_json(cli, authenticated, root, "task", "ready", "--project-id",
+          project.fetch("id").to_s).fetch("tasks").first
 
-        {
-          "plan" => "planned", "implement" => "implemented", "review" => "approved",
-          "publish" => "published"
-        }.each do |step, outcome|
-          check_options = step == "implement" ? [ "--required-checks", "passed" ] : []
-          task = run_installed_json(cli, authenticated, root, "task", "report-attempt", task.fetch("id").to_s,
-            "--owner-id", "smoke-owner", "--claim-version", task.fetch("claim_version").to_s,
-            "--step", step, "--outcome", outcome, "--artifact-file", artifact.path, *check_options).fetch("task")
+        Tempfile.create([ "smoke-result", ".md" ], root.to_s) do |result_file|
+          result_file.write("# Result\n")
+          result_file.flush
+          { "plan" => "planned", "implement" => "implemented", "review" => "approved",
+            "publish" => "published" }.each_with_index do |(step, outcome), index|
+            claim_id = "smoke-#{index}"
+            task = run_installed_json(cli, authenticated, root, "task", "claim", task.fetch("id").to_s,
+              "--claim-id", claim_id, "--version", task.fetch("version").to_s).fetch("task")
+            task = run_installed_json(cli, authenticated, root, "task", "report", task.fetch("id").to_s,
+              "--claim-id", claim_id, "--version", task.fetch("version").to_s, "--step", step,
+              "--outcome", outcome, "--result-file", result_file.path).fetch("task")
+          end
+
+          context = run_installed_json(cli, authenticated, root, "task", "context", task.fetch("id").to_s)
+          assert_equal [ "completed", "publish", nil ],
+            context.fetch("task").values_at("status", "current_step", "claim_id")
+          assert_equal %w[plan implement review publish], context.fetch("results").map { |entry| entry.fetch("step") }
+
+          paused_task = run_installed_json(cli, authenticated, root, "task", "ready", "--project-id",
+            project.fetch("id").to_s).fetch("tasks").first
+          paused_task = run_installed_json(cli, authenticated, root, "task", "claim", paused_task.fetch("id").to_s,
+            "--claim-id", "smoke-pause", "--version", paused_task.fetch("version").to_s).fetch("task")
+          paused_task = run_installed_json(cli, authenticated, root, "task", "report", paused_task.fetch("id").to_s,
+            "--claim-id", "smoke-pause", "--version", paused_task.fetch("version").to_s, "--step", "plan",
+            "--outcome", "needs_human", "--result-file", result_file.path, "--message", "Choose a direction").fetch("task")
+          paused_task = run_installed_json(cli, authenticated, root, "task", "answer", paused_task.fetch("id").to_s,
+            "--version", paused_task.fetch("version").to_s, "--step", "plan", "--answer-file", result_file.path).fetch("task")
+
+          active_task = run_installed_json(cli, authenticated, root, "task", "ready", "--project-id",
+            project.fetch("id").to_s).fetch("tasks").find { |candidate| candidate.fetch("key") == "active" }
+          active_task = run_installed_json(cli, authenticated, root, "task", "claim", active_task.fetch("id").to_s,
+            "--claim-id", "smoke-active", "--version", active_task.fetch("version").to_s).fetch("task")
         end
-
-        context = run_installed_json(cli, authenticated, root, "task", "context", task.fetch("id").to_s)
-        assert_equal [ "completed", "publish", nil, nil ],
-          context.fetch("task").values_at("status", "current_step", "owner_id", "lease_expires_at")
-        assert_equal %w[plan implement review publish],
-          context.fetch("artifacts").map { |entry| entry.fetch("step") }
-        assert_equal "passed", context.fetch("artifacts").find { |entry| entry.fetch("step") == "implement" }
-          .fetch("required_checks")
       end
 
       stop_server(system)
@@ -172,6 +200,19 @@ class GemPackageTest < ActiveSupport::TestCase
       restored = run_installed_json(cli, restored_environment, root, "project", "show", "--repository-identity",
         "example.test/test/smoke").fetch("project")
       assert_equal project.fetch("id"), restored.fetch("id")
+      restored_context = run_installed_json(cli, restored_environment, root, "task", "context",
+        task.fetch("id").to_s)
+      assert_equal "completed", restored_context.dig("task", "status")
+      assert_equal %w[plan implement review publish], restored_context.fetch("results").map { |entry| entry.fetch("step") }
+      restored_pause = run_installed_json(cli, restored_environment, root, "task", "context",
+        paused_task.fetch("id").to_s)
+      assert_equal [ "pending", "plan", "# Result\n" ],
+        [ restored_pause.dig("task", "status"), restored_pause.dig("pause", "step"),
+          restored_pause.dig("pause", "answer") ]
+      restored_active = run_installed_json(cli, restored_environment, root, "task", "context",
+        active_task.fetch("id").to_s)
+      assert_equal [ "active", "smoke-active", 1 ],
+        restored_active.fetch("task").values_at("status", "claim_id", "version")
     ensure
       stop_server(system) if system
     end
@@ -190,6 +231,10 @@ class GemPackageTest < ActiveSupport::TestCase
       stale_skill = config_home.join("skills/kos/obsolete.md")
       obsolete_brief_skill = config_home.join("skills/kos-brief/SKILL.md")
       obsolete_create_skill = config_home.join("skills/kos-create/SKILL.md")
+      obsolete_git_skill = config_home.join("skills/kos-git/SKILL.md")
+      obsolete_step_skill = config_home.join("skills/kos-step/SKILL.md")
+      obsolete_commands = %w[kos-brief.md kos-fix.md kos-task.md].map { |name| config_home.join("commands", name) }
+      obsolete_tier_agents = %w[kos-step-advanced.md kos-step-standard.md].map { |name| config_home.join("agents", name) }
       FileUtils.mkdir_p(stale_agent.dirname)
       FileUtils.mkdir_p(stale_skill.dirname)
       stale_agent.write("stale\n")
@@ -201,6 +246,13 @@ class GemPackageTest < ActiveSupport::TestCase
       obsolete_brief_skill.write("obsolete\n")
       FileUtils.mkdir_p(obsolete_create_skill.dirname)
       obsolete_create_skill.write("obsolete\n")
+      FileUtils.mkdir_p(obsolete_git_skill.dirname)
+      obsolete_git_skill.write("obsolete\n")
+      FileUtils.mkdir_p(obsolete_step_skill.dirname)
+      obsolete_step_skill.write("obsolete\n")
+      FileUtils.mkdir_p(config_home.join("commands"))
+      obsolete_commands.each { |path| path.write("obsolete\n") }
+      obsolete_tier_agents.each { |path| path.write("obsolete\n") }
 
       2.times do
         output, error, status = Open3.capture3(Rails.root.join("bin/install-opencode").to_s,
@@ -212,10 +264,10 @@ class GemPackageTest < ActiveSupport::TestCase
       manifest = JSON.parse(config_home.join("kos-installation.json").read)
       assert_equal Kos::VERSION, manifest.fetch("version")
       assert_equal Kos::BuildIdentity.source_id(root: Rails.root), manifest.fetch("source_id")
-      assert_equal %w[kos-brief.md kos-fix.md kos-task.md kos.md], manifest.fetch("commands")
-      assert_equal %w[kos-brief.md kos-fix.md kos-task.md kos.md], installed_names(config_home.join("commands"))
-      assert_equal %w[kos-step-advanced.md kos-step-standard.md], installed_names(config_home.join("agents"))
-      assert_equal %w[kos kos-cli kos-git kos-step okf],
+      assert_equal %w[kos.md], manifest.fetch("commands")
+      assert_equal %w[kos.md], installed_names(config_home.join("commands"))
+      assert_equal %w[kos-worker.md], installed_names(config_home.join("agents"))
+      assert_equal %w[kos kos-cli kos-worker okf],
         installed_names(config_home.join("skills"))
       refute_predicate stale_agent, :exist?
       refute_predicate stale_orchestrator, :exist?
@@ -224,6 +276,10 @@ class GemPackageTest < ActiveSupport::TestCase
       refute_predicate stale_skill, :exist?
       refute_predicate obsolete_brief_skill.dirname, :exist?
       refute_predicate obsolete_create_skill.dirname, :exist?
+      refute_predicate obsolete_git_skill.dirname, :exist?
+      refute_predicate obsolete_step_skill.dirname, :exist?
+      obsolete_commands.each { |path| refute_predicate path, :exist? }
+      obsolete_tier_agents.each { |path| refute_predicate path, :exist? }
 
       assert_matching_tree Rails.root.join(".opencode/commands"), config_home.join("commands")
       assert_matching_tree Rails.root.join(".opencode/agents"), config_home.join("agents")

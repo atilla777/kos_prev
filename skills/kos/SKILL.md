@@ -1,76 +1,24 @@
 ---
 name: kos
-description: Shared scheduler for built-in and custom KOS commands, driven by authoritative server state.
+description: Plan and orchestrate KOS tasks from authoritative state without performing workflow steps.
 ---
 
-# KOS Scheduler
+# KOS Orchestrator
 
-Schedule one task in `development`, `fix`, `brief`, or `custom` mode. Load `kos-git` for
-repository discovery and `kos-cli` for every public KOS operation. During
-scheduling, do not access Rails, SQLite, the REST API, a task worktree, or task
-Markdown.
+Use `kos-cli` for KOS operations. Turn the user's goal into a concise task plan,
+store it atomically, and coordinate its execution.
 
-Run `kos session-id` once to obtain this command's fresh canonical owner. Never
-ask a model to generate randomness, read `KOS_OWNER_ID`, or reuse an owner.
+The orchestrator may create or revise an unstarted plan, list ready tasks,
+claim work, dispatch `kos-worker` agents, present pauses, submit user answers,
+explicitly take over stopped work, and observe task state. It never performs a
+workflow step, judges a worker's result, or uses repository tools on a worker's
+behalf.
 
-## Select
+Claim each ready task with a fresh `claim-id`. Dispatch independent claims in
+parallel. From one claim response, give each worker only an immutable JSON
+envelope with `task_id`, `claim_id`, `version`, and `step`.
 
-Discover the invoking repository's canonical identity through `kos-git`, then
-require its exact registered project through `kos-cli`.
-
-- `development`: offer matching resumable work; otherwise use `task claim-next`
-  for the `development` type. Never create a task.
-- `fix` or `brief`: use `task create-or-get` with the mode, project, owner, and
-  complete exact `$ARGUMENTS` expansion through standard input. Preserve every
-  request byte; do not trim, infer argv, or interpret or unescape delimiters.
-- `custom`: require one exact nonblank task-type key that is not `brief`,
-  `development`, or `fix`. Offer resumable work with that exact key; otherwise
-  use `task claim-next` with the same key. Never create a task. Preserve every
-  key byte; do not trim, split, infer argv, or interpret or unescape delimiters.
-
-Read authoritative scheduler state with `task show`. Keep a completed or cancelled task terminal; otherwise use the
-public claim or resume operations when needed to make the chosen task active for
-this owner. Present persisted pause information and require the corresponding
-human answer, confirmed resolution, or confirmed stopped-owner takeover before
-resuming. Follow `kos-cli` whenever a mutation's result is ambiguous. Retain
-only the resulting positive decimal task ID.
-
-## Schedule
-
-Repeat:
-
-1. Read `task show` for the task ID. This focused scheduler projection contains
-   lifecycle and fence state, current execution mode and tier, the accepted
-   artifact index, and pause state, but no task Markdown or workflow body.
-2. Stop successfully on `completed` or `cancelled`. On `needs_human` or `blocked`, show the
-   persisted question or reason and stop.
-3. Require `active`. Before dispatch, if its server timestamp says the lease is
-   expired, use `task resume` once for this invocation with the exact observed
-   claim version and current step plus this command's owner, then reread scheduler state.
-   Require the result to be active for that owner at the same step with claim
-   version incremented by one and a renewed valid lease. Stop explicitly if
-   that fenced recovery is rejected, ambiguous, unconfirmed, or would be needed
-   a second time. A concurrently observed pause or terminal state also stops.
-4. Snapshot the authoritative status, current step, claim version, and accepted
-   artifact-index entry for that current step. Inspect only the current step's
-   `execution_mode` and `model_tier` for execution selection. The command's
-   frontmatter has already selected the main-agent model; `model_tier` selects a
-   profile only for `subagent` execution. `/kos-task` uses the advanced command
-   agent for every custom `main` step.
-5. For `main`, load `kos-step` and execute exactly one step in this command
-   agent. The step phase may read the task, evidence, and repository only as
-   allowed by its authoritative workflow instruction.
-6. For `subagent`, launch one fresh foreground `kos-step-standard` or
-   `kos-step-advanced` child selected only by `model_tier`; its complete prompt
-   is only the positive decimal task ID. Ignore its text and claimed result.
-7. After either path, leave the step phase and reread scheduler state. Progress requires
-   an authoritative change in status, current step, claim version, or the
-   snapshotted current-step artifact-index entry. Continue from changed state.
-   If state is unchanged while the lease remains valid, stop explicitly without
-   launching another executor. If it is unchanged because the lease expired,
-   perform the one exact resume above and dispatch that step at most once more.
-
-Never infer execution behavior from a step ID or task type. During scheduling,
-never add context to a child prompt, inspect artifact bodies or Git, interpret
-child output, report a step, mutate a graph, or keep local recovery state.
-Authoritative server state is the scheduler result.
+After dispatch, trust KOS state rather than worker prose. Continue selecting
+ready work, present persisted questions or obstructions to the user, and answer
+them through KOS. Take over an active task only after deciding its worker has
+stopped; takeover creates a new claim envelope and invalidates the old one.

@@ -17,7 +17,7 @@ class ReadinessTest < ActionDispatch::IntegrationTest
   end
 
   test "readiness fails generically when the canonical catalog is unavailable while liveness remains up" do
-    TaskType.find_by!(key: "development").update_column(:key, "development-unavailable")
+    Workflow.find_by!(key: "development", revision: 1).update_column(:key, "development-unavailable")
 
     get readiness_path, as: :json, headers: { "X-Request-Id" => "readiness-correlation" }
     assert_response :service_unavailable

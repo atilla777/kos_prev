@@ -35,18 +35,17 @@ development records and are not read by the KOS server or CLI.
 | 025 | [Run current live acceptance](025-current-live-acceptance/task.md) | done | 024 |
 | 026 | [Diagnose live stale reports](026-diagnose-live-stale-reports/task.md) | done | 025 |
 | 027 | [Evaluate document consolidation](027-evaluate-document-consolidation/task.md) | done | 025, 026 |
+| 028 | [Simplify KOS to an agent-led MVP](028-agent-led-mvp/task.md) | done | 027 |
 
 ## Planned
-
-The ordered remediation backlog below comes from the 2026-09-26 readiness
-review retained at
-[`tasks/018-restore-production-boot/artifacts/readiness-review-2026-09-26.md`](018-restore-production-boot/artifacts/readiness-review-2026-09-26.md).
-Each task preserves its own stable scope, plan, status, source evidence, and
-acceptance criteria so a new session can continue from the first unblocked row.
 
 No tasks are currently planned.
 
 ## Resolved Decisions
+
+The decisions below record the historical PLAN-022 implementation superseded by
+task 028. They are retained only as development history and do not override
+`specs/kos.md` or the current implementation.
 
 ### Server Workflow And Data Model
 

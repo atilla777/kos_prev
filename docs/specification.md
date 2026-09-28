@@ -1,464 +1,160 @@
 # KOS Product Specification
 
-Status: normative for the implemented PLAN-022 state-oriented architecture.
+This document refines the approved product contract in
+[`specs/kos.md`](../specs/kos.md).
 
-The OKF product concept is [`specs/kos.md`](../specs/kos.md). This document
-defines the complete system contract and public protocol.
+## Purpose
 
-## Purpose And Boundary
+KOS is an authoritative store for task plans, reusable workflows, and current
+task state. It provides only the durable coordination and concurrency controls
+needed by cooperating agents. It is not an agent runtime, process supervisor,
+reasoning engine, test runner, Git client, reviewer, or publisher.
 
-KOS is a small task-state and coordination service for AI agents. It persists
-projects, immutable workflow revisions, task types, tasks and descriptions,
-parent and blocking relationships, current workflow position, ownership,
-accepted step evidence including an approved brief graph identity, pauses, and
-answers. Rails and SQLite provide the
-transactional state core; the thin `kos` CLI is the only agent interface to it.
-Rails never starts OpenCode, Git, project checks, or agent processes.
+The trusted single-installation MVP uses one shared bearer credential. Claims
+coordinate writes; they are not identities for authorization.
 
-The implemented built-in scenarios are:
+## Roles
 
-```text
-/kos-brief <request> -> brief -> review -> publish -> completed
-/kos                 -> plan -> implement/check/document -> review -> publish -> completed
-/kos-fix <problem>   -> diagnose -> plan -> implement/check/document -> review -> publish -> completed
-```
+- The user supplies a goal and answers material questions.
+- The main orchestrator creates or updates a plan, selects ready tasks, claims
+  them, dispatches workers, presents pauses, explicitly takes over stopped work,
+  and observes authoritative state.
+- A worker performs exactly one current workflow step. It chooses the reasoning,
+  tools, checks, repository operations, and evidence appropriate to that step,
+  reports one allowed outcome, and stops.
+- An administrator registers projects and reusable workflows.
 
-`/kos-task <task-type-key>` schedules an existing custom task through its
-immutable custom workflow. It never creates a task and does not accept the
-reserved `brief`, `development`, or `fix` keys.
+The orchestrator never substitutes its own diagnosis, implementation, testing,
+review, Git work, or publication for a worker step. It may dispatch workers for
+multiple independent tasks concurrently. A single task has one current step and
+at most one current worker.
 
-The first version runs on one host with Rails, SQLite, the installed CLI,
-OpenCode, KOS skills, and task worktrees. Parallel tasks use separate worktrees.
-Moving an unfinished active task to another host is unsupported.
+## Durable Model
 
-Users do not manage numeric project or task-type IDs, workflow IDs, claim
-versions, leases, internal API calls, worktree paths, or workflow outcomes.
-The CLI generates each command session's unpredictable non-secret owner ID. For
-request-bound work, the server derives a deterministic bounded creation key and
-immutable task definition from the command kind and exact request.
-The shared bearer token authorizes every application operation and all token
-holders are trusted. Owner IDs, leases, and claim-version fences provide
-concurrency consistency among trusted holders, not per-agent authorization.
-Database preparation idempotently installs the `brief`, `development`, and
-`fix` task types and canonical workflows. Projects remain explicit
-installation-specific registrations; custom workflows and task types remain
-supported.
+KOS stores:
 
-## Responsibilities
+- projects identified by registered repository identity;
+- immutable workflow revisions;
+- project-scoped task plans containing task definitions and dependencies;
+- each task's selected workflow revision, current step, status, and optimistic
+  `version`;
+- one optional non-expiring active `claim_id`;
+- durable pause and answer state bound to the current step; and
+- the latest accepted result for each executed step.
 
-KOS is responsible for:
+A workflow revision declares its steps, concise worker instructions, allowed
+outcomes, and one transition for each outcome. A transition moves to another
+step, pauses with `needs_human` or `blocked`, or completes the task. KOS validates
+workflow shape and references but never interprets instruction or result
+meaning.
 
-- five domain tables for projects, workflows, task types, tasks, and dependencies;
-- immutable used workflows and each task's selected workflow revision;
-- typed next-task selection, exact claims, and idempotent request create-or-get;
-- exclusive leased ownership and monotonically increasing claim-version fencing;
-- authoritative current-step context and focused accepted-artifact retrieval;
-- validation of the reported step, outcome, artifact, closed required-check
-  assertion, and pause message;
-- atomic accepted-artifact storage and workflow transition;
-- durable pause messages and exact human-answer binding;
-- atomic validation and materialization of brief child graphs; and
-- recovery after Rails, OpenCode, transport, or agent interruption.
+Built-in workflows are convenient defaults and use exactly the same transition
+mechanism as custom workflows. Workflow, step, and outcome names confer no
+special task-type, Git, check, review, graph, publication, or completion rules.
+Updating a workflow creates a revision for future tasks; existing tasks remain
+bound to their selected revision.
 
-KOS does not judge requirements, code, review findings, checks, Git history, or
-Markdown meaning. It has no runtime broker, does not launch agents, and has no
-dedicated Git SHA fields; SHAs may appear only as agent-authored Markdown evidence.
-It has no universal arbitrary task-state blob, checkpoint,
-attempt log, artifact graph, evaluation gate, or dual artifact source.
+## Plans And Readiness
 
-Agents and skills clarify tasks, execute steps, select and run project checks,
-manage task worktrees, review independently, publish through Git, observe remote
-results, and choose one allowed outcome from observed evidence.
+`plan put` validates and stores the complete plan in one transaction, including
+all task definitions and blocker relationships. No reader can observe a partial
+plan. A plan may be replaced only while none of its tasks has started.
 
-## State-Oriented Execution
+Dependencies must refer to tasks in the plan and must be acyclic. A pending task
+is ready only when every blocker is complete. Paused, active, or otherwise
+incomplete blockers do not satisfy readiness. Failure or pause in one branch
+does not prevent unrelated ready tasks from being claimed.
 
-The slash-command skills are schedulers, not step executors. `/kos` resumes or
-claims development work; `/kos-fix` and `/kos-brief` recover or atomically
-create and claim their request-bound task; `/kos-task` resumes or claims an
-existing custom task by exact stable task-type key. Once they have a positive
-task ID, they retain only that ID. Scheduler lifecycle operations and `task
-show` return only task selection and fence state, current execution mode and
-tier, accepted artifact index metadata, and pause state. They never return task
-Markdown, workflow definitions, instructions, templates, or outcome bodies.
-For every iteration a scheduler:
+## Claims And Versions
 
-1. reads authoritative focused scheduler state;
-2. stops on `completed`, `needs_human`, or `blocked` as directed by persisted state;
-3. reads the current step's authoritative `execution_mode` and `model_tier`;
-4. executes a `main` step in the command agent, or launches one fresh generic
-   standard or advanced subagent whose complete prompt is the task ID's decimal
-   digits;
-5. ignores child prose and claimed outcomes when a child was launched; and
-6. rereads task context after either execution path, continuing only after an
-   authoritative change in status, current step, claim version, or accepted
-   evidence for the dispatched step.
+`claim-id` generates an unpredictable non-secret value locally for one worker
+dispatch. Claiming a ready task atomically installs that `claim_id`, activates
+the task, and increments its optimistic `version`.
 
-An unchanged execution stops explicitly while its lease remains valid. If the
-observed active claim has expired, one scheduler invocation may use the exact
-observed claim version and step to resume it once, then dispatch that step at
-most once more. A second required recovery, rejected or ambiguous resume, pause,
-or terminal state stops without another dispatch.
+Claims do not expire. KOS has no lease duration, heartbeat, server-clock
+comparison, stale-worker detector, or automatic redispatch. After deciding that
+a worker stopped, the orchestrator performs `task takeover` with the observed
+version and a new `claim_id`. A successful takeover increments the version and
+invalidates the old worker.
 
-The scheduler never receives or reads task Markdown, task description for
-dispatch, workflow artifacts, Git diff, status, HEAD, project checks, child
-   outcome text, local creation state, or pending submissions. It does not validate
-artifacts, infer outcomes, report attempts, validate or materialize brief
-children, or perform Git checks.
+Every lifecycle mutation supplies the observed task `version`. Worker reports
+also supply the active `claim_id` and current step. A stale version, claim, or
+step changes nothing. Consequently, two workers cannot both report the same task
+version, and a worker superseded by takeover cannot change task state.
 
-A step executor receives or retains only a positive task ID. It obtains
-authoritative context and relevant accepted evidence itself, invokes `kos-git`
-by task ID, and executes exactly one step within the workflow instruction. It reports its
-complete artifact and selected transition itself. Immediately before reporting,
-it rereads context and takes owner ID, claim version, and step together from the
-current task projection, never from a new session ID or artifact metadata. The
-server validates the active owner, fence, current step, outcome, and artifact
-atomically; the agent does not execute the next step.
+## Context, Results, And Reporting
 
-For request-bound `/kos-fix` and `/kos-brief` work, the scheduler sends the
-project, exact kind, exact request, and its fresh owner to `task create-or-get`.
-The exact request is the byte sequence in OpenCode's `$ARGUMENTS` expansion.
-Interactive slash-command payloads and `opencode run --command ...` requests
-passed as separate argv words provide supported exact paths. OpenCode 1.18.26
-display-serializes one argv containing spaces with wrapper quotes and escapes
-literal quotes before expansion. KOS does not infer the originating argv or
-guess, strip, or unescape that representation. The command, scheduler, CLI, and
-server preserve the expansion through transport, hashing, and persistence.
-The server derives the canonical title, description, and scoped SHA-256 creation
-key. An identical retry returns the exact existing task without changing its
-owner, status, lease, step, fence, or artifacts, so creation recovery needs no
-local files.
+`task context` returns everything a worker needs for one step:
 
-## Data Model
+- task identity, description, status, current step, version, and active claim;
+- project information;
+- the immutable workflow revision and current step instruction;
+- allowed outcomes and transitions;
+- an index of available prior results; and
+- the current pause question or obstruction and its exactly bound answer.
 
-The system has exactly five domain tables:
+`task result` returns the latest accepted result for one executed step. Results
+are opaque worker-authored content plus the reported outcome; KOS does not parse
+or judge their semantic claims. If a workflow returns to a step and that step is
+reported again, the new accepted result replaces the previous result for that
+step. Full attempt history is not required.
 
-| Table | Required purpose and fields |
-| --- | --- |
-| `projects` | `id`, `name`, unique canonical `repository_identity`, `remote_url`, `default_branch`, timestamps |
-| `workflows` | `id`, `name`, immutable `definition_json`, `created_at` |
-| `task_types` | `id`, unique stable `key`, `name`, `workflow_id`, timestamps |
-| `tasks` | `id`, `project_id`, `task_type_id`, `workflow_id`, optional `parent_id`, optional immutable `creation_key`, `title`, `description_markdown`, `status`, `current_step`, `owner_id`, `claim_version`, `lease_expires_at`, `accepted_artifacts`, `pause_message`, `pause_step`, `pause_claim_version`, `human_answer`, `human_answer_step`, `human_answer_claim_version`, timestamps |
-| `task_dependencies` | `task_id` and `blocker_id` relationships with uniqueness and cycle rules |
+`task report` atomically validates the active claim, observed version, current
+step, and allowed outcome; stores the latest result; applies the declared
+transition; and increments the version. A pause outcome also stores one nonblank
+question or concrete obstruction and releases the claim. Completion also
+releases the claim. A worker never executes the resulting next step.
 
-A project stores no local checkout or worktree path. Its canonical identity is
-`host/namespace/repository`; equivalent supported SSH and HTTPS `origin` URLs
-normalize to that identity. Registration also stores the Git remote and a
-Git-valid nonblank default branch. Rename or transfer updates the existing row,
-preserving numeric identity and relationships.
+`task answer` stores a nonblank answer against the exact paused step and observed
+version, then makes that same step available for a new claim. The pause and
+answer survive process restarts and remain visible in context until the step
+reports an accepted result. Answering does not allow a stale worker to report.
 
-Each workflow row is one complete immutable revision after use. A changed
-definition creates a new row and repoints only the task type; existing tasks
-retain their `workflow_id`. Task type keys are global and stable. The reserved
-built-in keys are `brief`, `development`, and `fix`.
+## Public Operations
 
-A pending task's description and dependencies may change before first claim.
-After first claim its definition is fixed. Parents and blockers belong to the
-same project and cannot create cycles; incomplete blockers prevent claims.
-Non-null creation keys are unique by project and task type. Request-bound
-create-or-get and keyed create-and-claim return an existing exact immutable definition without changing
-its owner, status, lease, step, fence, or artifacts; a mismatch conflicts.
+The CLI exposes the focused agent-facing capabilities below. The API also
+supports numeric project reads plus workflow revision listing and reads for
+administration and inspection.
 
-`accepted_artifacts` is the authoritative last accepted artifact map by step.
-Each value contains the accepted `outcome`, complete `markdown`,
-`accepted_claim_version`, and boolean `reconstructed`. An approved built-in brief
-review additionally contains normalized `brief_graph` and `graph_digest`.
-Development and fix
-implementation entries may additionally contain `required_checks`, whose closed
-values are `passed`, `not_required`, `missing`, `blocked`, and `failed`.
-Reporting a repeated step replaces that step's value. This JSON representation
-is an implementation detail, not a universal task-state schema or attempt history.
+| CLI | API | Purpose |
+| --- | --- | --- |
+| `health` | `GET /up` | Public process liveness |
+| `claim-id` | local | Create one dispatch claim identity |
+| `project create`, `project show`, `project update` | `POST /projects`, `GET /projects`, `PATCH /projects/:id` | Register, inspect, and update project metadata |
+| `workflow create` | `POST /workflows` | Create one immutable keyed revision |
+| `plan put`, `plan show` | `PUT /projects/:project_id/plan`, `GET /projects/:project_id/plan?key=KEY` | Atomically replace an unstarted plan and inspect it by key |
+| `task ready` | `GET /tasks/ready?project_id=ID` | List dependency-ready tasks |
+| `task show` | `GET /tasks/:id` | Observe lifecycle and fencing state |
+| `task context` | `GET /tasks/:id/context` | Read one worker's complete current-step context |
+| `task result` | `GET /tasks/:id/result?step=STEP` | Read one latest accepted result |
+| `task claim` | `POST /tasks/:id/claim` | Claim a ready task |
+| `task takeover` | `POST /tasks/:id/takeover` | Explicitly replace a stopped worker's claim |
+| `task report` | `POST /tasks/:id/report` | Store one result and transition atomically |
+| `task answer` | `POST /tasks/:id/answer` | Durably answer a paused step |
 
-## Workflow And Built-Ins
-
-A workflow definition contains an ordered `steps` array. Every new step has a
-unique `id`, `name`, `instruction`, `artifact_template`, `execution_mode` of
-`main` or `subagent`, `model_tier` of `standard` or `advanced`, and an outcome
-map. Unchanged persisted workflows without a mode execute as `subagent`, and
-those without a tier execute as `advanced`. Every outcome has exactly one action:
-
-- `next_step` naming an existing step;
-- `pause` equal to `needs_human` or `blocked`; or
-- `complete_task: true`.
-
-Every step reachable from the first step through `next_step` actions must have
-some finite `next_step` path to a step with `complete_task: true`. Pauses do not
-advance or complete a task. Reachable closed cycles and pause-only dead ends are
-invalid; backward cycles with a completion exit remain valid.
-
-KOS validates workflow shape and transitions but does not interpret evidence or
-execute conditions. Every built-in step additionally supports `needs_human` and
-`blocked`, which preserve the current step and pause. The exact non-pause routes
-are:
-
-### Development
-
-| Step | Outcomes |
-| --- | --- |
-| `plan` | `planned` -> `implement` |
-| `implement` | `implemented` -> `review`; `plan_invalid` -> `plan` |
-| `review` | `approved` -> `publish`; `changes_requested` -> `implement`; `redesign_required` -> `plan` |
-| `publish` | `published` -> complete; `review_invalid` -> `review`; `base_moved` -> `implement` |
-
-### Fix
-
-| Step | Outcomes |
-| --- | --- |
-| `diagnose` | `diagnosed` -> `plan` |
-| `plan` | `planned` -> `implement`; `diagnosis_invalid` -> `diagnose` |
-| `implement` | `implemented` -> `review`; `plan_invalid` -> `plan` |
-| `review` | `approved` -> `publish`; `changes_requested` -> `implement`; `redesign_required` -> `plan` |
-| `publish` | `published` -> complete; `review_invalid` -> `review`; `base_moved` -> `implement` |
-
-### Brief
-
-| Step | Outcomes |
-| --- | --- |
-| `brief` | `specified` -> `review` |
-| `review` | `approved` -> `publish`; `changes_requested` -> `brief` |
-| `publish` | `published` -> complete; `review_invalid` -> `review`; `base_moved` -> `brief`; `graph_invalid` -> `brief` |
-
-Built-in diagnosis, planning, and review instructions require advanced,
-read-only execution. Built-in briefing is advanced `main` execution and may
-change only authorized specification and graph work. Briefing and implementation
-may create local task commits but never push;
-each successful content step leaves a clean linear sequence from its observed
-base to its tip, with exactly one raw canonical `KOS-Task: <task-id>` line and no
-case variant or duplicate on every commit.
-Implementation instructions own base integration and all required tests, lint,
-formatting, builds, and type checks. Publication instructions are standard and
-may only validate and push the approved sequence and, for a brief, materialize
-children. Custom steps, including those whose IDs match built-in IDs, receive no
-implicit authority from their names. For `/kos-task`, command frontmatter
-selects the advanced main agent before context is available. Every custom `main`
-step runs there regardless of its declared tier; `model_tier` selects a profile
-only for `subagent` execution.
-
-Briefing runs in the `/kos-brief` command agent and updates OKF behavior while
-proposing a minimal acyclic graph. Review runs independently in a fresh advanced
-subagent, checks both, and submits the exact graph as structured `brief_graph`
-evidence. The server normalizes it and stores its `graph_digest`. Publication
-inspects the accepted graph, publishes the reviewed
-specification, observes remote success, and then submits the exact graph to one
-fenced operation. It performs bounded normalization, validation, and digesting
-before the SQLite writer lock, then atomically compares and materializes it under
-the publication fence. Children are development tasks with the brief as parent and
-blocker, plus declared sibling blockers. Only then does the publisher report
-`published`, completing the brief.
-
-## Ownership, Pauses, And Reporting
-
-Statuses are `pending`, `active`, `needs_human`, `blocked`, `completed`, and
-`cancelled`. `current_step` always identifies the next step to execute or retry.
-
-Claiming atomically verifies readiness, sets `active`, records `owner_id`,
-increments `claim_version`, and sets a server-time lease. Every execution
-mutation supplies task ID, owner ID, claim version, and current step. Resume also
-requires the exact persisted version and step, increments the version, and may
-replace an expired owner or a confirmed stopped active owner. There is no
-heartbeat.
-
-For `needs_human`, reporting requires a nonblank `message`. The same transaction
-stores it as `pause_message`, binds `pause_step` to the current step and
-`pause_claim_version` to the incremented version, releases ownership, and stores
-the accepted artifact. `blocked` uses the same exact binding for its technical
-reason.
-
-Resuming `needs_human` requires a nonblank valid UTF-8 answer together with the
-persisted claim version and step. The transaction stores `human_answer`,
-`human_answer_step`, and `human_answer_claim_version` equal to the paused step
-and pause version, then activates and refences the task. Context returns the
-answer only when those bindings match. A further active takeover preserves the
-binding; the next accepted report clears pause and answer state atomically.
-
-Every accepted report increments `claim_version`, even when a backward outcome
-returns to the same step later. Pause and completion release ownership. A stale,
-expired, duplicate, or wrong-step report cannot change artifact or transition
-state.
-
-## Context, Artifact, And Report Protocol
-
-The focused public API routes are:
-
-```text
-GET  /tasks/:id/context
-GET  /tasks/:id/artifact?step=STEP
-POST /tasks/:id/report-attempt
-```
-
-The CLI exposes these as `task context`, `task artifact`, and
-`task report-attempt`. Installed per-command help is authoritative for invocation
-syntax and options.
-
-Executor-only `context` returns exactly these projections:
-
-- `task`: `id`, `project_id`, `title`, `description_markdown`, `status`,
-  `current_step`, `owner_id`, `claim_version`, and `lease_expires_at`;
-- `project`: `id`, `name`, `repository_identity`, `remote_url`, and
-  `default_branch`;
-- `step`: `id`, `name`, `instruction`, `artifact_template`, `execution_mode`,
-  `model_tier`, and `allowed_outcomes`;
-- `artifacts`: one index entry per accepted step containing `step`, `outcome`,
-  applicable `required_checks` or `graph_digest`, `accepted_claim_version`, and `reconstructed`,
-  never Markdown; and
-- `pause`: null or `step`, `claim_version`, `message`, and an `answer` only when
-  exactly bound to that pause.
-
-`artifact` requires one step and returns `outcome`, `markdown`, applicable
-`required_checks`, `brief_graph`, `graph_digest`, `accepted_claim_version`, and
-`reconstructed`; an absent step
-is not an empty artifact.
-
-`report-attempt` accepts task ID plus top-level `owner_id`, `claim_version`,
-`step`, `outcome`, `artifact`, optional `message`, optional `required_checks`,
-and the required `brief_graph` for an approved built-in brief review. The CLI
-reads `artifact` from `--artifact-file`; `-` means
-standard input. An artifact must be a nonempty valid UTF-8 string of at most 1
-MiB. A pause message must be a nonblank string.
-In one database transaction KOS validates the outcome and pause requirement,
-checks active owner, unexpired lease, version, and current step, stores the last
-accepted artifact, applies the transition, increments the fence, and clears or
-sets pause/answer state. For built-in development and fix work,
-`required_checks` is allowed only at implementation; `implemented` requires
-`passed` or `not_required`. Positive review and publication also
-require that assertion in accepted implementation evidence. Rails does not
-select, run, or parse checks or their Markdown output. A built-in `complete_task`
-action is rejected unless the reported step and outcome are `publish` and
-`published`. For a brief at `publish`, the transaction serializes with
-materialization and requires the observed graph digest to equal accepted review
-identity before accepting `published`. `base_moved` and `review_invalid` remain
-invalid after materialization. `graph_invalid` atomically retracts the graph only
-while every child is pending and unclaimed and no unrelated task references it.
-Rejection stores no artifact. It returns
-the ordinary task envelope.
-
-The broader CLI also exposes project create/show/update; workflow create; task
-type create/update; task create/create-or-get/create-and-claim/update/show/show-owned;
-claim-next, exact claim, resumable, exact resume, cancel; and brief graph
-materialize/children operations. The installed CLI help lists exact
-commands and options; the README summarizes the API routes and operational
-setup.
-`kos session-id` is a local unauthenticated operation that returns
-`kos-session-` followed by 32 lowercase hexadecimal digits from a
-cryptographically secure random source.
-Public task-type administration may repoint custom types but cannot replace a
-reserved built-in type's workflow; catalog installation owns built-in revisions.
-`task create-or-get` accepts a project, kind `fix` or `brief`, owner, and exact
-request file. `task create-and-claim` accepts optional `--creation-key KEY`;
-ordinary task creation does not.
-The installed `/kos-task` command accepts one exact stable custom task-type key,
-uses existing `task resumable` and `task claim-next` operations, and never
-creates work. The three reserved built-in keys are rejected in favor of their
-dedicated commands.
-
-`kos health` calls the public liveness `GET /up` endpoint selected by `KOS_API_URL`
-without requiring `KOS_API_TOKEN`. Public `GET /ready` separately verifies a
-queryable current database, canonical built-in catalog, and writable data home,
-returning the server version and operational source identity. Every application
-operation requires the configured shared token. Its holders are trusted for all such operations;
-ownership and fencing coordinate their concurrent writes but do not authorize
-them separately.
-
-Rails and OpenCode run on the same host with the same absolute
-`KOS_DATA_HOME`. Executors derive task worktrees as
-`$KOS_DATA_HOME/worktrees/<project-id>/<task-id>` and reject a missing or
-relative client value. The path remains machine-local configuration and is not
-stored in a project row. API tokens must be nonempty valid UTF-8 HTTP header
-values without controls or surrounding whitespace; server boot and the CLI use
-the same validation.
-
-The supported production service is one loopback-bound Puma process supervised
-on the same host as SQLite and OpenCode, behind a separately supervised TLS
-terminating proxy. Server readiness, packaged CLI version output, and the
-OpenCode installation manifest expose the same deterministic operational source
-identity. Mixed identities are unsupported.
+Application operations require the bearer token. Inputs are JSON or explicit
+file/standard-input values through the CLI. Complete command help defines exact
+options and response fields. Failed validation, dependency cycles, conflicting
+claims, and stale writes produce no partial state change.
 
 ## Recovery And Upgrade
 
-Recovery uses authoritative current state, never local step files or attempt
-history. After an ambiguous report, `context` and the accepted-artifact index
-show whether the fenced transition occurred. An observed version, step, and
-artifact prove acceptance; an unchanged matching fence permits at most one
-careful retry; contradiction or unavailable observation blocks. The scheduler
-does not retain artifact bytes or a pending submission. Its in-memory
-before/after comparison bounds each unchanged execution, and expired-lease
-recovery uses at most one exact fenced resume per invocation.
+Authoritative recovery consists of rereading task state. After an ambiguous
+mutation, clients inspect `task show`, `context`, or `result` before deciding
+whether another mutation is safe. KOS does not require local receipts, pending
+submission files, deterministic retry scripts, or automatic recovery.
 
-There is no `tasks/<id>/<step>.md`, answer sidecar, inode check, pre-dispatch
-deletion, rename/fsync requirement, attempt marker, step receipt, or dual-read
-fallback. Old local task artifacts are not read, imported, or considered
-evidence.
+This pre-release architecture does not migrate PLAN-022 databases. Upgrade is a
+destructive reset: optionally retain a backup for reference, remove the old KOS
+database, prepare a new one, then recreate projects, workflows, and plans. Legacy
+tasks, task types, leases, artifacts, request keys, and brief graphs are not
+translated or imported.
 
-This pre-release workflow change provides no general legacy migration or
-dual-run path. The effective mode and tier defaults preserve already-persisted
-immutable workflow revisions that omit those fields; other incompatible local
-database state will be reset rather than translated.
+## Non-Goals
 
-Graph materialization accepts at most 64 children, 256 sibling edges, depth 32,
-100-byte keys, 200-byte titles, 16 KiB descriptions, and 1 MiB of canonical JSON.
-Validation is iterative and completes before persistence. An exact retry returns
-the unchanged observed graph; a different identity conflicts. Cancelling a
-materialized brief atomically cancels all unfinished direct children.
-
-Git recovery remains observation-oriented. Publication observes the approved
-base, ordered commit sequence, tip, trees, paths, diff digest, and remote before retrying,
-never force-pushes, and never duplicates a confirmed push. A moved base leaves
-history and content unchanged and returns to implementation or briefing as the
-workflow specifies; that content agent integrates before checks,
-product-behavior maintenance, and review repeat. An ambiguous push is resolved
-by fetching and observing the exact sequence remotely. Brief graph creation
-recovers by observing the complete
-materialized graph and its server-derived digest, which must equal accepted
-review evidence.
-
-## Publication
-
-Briefing and implementation may create local commits but never
-push. Every commit in the task range contains exactly one raw canonical
-`KOS-Task: <id>` line with no case variant or duplicate. Before a successful
-content report the worktree and index are clean and
-the commits form one linear, contiguous task-owned sequence from the observed
-default-branch base to `HEAD`.
-
-Review performs no repository mutation. It inspects the complete base-to-tip
-diff, while its bounded approval records the exact base, ordered commit SHAs,
-tip, base and per-commit tree identities, changed paths, and SHA-256 digest of
-that diff. Approval is valid only while all of those facts and the clean
-worktree remain unchanged.
-
-The publisher validates accepted predecessor evidence and the exact approved
-sequence, including successful structured required-check evidence for
-development and fix tasks, then fetches the default branch. Invalid approval
-returns `review_invalid`. After fetching, an exact reviewed remote tip and
-sequence proves publication; an exact reviewed base permits the push; only a
-remote differing from both permits `base_moved` or a conflict. A moved base
-changes no history or content. Publication creates, amends, rebases, squashes,
-cherry-picks, and appends no commit. It pushes the exact reviewed tip and range
-without force, fetches regardless of push output, and reports success only after
-observing the exact ordered sequence unchanged in remote history. A brief
-publisher then atomically materializes its reviewed graph. The server will not
-accept `published` until the observed and approved graph digests match. After
-children exist it permits a technical `blocked` pause and the explicit
-`graph_invalid` atomic retraction path, but no other publication rewind.
-
-The publisher reports `published` only after observing the exact reviewed range
-in remote history and, for a brief, after the exact child graph exists. The server
-then completes the task and releases ownership. Review and publication remain
-separate steps; there is no built-in verifier step.
-
-## Product Specifications
-
-Participating projects may keep observable behavior in an OKF v0.2 `specs/`
-bundle. The `okf` skill preserves unknown metadata and unrelated content and is
-confined to that bundle. Rails stores accepted execution evidence but does not
-parse or store the repository's OKF documents. Architecture and testing remain
-technical contracts in `docs/`.
-
-## Explicit Exclusions
-
-The implemented version excludes cross-host active-task migration, a web UI,
-multiple AI runtimes, a runtime broker, server-started OpenCode, heartbeat,
-random claim tokens, checkpoints, a universal arbitrary task-state document,
-full attempt history, artifact tables or graphs, result evaluators, candidate or
-base SHA fields outside accepted Markdown evidence, condition
-languages, parallel steps within one task, automatic conflict resolution,
-force-push, automatic deletion of unknown worktrees, and Rails parsing of OKF.
+The MVP excludes leases, heartbeat, automatic retries, parallel steps within one
+task, request-bound commands, task types, main-agent step execution, server-side
+required-check gates, Git/review/publication validation, brief graphs,
+deterministic scheduler or Git algorithms, live-model release gates,
+multi-tenant authorization, high availability, multi-host coordination, and a
+web UI.

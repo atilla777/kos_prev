@@ -32,7 +32,6 @@ module Kos
     config.autoload_lib(ignore: %w[assets tasks])
 
     config.x.kos.api_token = ENV["KOS_API_TOKEN"]
-    config.x.kos.lease_duration = Kos::Configuration.lease_duration
     config.x.kos.data_home = Rails.env.test? ? Rails.root.join("tmp").to_s : Kos::Configuration.data_home
     config.x.kos.source_id = Kos::BuildIdentity.source_id(root: Rails.root)
 

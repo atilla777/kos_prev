@@ -33,7 +33,7 @@ module Kos
     def run
       return print_version if @arguments == [ "--version" ] || @arguments == [ "-v" ]
       return print_help if @arguments.empty? || @arguments == [ "--help" ] || @arguments == [ "-h" ]
-      return session_id if @arguments.first == "session-id"
+      return claim_id if @arguments.first == "claim-id"
 
       method, path, payload = command
       response = request(method, path, payload)
@@ -62,12 +62,11 @@ module Kos
 
         Resources and actions:
           health
-          session-id
+          claim-id
           project create | show | update
           workflow create
-          task-type create | update
-          task create | create-or-get | create-and-claim | update | show | context | artifact | show-owned | claim-next | claim | resumable | resume | report-attempt | cancel
-          task materialize-children | children
+          plan put | show
+          task ready | show | context | result | claim | takeover | report | answer
 
         Options:
           -v, --version             Show the installed CLI version
@@ -77,10 +76,10 @@ module Kos
       0
     end
 
-    def session_id
+    def claim_id
       @arguments.shift
-      parse_options("kos session-id", {})
-      @stdout.puts("kos-session-#{SecureRandom.hex(16)}")
+      parse_options("kos claim-id", {})
+      @stdout.puts("kos-claim-#{SecureRandom.hex(16)}")
       0
     end
 
@@ -89,45 +88,28 @@ module Kos
       action = @arguments.shift
 
       case [ resource, action ]
-      when [ "health", nil ] then health
+      when [ "health", nil ] then [ :get, "/up", nil ]
       when [ "project", "create" ] then project_create
       when [ "project", "show" ] then project_show
       when [ "project", "update" ] then project_update
       when [ "workflow", "create" ] then workflow_create
-      when [ "task-type", "create" ] then task_type_create
-      when [ "task-type", "update" ] then task_type_update
-      when [ "task", "create" ] then task_create
-      when [ "task", "create-or-get" ] then task_create_or_get
-      when [ "task", "create-and-claim" ] then task_create_and_claim
-      when [ "task", "update" ] then task_update
+      when [ "plan", "put" ] then plan_put
+      when [ "plan", "show" ] then plan_show
+      when [ "task", "ready" ] then task_ready
       when [ "task", "show" ] then task_show
       when [ "task", "context" ] then task_context
-      when [ "task", "artifact" ] then task_artifact
-      when [ "task", "show-owned" ] then task_show_owned
-      when [ "task", "claim-next" ] then task_claim_next
+      when [ "task", "result" ] then task_result
       when [ "task", "claim" ] then task_claim
-      when [ "task", "resumable" ] then task_resumable
-      when [ "task", "resume" ] then task_resume
-      when [ "task", "report-attempt" ] then task_report_attempt
-      when [ "task", "cancel" ] then task_cancel
-      when [ "task", "materialize-children" ] then task_materialize_children
-      when [ "task", "children" ] then task_children
+      when [ "task", "takeover" ] then task_takeover
+      when [ "task", "report" ] then task_report
+      when [ "task", "answer" ] then task_answer
       else
         raise Error.new("usage_error", "unknown command #{[ resource, action ].compact.join(" ").inspect}")
       end
     end
 
-    def health
-      [ :get, "/up", nil ]
-    end
-
     def project_create
-      values = parse_options("kos project create", {
-        "--name NAME" => [ :name, String, "Project name" ],
-        "--remote-url URL" => [ :remote_url, String, "Git remote URL" ],
-        "--default-branch BRANCH" => [ :default_branch, String, "Default Git branch" ],
-        "--repository-identity IDENTITY" => [ :repository_identity, String, "Canonical host/namespace/repository" ]
-      })
+      values = parse_options("kos project create", project_options)
       require_values!(values, :name, :remote_url, :default_branch)
       [ :post, "/projects", values ]
     end
@@ -142,12 +124,7 @@ module Kos
 
     def project_update
       id = shift_id!("project")
-      values = parse_options("kos project update ID", {
-        "--name NAME" => [ :name, String, "Project name" ],
-        "--remote-url URL" => [ :remote_url, String, "Git remote URL" ],
-        "--default-branch BRANCH" => [ :default_branch, String, "Default Git branch" ],
-        "--repository-identity IDENTITY" => [ :repository_identity, String, "Canonical host/namespace/repository" ]
-      })
+      values = parse_options("kos project update ID", project_options)
       raise Error.new("usage_error", "provide at least one project field") if values.empty?
 
       [ :patch, "/projects/#{id}", values ]
@@ -155,69 +132,41 @@ module Kos
 
     def workflow_create
       values = parse_options("kos workflow create", {
+        "--key KEY" => [ :key, String, "Stable workflow key" ],
         "--name NAME" => [ :name, String, "Workflow name" ],
         "--definition-file FILE" => [ :definition_file, String, "Workflow JSON file, or - for STDIN" ]
       })
-      require_values!(values, :name, :definition_file)
-      definition_file = values.delete(:definition_file)
-      values[:definition_json] = read_json(definition_file)
+      require_values!(values, :key, :name, :definition_file)
+      values[:definition_json] = read_json_object(values.delete(:definition_file))
       [ :post, "/workflows", values ]
     end
 
-    def task_type_create
-      values = parse_options("kos task-type create", {
-        "--key KEY" => [ :key, String, "Stable task type key" ],
-        "--name NAME" => [ :name, String, "Task type name" ],
-        "--workflow-id ID" => [ :workflow_id, Integer, "Workflow ID" ]
-      })
-      require_values!(values, :key, :name, :workflow_id)
-      [ :post, "/task_types", values ]
-    end
-
-    def task_type_update
-      id = shift_id!("task type")
-      values = parse_options("kos task-type update ID", {
-        "--workflow-id ID" => [ :workflow_id, Integer, "Workflow ID" ]
-      })
-      require_values!(values, :workflow_id)
-      [ :patch, "/task_types/#{id}", values ]
-    end
-
-    def task_create
-      values = parse_task_definition_options("kos task create", update: false)
-      require_values!(values, :project_id, :title, :description_markdown)
-      require_task_type_selector!(values)
-      values[:blocker_ids] ||= []
-      [ :post, "/tasks", values ]
-    end
-
-    def task_create_and_claim
-      values = parse_task_definition_options("kos task create-and-claim", update: false, owner: true)
-      require_values!(values, :project_id, :title, :description_markdown, :owner_id)
-      require_task_type_selector!(values)
-      values[:blocker_ids] ||= []
-      [ :post, "/tasks/create-and-claim", values ]
-    end
-
-    def task_create_or_get
-      values = parse_options("kos task create-or-get", {
+    def plan_put
+      values = parse_options("kos plan put", {
         "--project-id ID" => [ :project_id, Integer, "Project ID" ],
-        "--kind KIND" => [ :kind, String, "Request kind: fix or brief" ],
-        "--owner-id OWNER" => [ :owner_id, String, "Orchestrator session ID" ],
-        "--request-file FILE" => [ :request_file, String, "Exact request, or - for STDIN" ]
+        "--definition-file FILE" => [ :definition_file, String, "Plan JSON file, or - for STDIN" ]
       })
-      require_values!(values, :project_id, :kind, :owner_id, :request_file)
-      request_file = values.delete(:request_file)
-      values[:request] = read_file(request_file)
-      [ :post, "/tasks/create-or-get", values ]
+      require_values!(values, :project_id, :definition_file)
+      project_id = values.delete(:project_id)
+      [ :put, "/projects/#{project_id}/plan", read_json_object(values.delete(:definition_file)) ]
     end
 
-    def task_update
-      id = shift_id!("task")
-      values = parse_task_definition_options("kos task update ID", update: true)
-      raise Error.new("usage_error", "provide at least one editable task field") if values.empty?
+    def plan_show
+      values = parse_options("kos plan show", {
+        "--project-id ID" => [ :project_id, Integer, "Project ID" ],
+        "--key KEY" => [ :key, String, "Task plan key" ]
+      })
+      require_values!(values, :project_id, :key)
+      project_id = values.delete(:project_id)
+      [ :get, query_path("/projects/#{project_id}/plan", values), nil ]
+    end
 
-      [ :patch, "/tasks/#{id}", values ]
+    def task_ready
+      values = parse_options("kos task ready", {
+        "--project-id ID" => [ :project_id, Integer, "Project ID" ]
+      })
+      require_values!(values, :project_id)
+      [ :get, query_path("/tasks/ready", values), nil ]
     end
 
     def task_show
@@ -232,178 +181,92 @@ module Kos
       [ :get, "/tasks/#{id}/context", nil ]
     end
 
-    def task_artifact
+    def task_result
       id = shift_id!("task")
-      values = parse_options("kos task artifact ID", {
-        "--step STEP" => [ :step, String, "Accepted workflow step" ]
+      values = parse_options("kos task result ID", {
+        "--step STEP" => [ :step, String, "Workflow step" ]
       })
       require_values!(values, :step)
-      [ :get, query_path("/tasks/#{id}/artifact", values), nil ]
-    end
-
-    def task_show_owned
-      values = parse_options("kos task show-owned", owner_options.merge(
-        "--project-id ID" => [ :project_id, Integer, "Project ID" ]
-      ))
-      require_values!(values, :project_id, :owner_id)
-      [ :get, query_path("/tasks/show-owned", values), nil ]
-    end
-
-    def task_claim_next
-      values = parse_options("kos task claim-next", owner_options.merge(
-        "--project-id ID" => [ :project_id, Integer, "Project ID" ],
-        "--task-type-key KEY" => [ :task_type_key, String, "Filter by task type key" ]
-      ))
-      require_values!(values, :project_id, :owner_id)
-      [ :post, "/tasks/claim-next", values ]
+      [ :get, query_path("/tasks/#{id}/result", values), nil ]
     end
 
     def task_claim
       id = shift_id!("task")
-      values = parse_options("kos task claim ID", owner_options)
-      require_values!(values, :owner_id)
+      values = parse_options("kos task claim ID", claim_options.merge(
+        "--version VERSION" => [ :version, Integer, "Observed task version" ]
+      ))
+      require_values!(values, :claim_id, :version)
       [ :post, "/tasks/#{id}/claim", values ]
     end
 
-    def task_resumable
-      values = parse_options("kos task resumable", {
-        "--project-id ID" => [ :project_id, Integer, "Project ID" ],
-        "--task-type-key KEY" => [ :task_type_key, String, "Task type key" ]
-      })
-      require_values!(values, :project_id, :task_type_key)
-      [ :get, query_path("/tasks/resumable", values), nil ]
-    end
-
-    def task_resume
+    def task_takeover
       id = shift_id!("task")
-      values = parse_options("kos task resume ID", owner_options.merge(
-        "--claim-version VERSION" => [ :claim_version, Integer, "Expected claim version" ],
-        "--step STEP" => [ :step, String, "Expected current workflow step" ],
-        "--answer-file FILE" => [ :answer_file, String, "Human answer file, or - for STDIN" ],
-        "--takeover-confirmed" => [ :takeover_confirmed, true, "Confirm replacement of an active owner" ]
+      values = parse_options("kos task takeover ID", claim_options.merge(
+        "--version VERSION" => [ :version, Integer, "Observed task version" ],
+        "--step STEP" => [ :step, String, "Observed current step" ]
       ))
-      require_values!(values, :owner_id, :claim_version, :step)
-      answer_file = values.delete(:answer_file)
-      values[:answer] = read_file(answer_file) if answer_file
-      values[:takeover_confirmed] ||= false
-      [ :post, "/tasks/#{id}/resume", values ]
+      require_values!(values, :claim_id, :version, :step)
+      [ :post, "/tasks/#{id}/takeover", values ]
     end
 
-    def task_report_attempt
+    def task_report
       id = shift_id!("task")
-      values = parse_options("kos task report-attempt ID", owner_options.merge(
-        "--claim-version VERSION" => [ :claim_version, Integer, "Current claim version" ],
-        "--step STEP" => [ :step, String, "Current workflow step" ],
+      values = parse_options("kos task report ID", fence_options.merge(
         "--outcome OUTCOME" => [ :outcome, String, "Reported step outcome" ],
-        "--artifact-file FILE" => [ :artifact_file, String, "Accepted Markdown artifact, or - for STDIN" ],
-        "--brief-graph-file FILE" => [ :brief_graph_file, String, "Approved brief graph JSON file, or - for STDIN" ],
-        "--required-checks STATUS" => [ :required_checks, String, "Required checks status for built-in implementation" ],
-        "--message MESSAGE" => [ :message, String, "Question or technical reason for a pause" ]
+        "--result-file FILE" => [ :result_file, String, "Step result, or - for STDIN" ],
+        "--message MESSAGE" => [ :message, String, "Question or obstruction for a pause" ]
       ))
-      require_values!(values, :owner_id, :claim_version, :step, :outcome, :artifact_file)
-      artifact_file = values.delete(:artifact_file)
-      values[:artifact] = read_file(artifact_file)
-      validate_artifact!(values[:artifact])
-      brief_graph_file = values.delete(:brief_graph_file)
-      values[:brief_graph] = read_json(brief_graph_file) if brief_graph_file
-      [ :post, "/tasks/#{id}/report-attempt", values ]
+      require_values!(values, :claim_id, :version, :step, :outcome, :result_file)
+      values[:result] = read_file(values.delete(:result_file))
+      [ :post, "/tasks/#{id}/report", values ]
     end
 
-    def task_cancel
+    def task_answer
       id = shift_id!("task")
-      parse_options("kos task cancel ID", {})
-      [ :post, "/tasks/#{id}/cancel", {} ]
+      values = parse_options("kos task answer ID", {
+        "--version VERSION" => [ :version, Integer, "Observed task version" ],
+        "--step STEP" => [ :step, String, "Paused workflow step" ],
+        "--answer-file FILE" => [ :answer_file, String, "Answer, or - for STDIN" ]
+      })
+      require_values!(values, :version, :step, :answer_file)
+      values[:answer] = read_file(values.delete(:answer_file))
+      [ :post, "/tasks/#{id}/answer", values ]
     end
 
-    def task_materialize_children
-      id = shift_id!("task")
-      values = parse_graph_options("kos task materialize-children ID")
-      [ :post, "/tasks/#{id}/materialize-children", values ]
+    def project_options
+      {
+        "--name NAME" => [ :name, String, "Project name" ],
+        "--remote-url URL" => [ :remote_url, String, "Git remote URL" ],
+        "--default-branch BRANCH" => [ :default_branch, String, "Default Git branch" ],
+        "--repository-identity IDENTITY" => [ :repository_identity, String, "Canonical host/namespace/repository" ]
+      }
     end
 
-    def task_children
-      id = shift_id!("task")
-      parse_options("kos task children ID", {})
-      [ :get, "/tasks/#{id}/children", nil ]
+    def claim_options
+      { "--claim-id CLAIM" => [ :claim_id, String, "Worker claim ID" ] }
     end
 
-    def parse_graph_options(usage)
-      definitions = owner_options.merge(
-        "--definition-file FILE" => [ :definition_file, String, "Child graph JSON file, or - for STDIN" ]
+    def fence_options
+      claim_options.merge(
+        "--version VERSION" => [ :version, Integer, "Observed task version" ],
+        "--step STEP" => [ :step, String, "Observed current step" ]
       )
-      definitions["--claim-version VERSION"] = [ :claim_version, Integer, "Current claim version" ]
-      values = parse_options(usage, definitions)
-      require_values!(values, :definition_file, :owner_id, :claim_version)
-      definition_file = values.delete(:definition_file)
-      definition = read_json(definition_file)
-      raise Error.new("local_input_error", "child graph definition must be a JSON object") unless definition.is_a?(Hash)
-
-      values[:children] = definition.fetch("children") do
-        raise Error.new("local_input_error", "child graph definition must contain children")
-      end
-      values
-    end
-
-    def parse_task_definition_options(usage, update:, owner: false)
-      values = {}
-      parser = option_parser(usage)
-      parser.on("--project-id ID", Integer, "Project ID") { |value| values[:project_id] = value } unless update
-      parser.on("--task-type-id ID", Integer, "Task type ID") { |value| values[:task_type_id] = value } unless update
-      parser.on("--task-type-key KEY", String, "Stable task type key") { |value| values[:task_type_key] = value } unless update
-      parser.on("--owner-id OWNER", String, "Orchestrator session ID") { |value| values[:owner_id] = value } if owner
-      parser.on("--creation-key KEY", String, "Request-bound creation key") { |value| values[:creation_key] = value } if owner
-      parser.on("--title TITLE", String, "Task title") { |value| values[:title] = value } unless update
-      parser.on("--description-file FILE", String, "Markdown file, or - for STDIN") do |value|
-        values[:description_markdown] = read_file(value)
-      end
-      parser.on("--parent-id ID", Integer, "Parent task ID") do |value|
-        reject_duplicate!(values, :parent_id, "--parent-id and --clear-parent are mutually exclusive")
-        values[:parent_id] = value
-      end
-      parser.on("--clear-parent", "Remove the parent task") do
-        reject_duplicate!(values, :parent_id, "--parent-id and --clear-parent are mutually exclusive")
-        values[:parent_id] = nil
-      end
-      blocker_ids = []
-      blockers_set = false
-      parser.on("--blocker-id ID", Integer, "Blocking task ID; may be repeated") do |value|
-        raise OptionParser::InvalidOption, "--blocker-id and --clear-blockers are mutually exclusive" if blockers_set == :clear
-
-        blockers_set = true
-        blocker_ids << value
-      end
-      parser.on("--clear-blockers", "Remove all blocking tasks") do
-        raise OptionParser::InvalidOption, "--blocker-id and --clear-blockers are mutually exclusive" if blockers_set == true
-
-        blockers_set = :clear
-      end
-      parse!(parser)
-      values[:blocker_ids] = blocker_ids if blockers_set
-      values
     end
 
     def parse_options(usage, definitions)
       values = {}
-      parser = option_parser(usage)
-      definitions.each do |switch, (name, type, description)|
-        if type == true
-          parser.on(switch, description) { values[name] = true }
-        else
-          parser.on(switch, type, description) { |value| values[name] = value }
-        end
-      end
-      parse!(parser)
-      values
-    end
-
-    def option_parser(usage)
-      OptionParser.new do |parser|
-        parser.banner = "Usage: #{usage} [options]"
-        parser.on("-h", "--help", "Show this help") do
-          @stdout.puts(parser)
+      parser = OptionParser.new do |option_parser|
+        option_parser.banner = "Usage: #{usage} [options]"
+        option_parser.on("-h", "--help", "Show this help") do
+          @stdout.puts(option_parser)
           throw :help
         end
       end
+      definitions.each do |switch, (name, type, description)|
+        parser.on(switch, type, description) { |value| values[name] = value }
+      end
+      parse!(parser)
+      values
     end
 
     def parse!(parser)
@@ -425,32 +288,19 @@ module Kos
       raise Error.new("usage_error", "missing required options: #{switches.join(", ")}")
     end
 
-    def require_task_type_selector!(values)
-      selectors = %i[task_type_key task_type_id].select { |name| values.key?(name) }
-      return if selectors.one?
-
-      raise Error.new("usage_error", "provide exactly one of --task-type-key or --task-type-id")
-    end
-
     def shift_id!(label)
       return 0 if %w[-h --help].include?(@arguments.first)
 
-      value = @arguments.shift
-      Integer(value, 10)
+      Integer(@arguments.shift, 10)
     rescue ArgumentError, TypeError
       raise Error.new("usage_error", "#{label} ID must be an integer")
     end
 
-    def owner_options
-      { "--owner-id OWNER" => [ :owner_id, String, "Orchestrator session ID" ] }
-    end
+    def read_json_object(path)
+      value = JSON.parse(read_file(path))
+      raise Error.new("local_input_error", "JSON in #{display_path(path)} must be an object") unless value.is_a?(Hash)
 
-    def reject_duplicate!(values, name, message)
-      raise OptionParser::InvalidOption, message if values.key?(name)
-    end
-
-    def read_json(path)
-      JSON.parse(read_file(path))
+      value
     rescue JSON::ParserError => error
       raise Error.new("local_input_error", "invalid JSON in #{display_path(path)}: #{error.message}")
     end
@@ -468,7 +318,8 @@ module Kos
 
     def request(method, path, payload)
       uri = endpoint(path)
-      request_class = { get: Net::HTTP::Get, patch: Net::HTTP::Patch, post: Net::HTTP::Post }.fetch(method)
+      request_class = { get: Net::HTTP::Get, patch: Net::HTTP::Patch, post: Net::HTTP::Post,
+                        put: Net::HTTP::Put }.fetch(method)
       http_request = request_class.new(uri)
       http_request["Accept"] = "application/json"
       http_request["Authorization"] = "Bearer #{api_token}" unless path == "/up"
@@ -520,16 +371,11 @@ module Kos
       end
     end
 
-    def normalize_utf8(value, label, kind: "local_input_error")
+    def normalize_utf8(value, label)
       utf8 = value.b.dup.force_encoding(Encoding::UTF_8)
       return utf8 if utf8.valid_encoding?
 
-      raise Error.new(kind, "#{label} must be valid UTF-8")
-    end
-
-    def validate_artifact!(artifact)
-      raise Error.new("local_input_error", "artifact must be non-empty") if artifact.empty?
-      raise Error.new("local_input_error", "artifact must be at most 1 MiB") if artifact.bytesize > 1024 * 1024
+      raise Error.new("local_input_error", "#{label} must be valid UTF-8")
     end
 
     def write_error(kind, message)

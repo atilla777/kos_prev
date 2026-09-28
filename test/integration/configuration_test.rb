@@ -81,18 +81,6 @@ class ConfigurationTest < ActiveSupport::TestCase
     end
   end
 
-  test "uses a configurable positive lease duration" do
-    assert_equal 21_600, Kos::Configuration.lease_duration({})
-    assert_equal 3_600, Kos::Configuration.lease_duration({ "KOS_LEASE_SECONDS" => "3600" })
-
-    [ "0", "-1", "invalid" ].each do |value|
-      error = assert_raises(Kos::ConfigurationError) do
-        Kos::Configuration.lease_duration({ "KOS_LEASE_SECONDS" => value })
-      end
-      assert_equal "KOS_LEASE_SECONDS must be a positive integer", error.message
-    end
-  end
-
   test "boots development with a token and creates its external data directory" do
     Dir.mktmpdir("kos-data") do |temporary_directory|
       data_home = File.join(temporary_directory, "data")

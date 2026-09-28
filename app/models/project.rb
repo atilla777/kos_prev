@@ -1,5 +1,6 @@
 class Project < ApplicationRecord
-  has_many :tasks
+  has_many :task_plans, dependent: :restrict_with_error
+  has_many :tasks, through: :task_plans
 
   validates :name, :remote_url, :default_branch, :repository_identity, presence: true
   validates :repository_identity, uniqueness: true

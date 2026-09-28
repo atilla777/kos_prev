@@ -8,7 +8,7 @@ class ApplicationController < ActionController::API
   rescue_from TaskLifecycle::InvalidTransition, with: :render_invalid_transition
   rescue_from TaskLifecycle::InvalidInput, with: :render_bad_request
   rescue_from TaskLifecycle::Conflict, with: :render_conflict
-  rescue_from BriefTaskGraph::InvalidDefinition, with: :render_invalid_graph
+  rescue_from TaskPlanStore::InvalidDefinition, with: :render_bad_request
 
   before_action :authenticate_api_token
 
@@ -105,9 +105,5 @@ class ApplicationController < ActionController::API
 
   def render_conflict(error)
     render json: { error: "conflict", message: error.message }, status: :conflict
-  end
-
-  def render_invalid_graph(error)
-    render json: { error: "invalid_graph", message: error.message }, status: :unprocessable_entity
   end
 end

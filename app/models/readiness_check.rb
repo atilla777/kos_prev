@@ -25,7 +25,7 @@ class ReadinessCheck
         raise "database query failed" unless connection.select_value("SELECT 1").to_i == 1
 
         connection.transaction(requires_new: true) do
-          connection.execute("UPDATE task_types SET updated_at = updated_at WHERE id = (SELECT MIN(id) FROM task_types)")
+          connection.execute("UPDATE workflows SET revision = revision WHERE id = (SELECT MIN(id) FROM workflows)")
           raise ActiveRecord::Rollback
         end
       end

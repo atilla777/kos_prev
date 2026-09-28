@@ -3,8 +3,7 @@
 ## Development Tasks
 
 KOS is developed through the repository files under `tasks/`, not through a
-running KOS task. Do not invoke `/kos`, `/kos-fix`, or `/kos-brief` to coordinate
-changes to this repository.
+running KOS task. Do not invoke `/kos` to coordinate changes to this repository.
 
 `tasks/roadmap.md` is the authoritative ordered task list. When asked to do the
 next task, select the first `planned` task whose dependencies are `done`. Work on

@@ -6,367 +6,176 @@ require "socket"
 require "tempfile"
 
 class CliTest < ActiveSupport::TestCase
-  test "prints top-level and command help without configuration" do
+  test "advertises only the focused command surface" do
     output, error, status = run_cli("--help", environment: {})
 
     assert_predicate status, :success?
-    assert_includes output, "Usage: kos <resource> <action> [options]"
-    assert_match(/^\s*health\s*$/, output)
-    assert_match(/^\s*session-id\s*$/, output)
-    {
-      "project" => %w[create show update],
-      "workflow" => %w[create],
-      "task-type" => %w[create update],
-      "task" => %w[
-        create create-or-get create-and-claim update show context artifact show-owned claim-next claim resumable resume
-        report-attempt cancel materialize-children children
-      ]
-    }.each do |resource, actions|
-      inventory = output.lines.grep(/^\s*#{Regexp.escape(resource)}\s+/).join
-      assert_not_empty inventory
-      actions.each { |action| assert_match(/\b#{Regexp.escape(action)}\b/, inventory) }
-    end
-    refute_includes output, "validate-children"
     assert_empty error
-
-    command_output, command_error, command_status = run_cli("session-id", "--help", environment: {})
-    assert_predicate command_status, :success?
-    assert_match(/Usage: kos session-id/, command_output)
-    assert_empty command_error
+    assert_match(/^\s*health\s*$/, output)
+    assert_match(/^\s*claim-id\s*$/, output)
+    assert_match(/^\s*project create \| show \| update\s*$/, output)
+    assert_match(/^\s*workflow create\s*$/, output)
+    assert_match(/^\s*plan put \| show\s*$/, output)
+    assert_match(/^\s*task ready \| show \| context \| result \| claim \| takeover \| report \| answer\s*$/, output)
+    %w[session-id task-type create-or-get resume lease artifact report-attempt materialize children graph].each do |removed|
+      refute_match(/\b#{Regexp.escape(removed)}\b/, output)
+    end
 
     {
-      %w[project show] => %w[--repository-identity],
-      %w[task create-or-get] => %w[--project-id --kind --owner-id --request-file],
-      %w[task context] => [],
-      %w[task artifact] => %w[--step],
-      %w[task resume] => %w[--owner-id --claim-version --step --answer-file],
-      %w[task report-attempt] => %w[
-        --owner-id --claim-version --step --outcome --artifact-file --required-checks --brief-graph-file
-      ],
-      %w[task materialize-children] => %w[--definition-file --owner-id --claim-version]
+      %w[workflow create] => %w[--key --name --definition-file],
+      %w[plan put] => %w[--project-id --definition-file],
+      %w[plan show] => %w[--project-id --key],
+      %w[task ready] => %w[--project-id],
+      %w[task result] => %w[--step],
+      %w[task claim] => %w[--claim-id --version],
+      %w[task takeover] => %w[--claim-id --version --step],
+      %w[task report] => %w[--claim-id --version --step --outcome --result-file --message],
+      %w[task answer] => %w[--version --step --answer-file]
     }.each do |command, options|
       command_output, command_error, command_status = run_cli(*command, "--help", environment: {})
-
       assert_predicate command_status, :success?, command.join(" ")
       assert_match(/Usage: kos #{Regexp.escape(command.join(" "))}/, command_output)
       options.each { |option| assert_includes command_output, option }
-      refute_includes command_output, "--expected-digest"
       assert_empty command_error
     end
   end
 
-  test "generates fresh local canonical session ids without API configuration" do
-    outputs = 2.times.map do
-      output, error, status = run_cli("session-id", environment: { "KOS_API_URL" => "not a URL" })
+  test "generates fresh claim ids without API configuration" do
+    ids = 2.times.map do
+      output, error, status = run_cli("claim-id", environment: { "KOS_API_URL" => "invalid" })
       assert_predicate status, :success?
       assert_empty error
-      assert_match(/\Akos-session-[0-9a-f]{32}\n\z/, output)
+      assert_match(/\Akos-claim-[0-9a-f]{32}\n\z/, output)
       output
     end
+    assert_equal 2, ids.uniq.length
 
-    assert_equal 2, outputs.uniq.length
-
-    _output, error, status = run_cli("session-id", "extra", environment: {})
+    _output, error, status = run_cli("claim-id", "extra", environment: {})
     assert_equal 2, status.exitstatus
     assert_equal "usage_error", JSON.parse(error).fetch("error")
   end
 
-  test "checks public server health without a token" do
-    output, error, status, request = run_cli_with_server("health", response_body: "<html>ready</html>", token: nil)
+  test "checks public health without a token and preserves its body" do
+    output, error, status, request = run_cli_with_server("health", response_body: "healthy", token: nil)
 
     assert_predicate status, :success?
-    assert_equal "<html>ready</html>", output
+    assert_equal "healthy", output
     assert_empty error
-    assert_equal "GET", request.fetch(:method)
-    assert_equal "/api/up", request.fetch(:path)
+    assert_equal [ "GET", "/api/up" ], request.values_at(:method, :path)
     refute request.fetch(:headers).key?("authorization")
   end
 
-  test "prints its version without configuration" do
-    output, error, status = run_cli("--version", environment: {})
-
-    assert_predicate status, :success?
-    assert_equal "kos #{Kos::VERSION} source=#{Kos::BuildIdentity.installed_source_id}\n", output
-    assert_empty error
-  end
-
-  test "create-or-get sends exact post-expansion quoting and escaping" do
-    request = '"display literal \"ready\" 015"'
-    output, error, status, sent = run_cli_with_server("task", "create-or-get", "--project-id", "1", "--kind",
-      "brief", "--owner-id", "session", "--request-file", "-", stdin_data: request)
-
-    assert_predicate status, :success?
-    assert_equal "{\"task\":{\"id\":9}}", output
-    assert_empty error
-    assert_equal request.b, sent.fetch(:body).fetch("request").b
-  end
-
-  test "requires a task type key" do
-    _output, error, status = run_cli("task-type", "create", "--name", "Feature", "--workflow-id", "4",
-      environment: {})
-
-    assert_equal 2, status.exitstatus
-    assert_equal "usage_error", JSON.parse(error).fetch("error")
-    assert_includes JSON.parse(error).fetch("message"), "--key"
-  end
-
-  test "maps every API operation to its HTTP request" do
-    Tempfile.create([ "workflow", ".json" ]) do |workflow_file|
-      workflow_file.write(JSON.generate(steps: [ { id: "develop" } ]))
-      workflow_file.flush
-
-      Tempfile.create([ "description", ".md" ]) do |description_file|
-        description_file.write("# Task\n\nMultiline description.\n")
-        description_file.flush
-
-        Tempfile.create([ "children", ".json" ]) do |children_file|
-          children_file.write(JSON.generate(children: [ {
-            key: "child", title: "Child", description_markdown: "Work", blocker_keys: []
-          } ]))
-          children_file.flush
+  test "maps every server operation with separate arguments and file input" do
+    Tempfile.create([ "definition", ".json" ]) do |definition|
+      definition.write(JSON.generate(steps: [ { id: "work" } ]))
+      definition.flush
+      Tempfile.create([ "plan", ".json" ]) do |plan|
+        plan.write(JSON.generate(key: "goal", title: "Goal", tasks: [ { key: "one", title: "One",
+          description_markdown: "Do it", workflow_key: "delivery", blocker_keys: [] } ]))
+        plan.flush
+        Tempfile.create([ "result", ".md" ]) do |result|
+          result.write("# Result\n")
+          result.flush
 
           cases = [
-          [ [ "project", "create", "--name", "KOS", "--remote-url", "git@example.test:test/kos.git",
-            "--default-branch", "main", "--repository-identity", "example.test/test/kos" ], "POST", "/projects",
-            { "name" => "KOS", "remote_url" => "git@example.test:test/kos.git", "default_branch" => "main",
-              "repository_identity" => "example.test/test/kos" } ],
-          [ [ "project", "show", "--repository-identity", "example.test/test/kos" ],
-            "GET", "/projects?repository_identity=example.test%2Ftest%2Fkos", nil ],
-          [ [ "project", "update", "7", "--name", "Renamed", "--remote-url",
-            "https://example.test/new/kos.git", "--repository-identity", "example.test/new/kos",
-            "--default-branch", "trunk" ], "PATCH", "/projects/7",
-            { "name" => "Renamed", "remote_url" => "https://example.test/new/kos.git",
-              "repository_identity" => "example.test/new/kos", "default_branch" => "trunk" } ],
-          [ [ "workflow", "create", "--name", "Default", "--definition-file", workflow_file.path ],
-            "POST", "/workflows", { "name" => "Default", "definition_json" => { "steps" => [ { "id" => "develop" } ] } } ],
-          [ [ "task-type", "create", "--key", "feature", "--name", "Feature", "--workflow-id", "4" ],
-            "POST", "/task_types", { "key" => "feature", "name" => "Feature", "workflow_id" => 4 } ],
-          [ [ "task-type", "update", "7", "--workflow-id", "5" ],
-            "PATCH", "/task_types/7", { "workflow_id" => 5 } ],
-          [ [ "task", "create", "--project-id", "1", "--task-type-id", "2", "--title", "CLI task",
-            "--description-file", description_file.path, "--parent-id", "3", "--blocker-id", "4", "--blocker-id", "5" ],
-            "POST", "/tasks", { "project_id" => 1, "task_type_id" => 2, "title" => "CLI task",
-              "description_markdown" => "# Task\n\nMultiline description.\n", "parent_id" => 3, "blocker_ids" => [ 4, 5 ] } ],
-          [ [ "task", "create", "--project-id", "1", "--task-type-key", "development", "--title", "Typed",
-            "--description-file", description_file.path ],
-            "POST", "/tasks", { "project_id" => 1, "task_type_key" => "development", "title" => "Typed",
-              "description_markdown" => "# Task\n\nMultiline description.\n", "blocker_ids" => [] } ],
-          [ [ "task", "create-and-claim", "--project-id", "1", "--task-type-key", "fix", "--title", "Fix",
-            "--description-file", description_file.path, "--owner-id", "intent-owner", "--creation-key",
-            "request:fix:sha256:abc" ],
-            "POST", "/tasks/create-and-claim", { "project_id" => 1, "task_type_key" => "fix", "title" => "Fix",
-              "description_markdown" => "# Task\n\nMultiline description.\n", "owner_id" => "intent-owner",
-              "creation_key" => "request:fix:sha256:abc", "blocker_ids" => [] } ],
-          [ [ "task", "create-or-get", "--project-id", "1", "--kind", "fix", "--owner-id", "session",
-            "--request-file", "-" ],
-            "POST", "/tasks/create-or-get", { "project_id" => 1, "kind" => "fix", "owner_id" => "session",
-              "request" => "Exact request\n" }, "Exact request\n" ],
-          [ [ "task", "update", "9", "--description-file", "-", "--clear-parent", "--clear-blockers" ],
-            "PATCH", "/tasks/9", { "description_markdown" => "Updated through STDIN\n", "parent_id" => nil, "blocker_ids" => [] },
-            "Updated through STDIN\n" ],
-          [ [ "task", "show", "9" ], "GET", "/tasks/9", nil ],
-          [ [ "task", "context", "9" ], "GET", "/tasks/9/context", nil ],
-          [ [ "task", "artifact", "9", "--step", "develop" ],
-            "GET", "/tasks/9/artifact?step=develop", nil ],
-          [ [ "task", "show-owned", "--project-id", "1", "--owner-id", "session-1" ],
-            "GET", "/tasks/show-owned?project_id=1&owner_id=session-1", nil ],
-          [ [ "task", "claim-next", "--project-id", "1", "--task-type-key", "development", "--owner-id", "session-1" ],
-            "POST", "/tasks/claim-next", { "project_id" => 1, "task_type_key" => "development",
-              "owner_id" => "session-1" } ],
-          [ [ "task", "claim", "9", "--owner-id", "session-1" ],
-            "POST", "/tasks/9/claim", { "owner_id" => "session-1" } ],
-          [ [ "task", "resumable", "--project-id", "1", "--task-type-key", "fix" ],
-            "GET", "/tasks/resumable?project_id=1&task_type_key=fix", nil ],
-          [ [ "task", "resume", "9", "--owner-id", "session-2", "--claim-version", "5", "--step", "develop",
-            "--answer-file", description_file.path ],
-            "POST", "/tasks/9/resume", { "owner_id" => "session-2", "claim_version" => 5, "step" => "develop",
-              "answer" => "# Task\n\nMultiline description.\n", "takeover_confirmed" => false } ],
-          [ [ "task", "report-attempt", "9", "--owner-id", "session-2", "--claim-version", "6",
-            "--step", "develop", "--outcome", "ready", "--artifact-file", description_file.path,
-            "--required-checks", "passed", "--brief-graph-file", children_file.path ],
-            "POST", "/tasks/9/report-attempt", { "owner_id" => "session-2", "claim_version" => 6,
-              "step" => "develop", "outcome" => "ready", "required_checks" => "passed",
-              "brief_graph" => { "children" => [ {
-                "key" => "child", "title" => "Child", "description_markdown" => "Work", "blocker_keys" => []
-              } ] },
-              "artifact" => "# Task\n\nMultiline description.\n" } ],
-            [ [ "task", "cancel", "9" ], "POST", "/tasks/9/cancel", {} ],
-            [ [ "task", "materialize-children", "9", "--definition-file", children_file.path,
-              "--owner-id", "brief-owner", "--claim-version", "3" ],
-              "POST", "/tasks/9/materialize-children", { "owner_id" => "brief-owner", "claim_version" => 3,
-                "children" => [ {
-                  "key" => "child", "title" => "Child", "description_markdown" => "Work", "blocker_keys" => []
-                } ] } ],
-            [ [ "task", "children", "9" ], "GET", "/tasks/9/children", nil ]
+            [ [ "project", "create", "--name", "KOS", "--remote-url", "https://example.test/acme/kos.git",
+              "--default-branch", "main", "--repository-identity", "example.test/acme/kos" ],
+              "POST", "/projects", { "name" => "KOS", "remote_url" => "https://example.test/acme/kos.git",
+                "default_branch" => "main", "repository_identity" => "example.test/acme/kos" } ],
+            [ [ "project", "show", "--repository-identity", "example.test/acme/kos" ],
+              "GET", "/projects?repository_identity=example.test%2Facme%2Fkos", nil ],
+            [ [ "project", "update", "7", "--name", "Renamed" ], "PATCH", "/projects/7", { "name" => "Renamed" } ],
+            [ [ "workflow", "create", "--key", "delivery", "--name", "Delivery", "--definition-file",
+              definition.path ], "POST", "/workflows", { "key" => "delivery", "name" => "Delivery",
+                "definition_json" => { "steps" => [ { "id" => "work" } ] } } ],
+            [ [ "plan", "put", "--project-id", "7", "--definition-file", plan.path ],
+              "PUT", "/projects/7/plan", { "key" => "goal", "title" => "Goal", "tasks" => [ {
+                "key" => "one", "title" => "One", "description_markdown" => "Do it",
+                "workflow_key" => "delivery", "blocker_keys" => []
+              } ] } ],
+            [ [ "plan", "show", "--project-id", "7", "--key", "goal" ],
+              "GET", "/projects/7/plan?key=goal", nil ],
+            [ [ "task", "ready", "--project-id", "7" ], "GET", "/tasks/ready?project_id=7", nil ],
+            [ [ "task", "show", "9" ], "GET", "/tasks/9", nil ],
+            [ [ "task", "context", "9" ], "GET", "/tasks/9/context", nil ],
+            [ [ "task", "result", "9", "--step", "work" ], "GET", "/tasks/9/result?step=work", nil ],
+            [ [ "task", "claim", "9", "--claim-id", "claim-a", "--version", "0" ], "POST", "/tasks/9/claim",
+              { "claim_id" => "claim-a", "version" => 0 } ],
+            [ [ "task", "takeover", "9", "--claim-id", "claim-b", "--version", "4", "--step", "work" ],
+              "POST", "/tasks/9/takeover", { "claim_id" => "claim-b", "version" => 4, "step" => "work" } ],
+            [ [ "task", "report", "9", "--claim-id", "claim-b", "--version", "5", "--step", "work",
+              "--outcome", "done", "--result-file", result.path, "--message", "evidence" ],
+              "POST", "/tasks/9/report", { "claim_id" => "claim-b", "version" => 5, "step" => "work",
+                "outcome" => "done", "message" => "evidence", "result" => "# Result\n" } ],
+            [ [ "task", "answer", "9", "--version", "6", "--step", "work", "--answer-file", "-" ],
+              "POST", "/tasks/9/answer", { "version" => 6, "step" => "work", "answer" => "Proceed\n" }, "Proceed\n" ]
           ]
 
-          cases.each do |arguments, expected_method, expected_path, expected_payload, stdin_data|
+          cases.each do |arguments, expected_method, expected_path, expected_body, stdin_data|
             output, error, status, request = run_cli_with_server(*arguments, stdin_data: stdin_data.to_s)
-
             assert_predicate status, :success?, arguments.join(" ")
-            assert_equal "{\"task\":{\"id\":9}}", output
+            assert_equal "{\"ok\":true}", output
             assert_empty error
             assert_equal expected_method, request.fetch(:method)
             assert_equal "/api#{expected_path}", request.fetch(:path)
             assert_equal "Bearer test-secret", request.fetch(:headers).fetch("authorization")
-            expected_payload.nil? ? assert_nil(request.fetch(:body)) : assert_equal(expected_payload, request.fetch(:body))
+            expected_body.nil? ? assert_nil(request.fetch(:body)) : assert_equal(expected_body, request.fetch(:body))
           end
         end
       end
     end
   end
 
-  test "requires exactly one task type selector for creation" do
-    Tempfile.create([ "description", ".md" ]) do |description_file|
-      description_file.write("Description")
-      description_file.flush
-      base = [ "task", "create", "--project-id", "1", "--title", "Task", "--description-file", description_file.path ]
-
-      _output, error, status = run_cli(*base, environment: {})
-      assert_equal 2, status.exitstatus
-      assert_includes JSON.parse(error).fetch("message"), "exactly one"
-
-      _output, error, status = run_cli(*base, "--task-type-id", "2", "--task-type-key", "development",
-        environment: {})
-      assert_equal 2, status.exitstatus
-      assert_includes JSON.parse(error).fetch("message"), "exactly one"
-    end
-  end
-
-  test "strictly validates project command arguments" do
-    cases = [
-      [ "project", "show" ],
-      [ "project", "update", "not-an-id", "--name", "KOS" ],
-      [ "project", "update", "7" ],
-      [ "project", "show", "--repository-identity", "example.test/acme/kos", "extra" ]
-    ]
-
-    cases.each do |arguments|
-      _output, error, status = run_cli(*arguments, environment: {})
-      assert_equal 2, status.exitstatus, arguments.join(" ")
-      assert_equal "usage_error", JSON.parse(error).fetch("error")
-    end
-  end
-
-  test "treats no content as an empty successful response" do
-    output, error, status, = run_cli_with_server("task", "claim-next", "--project-id", "1", "--owner-id", "session",
-      response_status: 204, response_body: "")
-
+  test "reads JSON and results from stdin and validates local input" do
+    output, error, status, request = run_cli_with_server("workflow", "create", "--key", "x", "--name", "X",
+      "--definition-file", "-", stdin_data: "{\"steps\":[]}")
     assert_predicate status, :success?
-    assert_empty output
+    assert_equal({ "steps" => [] }, request.dig(:body, "definition_json"))
+    assert_equal "{\"ok\":true}", output
     assert_empty error
-  end
 
-  test "preserves server error JSON and returns failure" do
-    response_body = "{\"error\":\"conflict\",\"message\":\"stale owner\"}"
-    output, error, status, = run_cli_with_server("task", "show", "9", response_status: 409,
-      response_body:)
-
-    assert_equal 1, status.exitstatus
-    assert_equal response_body, output
-    assert_empty error
-  end
-
-  test "reports configuration usage local input and transport errors as JSON without secrets" do
-    _output, error, status = run_cli("task", "show", "1", environment: {})
+    _output, error, status = run_cli("plan", "put", "--project-id", "1", "--definition-file", "-",
+      environment: { "KOS_API_TOKEN" => "secret" }, stdin_data: "[]")
     assert_equal 2, status.exitstatus
-    assert_equal "configuration_error", JSON.parse(error).fetch("error")
+    assert_equal "local_input_error", JSON.parse(error).fetch("error")
 
-    _output, error, status = run_cli("task", "create", "--project-id", "not-an-id",
-      environment: { "KOS_API_TOKEN" => "hidden-secret" })
-    assert_equal 2, status.exitstatus
-    assert_equal "usage_error", JSON.parse(error).fetch("error")
-    assert_not_includes error, "hidden-secret"
-
-    Tempfile.create([ "invalid-workflow", ".json" ]) do |file|
-      file.write("{")
-      file.flush
-      _output, error, status = run_cli("workflow", "create", "--name", "Invalid", "--definition-file", file.path,
-        environment: { "KOS_API_TOKEN" => "hidden-secret" })
-      assert_equal 2, status.exitstatus
-      assert_equal "local_input_error", JSON.parse(error).fetch("error")
-      assert_not_includes error, "hidden-secret"
-    end
-
-    unavailable_server = TCPServer.new("127.0.0.1", 0)
-    port = unavailable_server.local_address.ip_port
-    unavailable_server.close
-    _output, error, status = run_cli("task", "show", "1", environment: {
-      "KOS_API_URL" => "http://127.0.0.1:#{port}", "KOS_API_TOKEN" => "hidden-secret"
-    })
-    assert_equal 3, status.exitstatus
-    assert_equal "transport_error", JSON.parse(error).fetch("error")
-    assert_not_includes error, "hidden-secret"
-  end
-
-  test "normalizes UTF-8 input and rejects invalid bytes without a stack trace" do
-    output, error, status, request = run_cli_with_server("task", "update", "9", "--description-file", "-",
-      stdin_data: "Привет\n", cli_environment: { "LANG" => "C", "LC_ALL" => "C" })
-
-    assert_predicate status, :success?
-    assert_equal "Привет\n", request.dig(:body, "description_markdown")
-    assert_equal "{\"task\":{\"id\":9}}", output
-    assert_empty error
-
-    Tempfile.create("invalid-markdown") do |file|
+    Tempfile.create("invalid-result") do |file|
       file.binmode
       file.write("\xFF".b)
       file.flush
-      _output, error, status = run_cli("task", "update", "9", "--description-file", file.path,
-        environment: { "KOS_API_TOKEN" => "test-secret" })
-
+      _output, error, status = run_cli("task", "report", "1", "--claim-id", "c", "--version", "1",
+        "--step", "work", "--outcome", "done", "--result-file", file.path,
+        environment: { "KOS_API_TOKEN" => "secret" })
       assert_equal 2, status.exitstatus
       assert_equal "local_input_error", JSON.parse(error).fetch("error")
-      assert_not_includes error, "cli.rb:"
     end
-
-    _output, error, status = run_cli("task", "show", "9", environment: { "KOS_API_TOKEN" => "\xFF".b })
-    assert_equal 2, status.exitstatus
-    assert_equal "configuration_error", JSON.parse(error).fetch("error")
-    assert_not_includes error, "cli.rb:"
-
-    [ " leading", "trailing ", "tab\tvalue", "line\rbreak", "line\nbreak" ].each do |token|
-      _output, error, status = run_cli("task", "show", "9", environment: { "KOS_API_TOKEN" => token })
-      assert_equal 2, status.exitstatus
-      assert_equal "configuration_error", JSON.parse(error).fetch("error")
-      assert_not_includes error, "cli.rb:"
-    end
-
-    _output, error, status = run_cli("task", "show", "9", "--\xFF".b,
-      environment: { "KOS_API_TOKEN" => "test-secret" })
-    assert_equal 2, status.exitstatus
-    assert_equal "usage_error", JSON.parse(error).fetch("error")
-    assert_not_includes error, "cli.rb:"
-
-    _output, error, status = run_cli("task", "update", "9", "--description-file", "/tmp/\xFF".b,
-      environment: { "KOS_API_TOKEN" => "test-secret" })
-    assert_equal 2, status.exitstatus
-    assert_equal "usage_error", JSON.parse(error).fetch("error")
-    assert_not_includes error, "cli.rb:"
   end
 
-  test "reads report artifacts from stdin and rejects empty or oversized artifacts locally" do
-    arguments = [ "task", "report-attempt", "9", "--owner-id", "session", "--claim-version", "1",
-      "--step", "develop", "--outcome", "ready", "--artifact-file", "-" ]
-    output, error, status, request = run_cli_with_server(*arguments, stdin_data: "# Artifact\n")
-
-    assert_predicate status, :success?
-    assert_equal "# Artifact\n", request.dig(:body, "artifact")
-    assert_equal "{\"task\":{\"id\":9}}", output
+  test "preserves server failures and reports local and transport failures separately" do
+    body = "{\"error\":\"conflict\",\"message\":\"stale claim\"}"
+    output, error, status, = run_cli_with_server("task", "show", "9", response_status: 409, response_body: body)
+    assert_equal 1, status.exitstatus
+    assert_equal body, output
     assert_empty error
 
-    [ "", "x" * (1024 * 1024 + 1) ].each do |artifact|
-      _output, local_error, local_status = run_cli(*arguments,
-        environment: { "KOS_API_TOKEN" => "test-secret" }, stdin_data: artifact)
-      assert_equal 2, local_status.exitstatus
-      assert_equal "local_input_error", JSON.parse(local_error).fetch("error")
-    end
+    _output, error, status = run_cli("task", "show", "9", environment: {})
+    assert_equal 2, status.exitstatus
+    assert_equal "configuration_error", JSON.parse(error).fetch("error")
+
+    unavailable = TCPServer.new("127.0.0.1", 0)
+    port = unavailable.local_address.ip_port
+    unavailable.close
+    _output, error, status = run_cli("task", "show", "9", environment: {
+      "KOS_API_URL" => "http://127.0.0.1:#{port}", "KOS_API_TOKEN" => "hidden"
+    })
+    assert_equal 3, status.exitstatus
+    assert_equal "transport_error", JSON.parse(error).fetch("error")
+    assert_not_includes error, "hidden"
   end
 
   private
 
-  def run_cli_with_server(*arguments, response_status: 200, response_body: "{\"task\":{\"id\":9}}", stdin_data: "",
-    cli_environment: {}, token: "test-secret")
+  def run_cli_with_server(*arguments, response_status: 200, response_body: "{\"ok\":true}", stdin_data: "", token: "test-secret")
     server = TCPServer.new("127.0.0.1", 0)
     requests = Queue.new
     thread = Thread.new do
@@ -378,13 +187,9 @@ class CliTest < ActiveSupport::TestCase
         headers[name.downcase] = value.strip
       end
       raw_body = socket.read(headers.fetch("content-length", "0").to_i)
-      requests << {
-        method: request_line.split.fetch(0),
-        path: request_line.split.fetch(1),
-        headers:,
-        body: raw_body.empty? ? nil : JSON.parse(raw_body)
-      }
-      reason = { 200 => "OK", 204 => "No Content", 409 => "Conflict" }.fetch(response_status)
+      requests << { method: request_line.split.fetch(0), path: request_line.split.fetch(1), headers:,
+                    body: raw_body.empty? ? nil : JSON.parse(raw_body) }
+      reason = { 200 => "OK", 409 => "Conflict" }.fetch(response_status)
       socket.write("HTTP/1.1 #{response_status} #{reason}\r\nContent-Type: application/json\r\n" \
         "Content-Length: #{response_body.bytesize}\r\nConnection: close\r\n\r\n#{response_body}")
       socket.close
@@ -393,7 +198,7 @@ class CliTest < ActiveSupport::TestCase
     end
     thread.report_on_exception = false
 
-    environment = cli_environment.merge("KOS_API_URL" => "http://127.0.0.1:#{server.local_address.ip_port}/api/")
+    environment = { "KOS_API_URL" => "http://127.0.0.1:#{server.local_address.ip_port}/api/" }
     environment["KOS_API_TOKEN"] = token if token
     output, error, status = run_cli(*arguments, environment:, stdin_data:)
     unless thread.join(2)
@@ -405,10 +210,8 @@ class CliTest < ActiveSupport::TestCase
   end
 
   def run_cli(*arguments, environment:, stdin_data: "")
-    isolated_environment = {
-      "KOS_API_TOKEN" => nil, "KOS_API_URL" => nil, "RUBYOPT" => nil, "RUBYLIB" => nil
-    }.merge(environment)
-    Open3.capture3(isolated_environment, RbConfig.ruby, "--disable-gems", Rails.root.join("bin/kos").to_s, *arguments,
+    isolated = { "KOS_API_TOKEN" => nil, "KOS_API_URL" => nil, "RUBYOPT" => nil, "RUBYLIB" => nil }.merge(environment)
+    Open3.capture3(isolated, RbConfig.ruby, "--disable-gems", Rails.root.join("bin/kos").to_s, *arguments,
       stdin_data:)
   end
 end

@@ -4,35 +4,24 @@ require "open3"
 require "tmpdir"
 
 class BuiltInCatalogSeedTest < ActiveSupport::TestCase
-  test "a fresh prepared database receives the idempotent built-in catalog" do
+  test "a fresh prepared database receives the idempotent built-in workflows" do
     Dir.mktmpdir("kos-seed") do |data_home|
       environment = {
-        "RAILS_ENV" => "development",
-        "KOS_API_TOKEN" => "seed-test-token",
-        "KOS_DATA_HOME" => data_home,
+        "RAILS_ENV" => "development", "KOS_API_TOKEN" => "seed-test-token", "KOS_DATA_HOME" => data_home,
         "DATABASE_URL" => nil
       }
-
       run_rails(environment, "db:prepare")
-      first = catalog_counts(environment)
+      first = catalog(environment)
       run_rails(environment, "db:seed")
-      second = catalog_counts(environment)
-
-      assert_equal({ "keys" => %w[brief development fix], "task_types" => 3, "workflows" => 3 }, first)
-      assert_equal first, second
+      assert_equal first, catalog(environment)
+      assert_equal({ "keys" => %w[brief development fix], "revisions" => [ 1, 1, 1 ] }, first)
     end
   end
 
   private
 
-  def catalog_counts(environment)
-    script = <<~RUBY
-      puts({
-        keys: TaskType.order(:key).pluck(:key),
-        task_types: TaskType.count,
-        workflows: Workflow.count
-      }.to_json)
-    RUBY
+  def catalog(environment)
+    script = "puts({ keys: Workflow.order(:key).pluck(:key), revisions: Workflow.order(:key).pluck(:revision) }.to_json)"
     JSON.parse(run_rails(environment, "runner", script).lines.last)
   end
 

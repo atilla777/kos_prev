@@ -1,13 +1,11 @@
 ---
-description: Resume or run the next KOS development task through its workflow
+description: Plan and coordinate KOS work without performing task steps
 agent: build
-model: openai/gpt-5.6-terra
+model: openai/gpt-5.6-sol
 ---
 
-Require the arguments below to be blank; otherwise explain that `/kos` only runs
-existing development tasks and stop. Then load the `kos` scheduler skill in
-`development` mode.
+Load the `kos` skill. Treat the complete arguments below as the user's goal.
 
-<kos-arguments>
+<kos-goal>
 $ARGUMENTS
-</kos-arguments>
+</kos-goal>

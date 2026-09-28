@@ -21,16 +21,17 @@ end.parse!
 abort("--config-home must be an absolute path") unless options[:config_home].absolute?
 
 inventory = {
-  "commands" => %w[kos.md kos-brief.md kos-fix.md kos-task.md],
-  "agents" => %w[kos-step-advanced.md kos-step-standard.md],
-  "skills" => %w[kos kos-cli kos-git kos-step okf]
+  "commands" => %w[kos.md],
+  "agents" => %w[kos-worker.md],
+  "skills" => %w[kos kos-cli kos-worker okf]
 }
 obsolete = {
   "agents" => %w[
     kos-brief.md kos-diagnose.md kos-document.md kos-implement.md kos-orchestrator.md kos-plan.md kos-publish.md
-    kos-review.md kos-step.md kos-verify.md
+    kos-review.md kos-step.md kos-step-advanced.md kos-step-standard.md kos-verify.md
   ],
-  "skills" => %w[kos-brief kos-create]
+  "commands" => %w[kos-brief.md kos-fix.md kos-task.md],
+  "skills" => %w[kos-brief kos-create kos-git kos-step]
 }
 config_home = options.fetch(:config_home)
 manifest = config_home.join("kos-installation.json")
@@ -100,6 +101,7 @@ inventory.fetch("agents").each do |name|
   FileUtils.cp(source, destination)
 end
 obsolete.fetch("agents").each { |name| FileUtils.rm_f(config_home.join("agents", name)) }
+obsolete.fetch("commands").each { |name| FileUtils.rm_f(config_home.join("commands", name)) }
 obsolete.fetch("skills").each { |name| FileUtils.rm_r(config_home.join("skills", name)) if config_home.join("skills", name).exist? }
 
 inventory.fetch("skills").each do |name|

@@ -11,9 +11,13 @@ class ProjectsController < ApplicationController
     render_project(project, :created)
   end
 
-  def show
+  def index
     project = Project.find_by!(repository_identity: required_string(:repository_identity))
     render_project(project)
+  end
+
+  def show
+    render_project(Project.find(params[:id]))
   end
 
   def update
