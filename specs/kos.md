@@ -44,8 +44,9 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 - A worker can pause with one question or a concrete obstruction. The answer or
   resolution is stored with the task before the same step continues.
 - After a worker or orchestrator interruption, a later orchestrator discovers
-  the project's non-completed plans and tasks, reads their KOS state, and
-  explicitly takes over unfinished work when appropriate.
+  the registered project from one explicitly selected checkout remote, obtains
+  its non-completed plans and tasks in one status operation, reads their KOS
+  state, and explicitly takes over unfinished work when appropriate.
 - With explicit user intent, the orchestrator can atomically abandon an
   erroneous or obsolete started plan without erasing completed work.
 - Built-in development, fix, and brief workflows may be supplied as convenient
@@ -128,6 +129,11 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 - Project registration is an explicit administrator action over a published Git
   remote and chosen default branch. KOS derives a canonical host/path identity
   but does not create repositories, commits, branches, clones, or worktrees.
+- For recovery only, the CLI may read the URL of one explicitly named remote in
+  the current checkout, normalize it with the registration identity rules, and
+  request the exact registered project or its non-completed status. It does not
+  select a remote, contact it, infer worker liveness, or mutate coordination or
+  repository state.
 - Before installed OpenCode orchestration or worker execution, the supported
   integration compares its successful-install manifest, CLI, and server release
   identity and verifies server readiness.
@@ -165,6 +171,9 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   components from one release and restart OpenCode.
 - A missing workflow, plan, task, or task result retains the stable `not_found`
   discriminator and identifies the missing resource and lookup value.
+- Current-checkout recovery fails without a server mutation when Git, a working
+  tree, the explicitly named remote, one unambiguous supported remote URL, or an
+  exact project registration is unavailable.
 
 # Edge Cases
 
@@ -207,6 +216,9 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 - Given a registered project identity, a fresh orchestrator can discover every
   non-completed plan and task, including abandoned state, active claim fences,
   and durable pause and answer state.
+- From a checkout, a fresh orchestrator can explicitly select one remote and
+  obtain the matching project and all non-completed recovery state with one
+  status command, without lifecycle writes or stale-worker classification.
 - Built-in and custom workflows execute through the same server transition
   rules without task-type-specific Git, check, review, or publication gates.
 - Skills remain short enough to communicate capabilities, commands, role

@@ -69,7 +69,8 @@ The public command families are:
 health
 claim-id
 installation check
-project create|show|update
+project create|show|resolve|update
+status
 workflow create|list|show|schema
 plan put|list|show|abandon
 task list|ready|show|context|result|claim|takeover|report|answer
@@ -77,18 +78,26 @@ task list|ready|show|context|result|claim|takeover|report|answer
 
 The JSON API mirrors these operations with public `GET /up` liveness and
 `GET /ready` dependency readiness probes, project resources,
-immutable workflow discovery and creation, the read-only workflow schema,
+immutable workflow discovery and creation, the read-only workflow schema and
+aggregate recovery status,
 project-scoped plan storage and abandonment,
 ready-task discovery, project-scoped non-completed-state discovery, task reads,
 and task claim/takeover/report/answer mutations. The CLI validates local arguments and
 input, sends one request, preserves server output, and does not duplicate
 workflow or recovery policy. Per-command help is the syntax authority.
 
-`installation check` is the one local installation exception to ordinary API
+`installation check` is one local exception to ordinary API
 mapping. It validates the OpenCode successful-install manifest, compares its
 version and source identity with the packaged CLI, then compares both with the
 public `/ready` response. Exact equality is intentional for the single-release
 pre-release deployment; KOS has no mixed-release compatibility matrix.
+
+Current-checkout recovery is the other narrow local exception. `project resolve`
+and `status` read the URL of one caller-selected Git remote and normalize it with
+the shared repository identity implementation before one authenticated request.
+They do not select or contact remotes, fetch, inspect branches, or manage Git
+state. Status composes authoritative project, plan, and task projections in one
+read-only server operation and adds no persisted aggregate model.
 
 `task show` is the orchestrator's focused lifecycle view. `task context` is the
 worker view and includes the current immutable instruction, outcomes, prior
@@ -154,8 +163,9 @@ Independent tasks can be claimed in parallel. Serial transactions and
 optimistic versions prevent duplicate claims and stale reports for the same
 task. KOS does not support parallel workers or parallel steps within one task.
 
-Recovery is observational. A new orchestrator resolves a registered project,
-lists its unfinished plans and tasks, and may take over an active task only
+Recovery is observational. A new orchestrator uses one explicitly selected
+checkout remote to resolve a registered project and read its unfinished plans
+and tasks, and may take over an active task only
 after deciding the prior worker stopped. Discovery returns persisted lifecycle
 and pause state; it does not infer readiness, staleness, or takeover policy. A
 delayed worker's report fails because takeover changed both claim identity and
@@ -178,9 +188,10 @@ receipts.
 
 Project registration is administrator-owned. The server normalizes a supported
 Git remote into the durable repository identity and stores the selected default
-branch, but neither server nor CLI inspects a checkout, chooses a remote, creates
-GitHub resources, publishes an initial branch, clones, or manages worktrees.
-OpenCode must run in the intended existing checkout.
+branch. Outside the focused recovery inspection above, neither server nor CLI
+inspects a checkout. Neither chooses a remote, creates GitHub resources,
+publishes an initial branch, clones, or manages worktrees. OpenCode must run in
+the intended existing checkout.
 
 ## Deployment And Upgrade
 

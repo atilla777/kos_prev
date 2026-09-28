@@ -26,8 +26,8 @@ agent intelligence.
 - CLI tests execute the packaged client and cover discoverable help, health,
   installation identity/readiness checks, claim identity generation, argument
   and standard-input mapping, workflow list/show/schema, complete command shape
-  and response help, output preservation, and exit statuses for every public
-  command family.
+  and response help, isolated explicit Git-remote resolution, recovery status,
+  output preservation, and exit statuses for every public command family.
 - Installation tests verify exactly one `/kos` command, one `kos-worker` agent,
   skills `kos`, `kos-cli`, `kos-worker`, and `okf`; clean and legacy installation,
   manifest-owned stale cleanup, unmanaged-file preservation, compatibility

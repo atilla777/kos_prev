@@ -6,7 +6,9 @@ require "securerandom"
 require "uri"
 require "kos/api_token"
 require "kos/build_identity"
+require "kos/git_remote"
 require "kos/open_code_installation"
+require "kos/repository_identity"
 require "kos/workflow_definition"
 require_relative "version"
 
@@ -24,12 +26,13 @@ module Kos
       end
     end
 
-    def initialize(arguments, environment: ENV, stdin: $stdin, stdout: $stdout, stderr: $stderr)
+    def initialize(arguments, environment: ENV, stdin: $stdin, stdout: $stdout, stderr: $stderr, git_remote: nil)
       @arguments = arguments.dup
       @environment = environment
       @stdin = stdin
       @stdout = stdout
       @stderr = stderr
+      @git_remote = git_remote || Kos::GitRemote.new(environment:)
     end
 
     def run
@@ -67,7 +70,8 @@ module Kos
           health
           claim-id
           installation check
-          project create | show | update
+          project create | show | resolve | update
+          status
           workflow create | list | show | schema
           plan put | list | show | abandon
           task list | ready | show | context | result | claim | takeover | report | answer
@@ -116,13 +120,15 @@ module Kos
 
     def command
       resource = @arguments.shift
-      action = @arguments.shift
+      action = @arguments.shift unless resource == "status"
 
       case [ resource, action ]
       when [ "health", nil ] then [ :get, "/up", nil ]
       when [ "project", "create" ] then project_create
       when [ "project", "show" ] then project_show
+      when [ "project", "resolve" ] then project_resolve
       when [ "project", "update" ] then project_update
+      when [ "status", nil ] then status
       when [ "workflow", "list" ] then workflow_list
       when [ "workflow", "show" ] then workflow_show
       when [ "workflow", "schema" ] then workflow_schema
@@ -184,6 +190,20 @@ module Kos
       HELP
       require_values!(values, :repository_identity)
       [ :get, query_path("/projects", values), nil ]
+    end
+
+    def project_resolve
+      identity = resolved_repository_identity("kos project resolve")
+      [ :get, query_path("/projects", repository_identity: identity), nil ]
+    end
+
+    def status
+      identity = resolved_repository_identity("kos status", footer: <<~HELP)
+        Response: project with #{project_response_fields}; task_plans[] and tasks[] contain default non-completed recovery state.
+        Status is observational and does not classify claims or perform lifecycle writes.
+        Example: kos status --remote origin
+      HELP
+      [ :get, query_path("/status", repository_identity: identity), nil ]
     end
 
     def project_update
@@ -387,6 +407,23 @@ module Kos
         "--repository-identity IDENTITY" => [ :repository_identity, String,
           "Optional canonical host/namespace/repository" ]
       }
+    end
+
+    def resolved_repository_identity(usage, footer: nil)
+      values = parse_options(usage, {
+        "--remote NAME" => [ :remote, String, "Required explicitly selected Git remote name" ]
+      }, footer: footer || <<~HELP)
+        Response: project with #{project_response_fields}.
+        Reads only the selected remote URL from the current Git checkout.
+        Example: kos project resolve --remote origin
+      HELP
+      require_values!(values, :remote)
+      remote_url = normalize_utf8(@git_remote.url(values.fetch(:remote)), "Git remote URL")
+      Kos::RepositoryIdentity.normalize(remote_url)
+    rescue Kos::GitRemote::Error => error
+      raise Error.new(error.kind, error.message)
+    rescue Kos::RepositoryIdentity::Invalid => error
+      raise Error.new("invalid_remote_url", "selected Git remote URL is unsupported: #{error.message}")
     end
 
     def claim_options

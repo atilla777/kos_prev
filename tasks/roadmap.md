@@ -45,12 +45,12 @@ development records and are not read by the KOS server or CLI.
 | 035 | [Harden installation and project bootstrap](035-harden-installation-bootstrap/task.md) | done | 034 |
 | 036 | [Complete CLI discovery](036-complete-cli-discovery/task.md) | done | 035 |
 | 037 | [Make orchestration intent safe](037-make-orchestration-intent-safe/task.md) | done | 036 |
+| 038 | [Add repository recovery status](038-add-repository-recovery-status/task.md) | done | 036 |
 
 ## Planned
 
 | ID | Task | Status | Dependencies |
 | --- | --- | --- | --- |
-| 038 | [Add repository recovery status](038-add-repository-recovery-status/task.md) | planned | 036 |
 | 039 | [Add fenced claim release](039-add-fenced-claim-release/task.md) | planned | 037, 038 |
 | 040 | [Prove recovery usability](040-prove-recovery-usability/task.md) | planned | 036, 037, 038, 039 |
 

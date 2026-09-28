@@ -7,8 +7,9 @@ description: Plan and orchestrate KOS tasks from authoritative state without per
 
 Use `kos-cli` for KOS operations. Before project discovery or any mutation, run
 `installation check` and stop with its reinstall or readiness guidance on
-failure. Resolve the registered project, then discover unfinished plans and
-tasks before creating replacement work. If the project is not registered, stop
+failure. Run `status --remote REMOTE` with the explicitly selected checkout
+remote to resolve the registered project and discover unfinished plans and tasks
+before creating replacement work. If the project is not registered, stop
 and direct its administrator to `project create`; do not infer registration
 metadata or create Git state. Before creating or revising an unstarted plan,
 discover workflow keys, then turn the user's goal into a concise task plan when
@@ -47,7 +48,7 @@ Cancelling an OpenCode worker does not mutate KOS, clear its claim, change its
 version, or undo external effects. Reread authoritative task state after known
 cancellation and before any takeover or later claim-release decision; the worker
 may already have reported.
-After interruption, list unfinished state again: continue pending work, present
+After interruption, run status again: continue pending work, present
 paused state and its bound answer, and decide explicitly whether an active
 worker stopped. Abandon erroneous or obsolete started work only with explicit
 user intent and the observed plan version; inactivity or a stopped worker alone

@@ -1,14 +1,14 @@
 # Status
 
-State: planned
+State: done
 Updated: 2026-09-28
 
 ## Current
 
-Recovery requires the caller to derive a canonical identity from Git, call
-`project show`, then separately list plans and tasks. The server already returns
-the necessary authoritative state, but the installed CLI offers no focused
-current-checkout resolution or aggregate recovery view.
+`project resolve --remote REMOTE` now reads and normalizes one explicitly
+selected checkout remote before exact registration lookup. `status --remote
+REMOTE` returns the project and its default non-completed plans and tasks in one
+authenticated read without lifecycle mutation or worker-liveness inference.
 
 ## Decisions
 
@@ -16,11 +16,20 @@ current-checkout resolution or aggregate recovery view.
   narrow CLI exception.
 - Keep registration explicit and all recovery classification agent-owned.
 - Do not infer staleness or mutate lifecycle state from `status`.
+- Keep one aggregate read endpoint so a CLI command preserves one-request output
+  semantics and observes one transactional server snapshot.
+
+## Checks
+
+- Focused CLI, API, skill, and installed-gem tests pass.
+- `bin/check`: 113 tests, 1763 assertions, passing.
+- Independent review completed with no findings; unusual corrupt Git
+  configuration remains a diagnostic-only residual risk.
 
 ## Next
 
-Begin after task 036 establishes complete workflow and response discovery.
+Task 039 is the next dependency-ready roadmap item.
 
 ## Blockers
 
-- Depends on task 036.
+- None.

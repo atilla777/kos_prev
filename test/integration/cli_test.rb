@@ -15,7 +15,8 @@ class CliTest < ActiveSupport::TestCase
     assert_match(/^\s*health\s*$/, output)
     assert_match(/^\s*claim-id\s*$/, output)
     assert_match(/^\s*installation check\s*$/, output)
-    assert_match(/^\s*project create \| show \| update\s*$/, output)
+    assert_match(/^\s*project create \| show \| resolve \| update\s*$/, output)
+    assert_match(/^\s*status\s*$/, output)
     assert_match(/^\s*workflow create \| list \| show \| schema\s*$/, output)
     assert_match(/^\s*plan put \| list \| show \| abandon\s*$/, output)
     assert_match(/^\s*task list \| ready \| show \| context \| result \| claim \| takeover \| report \| answer\s*$/, output)
@@ -27,7 +28,9 @@ class CliTest < ActiveSupport::TestCase
       %w[installation check] => %w[--manifest],
       %w[project create] => %w[--name --remote-url --default-branch],
       %w[project show] => %w[--repository-identity],
+      %w[project resolve] => %w[--remote],
       %w[project update] => [],
+      %w[status] => %w[--remote],
       %w[workflow create] => %w[--key --name --definition-file],
       %w[workflow list] => %w[--key],
       %w[workflow show] => [],
@@ -80,8 +83,87 @@ class CliTest < ActiveSupport::TestCase
     %w[task_plan project workflow instruction allowed_outcomes results pause].each do |field|
       assert_includes context_help, field
     end
+    status_help, = run_cli("status", "--help", environment: {})
+    %w[project task_plans tasks observational].each { |detail| assert_includes status_help, detail }
     assert Workflow.new(key: "help-example", name: "Help example", revision: 1,
       definition_json: Kos::WorkflowDefinition.example).valid?
+  end
+
+  test "resolves an explicitly selected remote and requests recovery status" do
+    {
+      "https://Example.Test/acme/widget.git" => "example.test/acme/widget",
+      "ssh://git@example.test/acme/widget.git" => "example.test/acme/widget",
+      "git@example.test:acme/Widget.git" => "example.test/acme/Widget"
+    }.each do |remote_url, identity|
+      with_git_checkout(remote_url) do |directory, git_environment|
+        output, error, status, request = run_cli_with_server("status", "--remote", "upstream",
+          environment: git_environment, chdir: directory)
+
+        assert_predicate status, :success?, remote_url
+        assert_equal "{\"ok\":true}", output
+        assert_empty error
+        assert_equal [ "GET", "/api/status?repository_identity=#{URI.encode_www_form_component(identity)}" ],
+          request.values_at(:method, :path)
+      end
+    end
+
+    with_git_checkout("https://example.test/acme/widget.git") do |directory, git_environment|
+      _output, error, status, request = run_cli_with_server("project", "resolve", "--remote", "upstream",
+        environment: git_environment, chdir: directory)
+      assert_predicate status, :success?, error
+      assert_equal "/api/projects?repository_identity=example.test%2Facme%2Fwidget", request.fetch(:path)
+    end
+  end
+
+  test "diagnoses unavailable Git checkout remote and remote URL state locally" do
+    _output, error, status = run_cli("status", "--remote", "origin", environment: { "PATH" => "" })
+    assert_equal [ 2, "git_unavailable" ], [ status.exitstatus, JSON.parse(error).fetch("error") ]
+
+    Dir.mktmpdir("kos-not-checkout") do |directory|
+      _output, error, status = run_cli("status", "--remote", "origin", environment: git_environment,
+        chdir: directory)
+      assert_equal [ 2, "not_a_checkout" ], [ status.exitstatus, JSON.parse(error).fetch("error") ]
+    end
+
+    with_git_checkout do |directory, environment|
+      _output, error, status = run_cli("status", "--remote", "missing", environment:, chdir: directory)
+      assert_equal [ 2, "remote_not_found" ], [ status.exitstatus, JSON.parse(error).fetch("error") ]
+
+      git!(environment, directory, "config", "--local", "remote.empty.fetch", "+refs/heads/*:refs/remotes/empty/*")
+      _output, error, status = run_cli("status", "--remote", "empty", environment:, chdir: directory)
+      assert_equal [ 2, "remote_url_missing" ], [ status.exitstatus, JSON.parse(error).fetch("error") ]
+
+      git!(environment, directory, "remote", "add", "invalid", "relative/path")
+      _output, error, status = run_cli("status", "--remote", "invalid", environment:, chdir: directory)
+      assert_equal [ 2, "invalid_remote_url" ], [ status.exitstatus, JSON.parse(error).fetch("error") ]
+
+      git!(environment, directory, "remote", "add", "many", "https://example.test/acme/one.git")
+      git!(environment, directory, "config", "--local", "--add", "remote.many.url",
+        "https://example.test/acme/two.git")
+      _output, error, status = run_cli("status", "--remote", "many", environment:, chdir: directory)
+      assert_equal [ 2, "remote_url_ambiguous" ], [ status.exitstatus, JSON.parse(error).fetch("error") ]
+    end
+  end
+
+  test "preserves status registration authentication and transport failures" do
+    with_git_checkout("https://example.test/acme/widget.git") do |directory, git_environment|
+      body = JSON.generate(error: "not_found", message: "Project is not registered")
+      output, error, status, = run_cli_with_server("status", "--remote", "upstream", response_status: 404,
+        response_body: body, environment: git_environment, chdir: directory)
+      assert_equal [ 1, body, "" ], [ status.exitstatus, output, error ]
+
+      body = JSON.generate(error: "unauthorized")
+      output, error, status, = run_cli_with_server("status", "--remote", "upstream", response_status: 401,
+        response_body: body, environment: git_environment, chdir: directory)
+      assert_equal [ 1, body, "" ], [ status.exitstatus, output, error ]
+
+      unavailable = TCPServer.new("127.0.0.1", 0)
+      port = unavailable.local_address.ip_port
+      unavailable.close
+      _output, error, status = run_cli("status", "--remote", "upstream", environment: git_environment.merge(
+        "KOS_API_URL" => "http://127.0.0.1:#{port}", "KOS_API_TOKEN" => "hidden"), chdir: directory)
+      assert_equal [ 3, "transport_error" ], [ status.exitstatus, JSON.parse(error).fetch("error") ]
+    end
   end
 
   test "generates fresh claim ids without API configuration" do
@@ -292,7 +374,8 @@ class CliTest < ActiveSupport::TestCase
 
   private
 
-  def run_cli_with_server(*arguments, response_status: 200, response_body: "{\"ok\":true}", stdin_data: "", token: "test-secret")
+  def run_cli_with_server(*arguments, response_status: 200, response_body: "{\"ok\":true}", stdin_data: "",
+    token: "test-secret", environment: {}, chdir: nil)
     server = TCPServer.new("127.0.0.1", 0)
     requests = Queue.new
     thread = Thread.new do
@@ -306,7 +389,8 @@ class CliTest < ActiveSupport::TestCase
       raw_body = socket.read(headers.fetch("content-length", "0").to_i)
       requests << { method: request_line.split.fetch(0), path: request_line.split.fetch(1), headers:,
                     body: raw_body.empty? ? nil : JSON.parse(raw_body) }
-      reason = { 200 => "OK", 404 => "Not Found", 409 => "Conflict", 503 => "Service Unavailable" }.fetch(response_status)
+      reason = { 200 => "OK", 401 => "Unauthorized", 404 => "Not Found", 409 => "Conflict",
+                 503 => "Service Unavailable" }.fetch(response_status)
       socket.write("HTTP/1.1 #{response_status} #{reason}\r\nContent-Type: application/json\r\n" \
         "Content-Length: #{response_body.bytesize}\r\nConnection: close\r\n\r\n#{response_body}")
       socket.close
@@ -315,9 +399,9 @@ class CliTest < ActiveSupport::TestCase
     end
     thread.report_on_exception = false
 
-    environment = { "KOS_API_URL" => "http://127.0.0.1:#{server.local_address.ip_port}/api/" }
+    environment = environment.merge("KOS_API_URL" => "http://127.0.0.1:#{server.local_address.ip_port}/api/")
     environment["KOS_API_TOKEN"] = token if token
-    output, error, status = run_cli(*arguments, environment:, stdin_data:)
+    output, error, status = run_cli(*arguments, environment:, stdin_data:, chdir:)
     unless thread.join(2)
       server.close
       thread.kill
@@ -326,10 +410,30 @@ class CliTest < ActiveSupport::TestCase
     [ output, error, status, requests.pop ]
   end
 
-  def run_cli(*arguments, environment:, stdin_data: "")
+  def run_cli(*arguments, environment:, stdin_data: "", chdir: nil)
     isolated = { "KOS_API_TOKEN" => nil, "KOS_API_URL" => nil, "RUBYOPT" => nil, "RUBYLIB" => nil }.merge(environment)
+    options = { stdin_data: }
+    options[:chdir] = chdir if chdir
     Open3.capture3(isolated, RbConfig.ruby, "--disable-gems", Rails.root.join("bin/kos").to_s, *arguments,
-      stdin_data:)
+      **options)
+  end
+
+  def with_git_checkout(remote_url = nil)
+    Dir.mktmpdir("kos-git-checkout") do |directory|
+      environment = git_environment
+      git!(environment, directory, "init", "--quiet")
+      git!(environment, directory, "remote", "add", "upstream", remote_url) if remote_url
+      yield directory, environment
+    end
+  end
+
+  def git_environment
+    { "GIT_CONFIG_NOSYSTEM" => "1", "GIT_CONFIG_GLOBAL" => File::NULL }
+  end
+
+  def git!(environment, directory, *arguments)
+    _output, error, status = Open3.capture3(environment, "git", "-C", directory.to_s, *arguments)
+    assert_predicate status, :success?, error
   end
 
   def write_manifest(path, version: Kos::VERSION, source_id: Kos::BuildIdentity.installed_source_id,

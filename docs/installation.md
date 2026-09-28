@@ -93,18 +93,22 @@ commands and the canonical `repository_identity` used for lookup:
 
 The server derives the identity when `--repository-identity` is omitted. Its
 canonical form includes the lowercased host and repository path, strips a final
-`.git`, and preserves path case. Verify registration with the exact returned
-value before invoking `/kos` from the intended checkout:
+`.git`, and preserves path case. From the intended checkout, explicitly select
+the remote used for recovery and verify registration before invoking `/kos`:
 
 ```sh
-"$KOS_CLI_PATH" project show \
-  --repository-identity "github.com/acme/widget"
+"$KOS_CLI_PATH" project resolve --remote origin
+"$KOS_CLI_PATH" status --remote origin
 ```
 
 An HTTP 404 with `error: not_found` means no project is registered under that
 exact identity; it is not a request to create one. Recheck the host-qualified
 identity or run `project create`. Local paths and `file://` remotes are not
 stable repository identities and cannot be registered.
+
+These commands inspect only the selected local remote URL. They do not choose a
+remote, fetch, test reachability, or change Git or KOS state. `status` returns
+the project plus its non-completed plans and tasks for recovery.
 
 For a minimal first run, save this one-step workflow as `workflow.json`:
 

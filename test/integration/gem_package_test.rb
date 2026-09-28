@@ -45,8 +45,9 @@ class GemPackageTest < ActiveSupport::TestCase
       output, error, status = Open3.capture3(environment, bin_dir.join("kos").to_s, "--help", chdir: directory)
       assert_predicate status, :success?, error
       assert_match(/^\s*health\s*$/, output)
+      assert_match(/^\s*status\s*$/, output)
       {
-        "project" => %w[create show update],
+        "project" => %w[create show resolve update],
         "workflow" => %w[create list show schema],
         "plan" => %w[put list show abandon],
         "task" => %w[list ready show context result claim takeover report answer]
@@ -57,6 +58,8 @@ class GemPackageTest < ActiveSupport::TestCase
       end
 
       {
+        %w[project resolve] => %w[--remote],
+        %w[status] => %w[--remote],
         %w[workflow create] => %w[--key --name --definition-file complete_task needs_human],
         %w[workflow list] => %w[--key],
         %w[workflow show] => [],
@@ -136,6 +139,14 @@ class GemPackageTest < ActiveSupport::TestCase
 
       project = run_installed_json(cli, authenticated, root, "project", "create", "--name", "Smoke",
         "--remote-url", "https://example.test/test/smoke.git", "--default-branch", "main").fetch("project")
+      _output, error, status = Open3.capture3("git", "-C", root.to_s, "init", "--quiet")
+      assert_predicate status, :success?, error
+      _output, error, status = Open3.capture3("git", "-C", root.to_s, "remote", "add", "recovery",
+        "https://example.test/test/smoke.git")
+      assert_predicate status, :success?, error
+      resolved = run_installed_json(cli, authenticated, root, "project", "resolve", "--remote", "recovery")
+        .fetch("project")
+      assert_equal project.fetch("id"), resolved.fetch("id")
       shown = run_installed_json(cli, authenticated, root, "project", "show", "--repository-identity",
         "example.test/test/smoke").fetch("project")
       assert_equal project.fetch("id"), shown.fetch("id")
@@ -241,15 +252,13 @@ class GemPackageTest < ActiveSupport::TestCase
       assert_equal "ready", restored_ready.fetch("status")
       restored_environment = cli_environment.merge("KOS_API_URL" => system.fetch(:api_url),
         "KOS_API_TOKEN" => system.fetch(:token))
-      restored = run_installed_json(cli, restored_environment, root, "project", "show", "--repository-identity",
-        "example.test/test/smoke").fetch("project")
+      recovery_status = run_installed_json(cli, restored_environment, root, "status", "--remote", "recovery")
+      restored = recovery_status.fetch("project")
       assert_equal project.fetch("id"), restored.fetch("id")
-      discovered_plans = run_installed_json(cli, restored_environment, root, "plan", "list", "--project-id",
-        restored.fetch("id").to_s).fetch("task_plans")
+      discovered_plans = recovery_status.fetch("task_plans")
       assert_equal [ "smoke" ], discovered_plans.pluck("key")
       assert_equal "abandoned", discovered_plans.first.fetch("status")
-      discovered_tasks = run_installed_json(cli, restored_environment, root, "task", "list", "--project-id",
-        restored.fetch("id").to_s).fetch("tasks")
+      discovered_tasks = recovery_status.fetch("tasks")
       assert_equal %w[paused active blocked], discovered_tasks.pluck("key")
       assert_equal [ "abandoned", "plan", "Choose a direction", "# Result\n" ],
         discovered_tasks.first.values_at("status", "pause_step", "pause_message", "answer")

@@ -90,7 +90,8 @@ surface is:
 kos health
 kos claim-id
 kos installation check
-kos project create|show|update
+kos project create|show|resolve|update
+kos status
 kos workflow create|list|show|schema
 kos plan put|list|show|abandon
 kos task list|ready|show|context|result|claim|takeover|report|answer
@@ -111,6 +112,11 @@ ready` supports orchestrator scheduling; `show` observes lifecycle state;
 `context` gives one worker its task, project, current instruction, outcomes,
 pause/answer, and result index; `result` returns one latest accepted step result.
 The remaining task commands are version-fenced mutations.
+`project resolve --remote REMOTE` reads one explicitly selected checkout remote
+and performs the exact registered-project lookup. `status --remote REMOTE` uses
+the same local resolution and returns that project with all default
+non-completed plans and tasks in one read-only request; it neither contacts the
+remote nor classifies active claims as stale.
 
 Use `kos --help` and per-command help for required arguments, accepted
 identifiers, input shapes, response fields, and examples. Prefer standard input
@@ -125,6 +131,8 @@ kos project create \
   --remote-url "git@github.com:acme/widget.git" \
   --default-branch "main"
 kos project show --repository-identity "github.com/acme/widget"
+kos project resolve --remote origin
+kos status --remote origin
 ```
 
 Use the `id` and canonical `repository_identity` returned by `project create`.
@@ -141,6 +149,7 @@ The JSON API exposes public probes and authenticated coordination operations:
 ```text
 GET  /up
 GET  /ready
+GET  /status?repository_identity=IDENTITY
 POST /projects
 GET  /projects?repository_identity=IDENTITY
 PATCH /projects/:id

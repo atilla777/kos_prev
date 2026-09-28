@@ -35,7 +35,7 @@ class KosSkillsTest < ActiveSupport::TestCase
   test "orchestrator coordinates but never performs substantive work" do
     source = normalized(Rails.root.join("skills/kos/SKILL.md"))
 
-    assert_match(/discover unfinished plans and tasks before creating replacement work/i, source)
+    assert_match(/`status --remote REMOTE`.*discover unfinished plans and tasks before creating replacement work/i, source)
     assert_match(/before project discovery .* run `installation check`/i, source)
     assert_match(/project is not registered, stop/i, source)
     assert_match(/dispatch independent claims in parallel/i, source)
@@ -99,11 +99,12 @@ class KosSkillsTest < ActiveSupport::TestCase
       assert_includes source, value
     end
     assert_includes source, "installation check"
-    [ "project create/show/update", "workflow create/list/show/schema", "plan put/list/show/abandon",
+    [ "project create/show/resolve/update", "workflow create/list/show/schema", "plan put/list/show/abandon",
       "task list/ready/show/context/result/claim/takeover/report/answer" ].each do |surface|
       assert_includes source, surface
     end
-    [ "project show --repository-identity IDENTITY", "workflow list [--key KEY]", "workflow show ID",
+    [ "project show --repository-identity IDENTITY", "project resolve --remote REMOTE", "status --remote REMOTE",
+      "workflow list [--key KEY]", "workflow show ID",
       "workflow schema", "plan show --project-id ID --key KEY", "task context ID" ].each do |signature|
       assert_includes source, signature
     end

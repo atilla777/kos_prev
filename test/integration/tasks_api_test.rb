@@ -154,6 +154,7 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     blocked = create_task(task_plan: plan, workflow: @workflow, key: "blocked")
     blocked.update!(status: "blocked", pause_kind: "blocked", pause_message: "Service unavailable",
       pause_step: "work", version: 5)
+    TaskDependency.create!(task: blocked, blocker: active)
     completed_plan = create_task_plan(project: @project, key: "finished")
     completed = create_task(task_plan: completed_plan, workflow: @workflow, key: "completed")
     completed.update!(status: "completed", current_step: "review", version: 6)
@@ -189,6 +190,19 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     assert_equal %w[current finished], response.parsed_body.fetch("task_plans").pluck("key")
     get project_tasks_path(@project), params: { include_completed: true }, headers: @headers
     assert_equal %w[pending active paused blocked completed], response.parsed_body.fetch("tasks").pluck("key")
+
+    get coordination_status_path, params: { repository_identity: @project.repository_identity }, headers: @headers
+    assert_response :success
+    status = response.parsed_body
+    assert_equal @project.id, status.dig("project", "id")
+    assert_equal [ "current" ], status.fetch("task_plans").pluck("key")
+    assert_equal %w[pending active paused blocked], status.fetch("tasks").pluck("key")
+    assert_equal [ "worker", 2 ], status.fetch("tasks").second.values_at("claim_id", "version")
+    assert_equal [ "needs_human", "Which option?", "work", nil ],
+      status.fetch("tasks").third.values_at("pause_kind", "pause_message", "pause_step", "answer")
+    assert_equal [ @workflow.id, "delivery", @workflow.revision ],
+      status.fetch("tasks").first.values_at("workflow_id", "workflow_key", "workflow_revision")
+    assert_equal [ active.id ], status.fetch("tasks").last.fetch("blocker_ids")
   end
 
   test "validates discovery filters and project scope" do
@@ -204,6 +218,11 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     assert_includes response.parsed_body.fetch("message"), other_plan.id.to_s
     assert_includes response.parsed_body.fetch("message"), @project.id.to_s
+
+    get coordination_status_path, params: { repository_identity: "example.test/missing/project" }, headers: @headers
+    assert_response :not_found
+    assert_equal "not_found", response.parsed_body.fetch("error")
+    assert_includes response.parsed_body.fetch("message"), "example.test/missing/project"
   end
 
   test "identifies missing plans tasks and results by lookup value" do
@@ -232,6 +251,7 @@ class TasksApiTest < ActionDispatch::IntegrationTest
       -> { get project_plans_path(1) },
       -> { post abandon_project_plan_path(1), params: {}, as: :json },
       -> { get project_tasks_path(1) },
+      -> { get coordination_status_path },
       -> { get tasks_ready_path },
       -> { get task_path(1) },
       -> { get context_task_path(1) },

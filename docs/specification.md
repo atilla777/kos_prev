@@ -166,7 +166,8 @@ supports numeric project reads for administration and inspection.
 | `installation check` | `GET /ready` plus local manifest | Verify matching OpenCode, CLI, and ready server installation |
 | - | `GET /ready` | Public database, migration, catalog, and data-directory readiness |
 | `claim-id` | local | Create one dispatch claim identity |
-| `project create`, `project show`, `project update` | `POST /projects`, `GET /projects`, `PATCH /projects/:id` | Register, inspect, and update project metadata |
+| `project create`, `project show`, `project resolve`, `project update` | `POST /projects`, `GET /projects`, `PATCH /projects/:id` | Register, inspect, resolve from one selected local remote, and update project metadata |
+| `status` | `GET /status?repository_identity=IDENTITY` | Return the resolved project's default non-completed recovery state |
 | `workflow create` | `POST /workflows` | Create one immutable keyed revision |
 | `workflow list` | `GET /workflows[?key=KEY]` | List keys and immutable revisions, optionally for one exact key |
 | `workflow show ID` | `GET /workflows/:id` | Read one numeric immutable revision ID returned by the list |
@@ -219,8 +220,15 @@ not tenant quotas or rate limits.
 
 ## Recovery And Upgrade
 
-Authoritative recovery starts by resolving the registered project and listing
-its non-completed plans and tasks. These project-scoped reads include pending,
+Authoritative recovery starts with `status --remote REMOTE`. The CLI reads only
+the explicitly named remote URL from the current Git checkout, normalizes it
+with the registration identity rules, and requests the exact registered project
+and its non-completed plans and tasks in one authenticated read. Missing Git,
+checkout, remote, URL, registration, authentication, and transport state are
+reported without a coordination mutation. The command never chooses a remote,
+contacts it, or infers worker liveness.
+
+Recovery state includes pending,
 active, needs-human, blocked, and terminal abandoned state; active entries
 expose their claim fence, and paused or abandoned entries retain persisted pause
 and answer evidence. Completed state is excluded by default but can be requested
@@ -233,7 +241,8 @@ timestamps, and blocker IDs; per-command help names the exact fields.
 After an ambiguous mutation, clients inspect the listing, `task show`,
 `context`, or `result` before deciding whether another mutation is safe. KOS
 does not require retained conversational identifiers, local receipts, pending
-submission files, deterministic retry scripts, or automatic recovery.
+submission files, deterministic retry scripts, or automatic recovery. The
+existing project-scoped list operations remain available for focused inspection.
 
 This pre-release architecture does not migrate PLAN-022 databases. Upgrade is a
 destructive reset: optionally retain a backup for reference, remove the old KOS

@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
   get "ready" => "readiness#show", as: :readiness
+  get "status", to: "statuses#show", as: :coordination_status
 
   resources :projects, only: %i[index create show update]
   get "workflows/schema", to: "workflows#schema", as: :workflow_schema

@@ -7,11 +7,12 @@ description: Discover and safely invoke the public KOS CLI as a thin client.
 
 Use the absolute executable in `KOS_CLI_PATH`. `KOS_API_URL` selects the server;
 `KOS_API_TOKEN` is required except for `health`, `installation check`, and local
-`claim-id`. Never print the token or bypass the CLI with HTTP, Rails, or database
+`claim-id`. `project resolve` and `status` also inspect one explicitly selected
+local Git remote before their authenticated request. Never print the token or bypass the CLI with HTTP, Rails, or database
 access.
 
 Use `--help` and per-command help for the installed interface. The commands are
-`health`, `claim-id`, `installation check`, `project create/show/update`,
+`health`, `claim-id`, `installation check`, `status`, `project create/show/resolve/update`,
 `workflow create/list/show/schema`, `plan put/list/show/abandon`, and `task
 list/ready/show/context/result/claim/takeover/report/answer`. Run `installation
 check` before a KOS workflow; it verifies the OpenCode manifest, CLI, and server
@@ -20,7 +21,8 @@ non-default absolute manifest path.
 `plan abandon` is fenced by the observed plan version. List commands return
 non-completed state, including terminal abandoned records; use
 `--include-completed` for successful history.
-Common signatures are `project show --repository-identity IDENTITY`, `workflow
+Common signatures are `project show --repository-identity IDENTITY`, `project
+resolve --remote REMOTE`, `status --remote REMOTE`, `workflow
 list [--key KEY]`, `workflow show ID`, `workflow schema`, `plan list
 --project-id ID`, `plan show --project-id ID --key KEY`, `task list --project-id
 ID`, `task ready --project-id ID`, `task show ID`, and `task context ID`.
