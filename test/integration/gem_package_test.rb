@@ -47,8 +47,8 @@ class GemPackageTest < ActiveSupport::TestCase
       {
         "project" => %w[create show update],
         "workflow" => %w[create],
-        "plan" => %w[put show],
-        "task" => %w[ready show context result claim takeover report answer]
+        "plan" => %w[put list show],
+        "task" => %w[list ready show context result claim takeover report answer]
       }.each do |resource, actions|
         inventory = output.lines.grep(/^\s*#{Regexp.escape(resource)}\s+/).join
         assert_not_empty inventory
@@ -121,6 +121,7 @@ class GemPackageTest < ActiveSupport::TestCase
       task = nil
       paused_task = nil
       active_task = nil
+      blocked_task = nil
       Tempfile.create([ "smoke-plan", ".json" ], root.to_s) do |plan_file|
         plan_file.write(JSON.generate(key: "smoke", title: "Smoke", tasks: [
           {
@@ -133,6 +134,10 @@ class GemPackageTest < ActiveSupport::TestCase
           },
           {
             key: "active", title: "Smoke active claim", description_markdown: "Keep the claim active",
+            workflow_key: "development", blocker_keys: []
+          },
+          {
+            key: "blocked", title: "Smoke obstruction", description_markdown: "Block the lifecycle",
             workflow_key: "development", blocker_keys: []
           }
         ]))
@@ -174,6 +179,15 @@ class GemPackageTest < ActiveSupport::TestCase
             project.fetch("id").to_s).fetch("tasks").find { |candidate| candidate.fetch("key") == "active" }
           active_task = run_installed_json(cli, authenticated, root, "task", "claim", active_task.fetch("id").to_s,
             "--claim-id", "smoke-active", "--version", active_task.fetch("version").to_s).fetch("task")
+
+          blocked_task = run_installed_json(cli, authenticated, root, "task", "ready", "--project-id",
+            project.fetch("id").to_s).fetch("tasks").find { |candidate| candidate.fetch("key") == "blocked" }
+          blocked_task = run_installed_json(cli, authenticated, root, "task", "claim", blocked_task.fetch("id").to_s,
+            "--claim-id", "smoke-blocked", "--version", blocked_task.fetch("version").to_s).fetch("task")
+          blocked_task = run_installed_json(cli, authenticated, root, "task", "report", blocked_task.fetch("id").to_s,
+            "--claim-id", "smoke-blocked", "--version", blocked_task.fetch("version").to_s, "--step", "plan",
+            "--outcome", "blocked", "--result-file", result_file.path, "--message",
+            "Dependency unavailable").fetch("task")
         end
       end
 
@@ -200,6 +214,21 @@ class GemPackageTest < ActiveSupport::TestCase
       restored = run_installed_json(cli, restored_environment, root, "project", "show", "--repository-identity",
         "example.test/test/smoke").fetch("project")
       assert_equal project.fetch("id"), restored.fetch("id")
+      discovered_plans = run_installed_json(cli, restored_environment, root, "plan", "list", "--project-id",
+        restored.fetch("id").to_s).fetch("task_plans")
+      assert_equal [ "smoke" ], discovered_plans.pluck("key")
+      discovered_tasks = run_installed_json(cli, restored_environment, root, "task", "list", "--project-id",
+        restored.fetch("id").to_s).fetch("tasks")
+      assert_equal %w[paused active blocked], discovered_tasks.pluck("key")
+      assert_equal [ "pending", "plan", "Choose a direction", "# Result\n" ],
+        discovered_tasks.first.values_at("status", "pause_step", "pause_message", "answer")
+      assert_equal [ "active", "smoke-active", 1 ],
+        discovered_tasks.second.values_at("status", "claim_id", "version")
+      assert_equal [ "blocked", "blocked", "plan", "Dependency unavailable", nil ],
+        discovered_tasks.last.values_at("status", "pause_kind", "pause_step", "pause_message", "answer")
+      all_tasks = run_installed_json(cli, restored_environment, root, "task", "list", "--project-id",
+        restored.fetch("id").to_s, "--include-completed").fetch("tasks")
+      assert_equal %w[lifecycle paused active blocked], all_tasks.pluck("key")
       restored_context = run_installed_json(cli, restored_environment, root, "task", "context",
         task.fetch("id").to_s)
       assert_equal "completed", restored_context.dig("task", "status")

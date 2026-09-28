@@ -122,7 +122,9 @@ administration and inspection.
 | `claim-id` | local | Create one dispatch claim identity |
 | `project create`, `project show`, `project update` | `POST /projects`, `GET /projects`, `PATCH /projects/:id` | Register, inspect, and update project metadata |
 | `workflow create` | `POST /workflows` | Create one immutable keyed revision |
+| `plan list` | `GET /projects/:project_id/plans` | List unfinished plans, or all plans when explicitly requested |
 | `plan put`, `plan show` | `PUT /projects/:project_id/plan`, `GET /projects/:project_id/plan?key=KEY` | Atomically replace an unstarted plan and inspect it by key |
+| `task list` | `GET /projects/:project_id/tasks` | List unfinished task lifecycle state, or all tasks when explicitly requested |
 | `task ready` | `GET /tasks/ready?project_id=ID` | List dependency-ready tasks |
 | `task show` | `GET /tasks/:id` | Observe lifecycle and fencing state |
 | `task context` | `GET /tasks/:id/context` | Read one worker's complete current-step context |
@@ -139,9 +141,19 @@ claims, and stale writes produce no partial state change.
 
 ## Recovery And Upgrade
 
-Authoritative recovery consists of rereading task state. After an ambiguous
-mutation, clients inspect `task show`, `context`, or `result` before deciding
-whether another mutation is safe. KOS does not require local receipts, pending
+Authoritative recovery starts by resolving the registered project and listing
+its unfinished plans and tasks. These project-scoped reads include pending,
+active, needs-human, and blocked tasks; active entries expose their claim fence,
+and paused entries expose their persisted question or obstruction and bound
+answer. Completed state is excluded by default but can be requested for
+deliberate inspection. `plan list` returns plan identity and timestamps. `task
+list` returns task and plan identity, workflow identity, key, title, status,
+current step, claim, version, pause and answer fields, timestamps, and blocker
+IDs; per-command help names the exact fields.
+
+After an ambiguous mutation, clients inspect the listing, `task show`,
+`context`, or `result` before deciding whether another mutation is safe. KOS
+does not require retained conversational identifiers, local receipts, pending
 submission files, deterministic retry scripts, or automatic recovery.
 
 This pre-release architecture does not migrate PLAN-022 databases. Upgrade is a

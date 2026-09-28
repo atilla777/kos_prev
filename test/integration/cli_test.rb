@@ -15,8 +15,8 @@ class CliTest < ActiveSupport::TestCase
     assert_match(/^\s*claim-id\s*$/, output)
     assert_match(/^\s*project create \| show \| update\s*$/, output)
     assert_match(/^\s*workflow create\s*$/, output)
-    assert_match(/^\s*plan put \| show\s*$/, output)
-    assert_match(/^\s*task ready \| show \| context \| result \| claim \| takeover \| report \| answer\s*$/, output)
+    assert_match(/^\s*plan put \| list \| show\s*$/, output)
+    assert_match(/^\s*task list \| ready \| show \| context \| result \| claim \| takeover \| report \| answer\s*$/, output)
     %w[session-id task-type create-or-get resume lease artifact report-attempt materialize children graph].each do |removed|
       refute_match(/\b#{Regexp.escape(removed)}\b/, output)
     end
@@ -24,7 +24,9 @@ class CliTest < ActiveSupport::TestCase
     {
       %w[workflow create] => %w[--key --name --definition-file],
       %w[plan put] => %w[--project-id --definition-file],
+      %w[plan list] => %w[--project-id --include-completed],
       %w[plan show] => %w[--project-id --key],
+      %w[task list] => %w[--project-id --include-completed],
       %w[task ready] => %w[--project-id],
       %w[task result] => %w[--step],
       %w[task claim] => %w[--claim-id --version],
@@ -37,6 +39,13 @@ class CliTest < ActiveSupport::TestCase
       assert_match(/Usage: kos #{Regexp.escape(command.join(" "))}/, command_output)
       options.each { |option| assert_includes command_output, option }
       assert_empty command_error
+    end
+
+    plan_list_help, = run_cli("plan", "list", "--help", environment: {})
+    assert_includes plan_list_help, "task_plans fields: id, project_id, key, title"
+    task_list_help, = run_cli("task", "list", "--help", environment: {})
+    %w[claim_id version pause_kind pause_message pause_step answer blocker_ids].each do |field|
+      assert_includes task_list_help, field
     end
   end
 
@@ -95,6 +104,12 @@ class CliTest < ActiveSupport::TestCase
               } ] } ],
             [ [ "plan", "show", "--project-id", "7", "--key", "goal" ],
               "GET", "/projects/7/plan?key=goal", nil ],
+            [ [ "plan", "list", "--project-id", "7" ], "GET", "/projects/7/plans", nil ],
+            [ [ "plan", "list", "--project-id", "7", "--include-completed" ],
+              "GET", "/projects/7/plans?include_completed=true", nil ],
+            [ [ "task", "list", "--project-id", "7" ], "GET", "/projects/7/tasks", nil ],
+            [ [ "task", "list", "--project-id", "7", "--include-completed" ],
+              "GET", "/projects/7/tasks?include_completed=true", nil ],
             [ [ "task", "ready", "--project-id", "7" ], "GET", "/tasks/ready?project_id=7", nil ],
             [ [ "task", "show", "9" ], "GET", "/tasks/9", nil ],
             [ [ "task", "context", "9" ], "GET", "/tasks/9/context", nil ],

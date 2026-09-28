@@ -36,10 +36,17 @@ development records and are not read by the KOS server or CLI.
 | 026 | [Diagnose live stale reports](026-diagnose-live-stale-reports/task.md) | done | 025 |
 | 027 | [Evaluate document consolidation](027-evaluate-document-consolidation/task.md) | done | 025, 026 |
 | 028 | [Simplify KOS to an agent-led MVP](028-agent-led-mvp/task.md) | done | 027 |
+| 029 | [Complete recovery discovery](029-complete-recovery-discovery/task.md) | done | 028 |
 
 ## Planned
 
-No tasks are currently planned.
+| ID | Task | Status | Dependencies |
+| --- | --- | --- | --- |
+| 030 | [Correct built-in workflow contracts](030-correct-built-in-contracts/task.md) | planned | 029 |
+| 031 | [Prove installed orchestration](031-prove-installed-orchestration/task.md) | planned | 030 |
+| 032 | [Add plan abandonment](032-add-plan-abandonment/task.md) | planned | 031 |
+| 033 | [Bound coordination state](033-bound-coordination-state/task.md) | planned | 032 |
+| 034 | [Finish operational readiness](034-finish-operational-readiness/task.md) | planned | 033 |
 
 ## Resolved Decisions
 

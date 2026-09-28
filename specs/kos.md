@@ -40,8 +40,9 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   stored workflow definition.
 - A worker can pause with one question or a concrete obstruction. The answer or
   resolution is stored with the task before the same step continues.
-- After a worker or orchestrator interruption, a later orchestrator reads KOS
-  state and explicitly takes over unfinished work when appropriate.
+- After a worker or orchestrator interruption, a later orchestrator discovers
+  the project's unfinished plans and tasks, reads their KOS state, and
+  explicitly takes over unfinished work when appropriate.
 - Built-in development, fix, and brief workflows may be supplied as convenient
   defaults, while custom workflows use the same generic state semantics.
 
@@ -90,6 +91,8 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   postconditions over exhaustive negative rules or exact command sequences.
 - KOS state, not a worker's conversational response, is authoritative progress
   for the orchestrator.
+- Project-scoped discovery returns every unfinished plan and task needed for
+  recovery. Completed state remains available through deliberate inspection.
 
 # Errors
 
@@ -108,9 +111,9 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 
 - If a stale worker finishes after explicit takeover, its report is rejected by
   the changed claim or task version.
-- If an orchestrator stops after dispatch, another orchestrator can inspect the
-  active task and explicitly take it over after deciding the prior worker has
-  stopped.
+- If an orchestrator stops after dispatch, another orchestrator can discover
+  the active task from the registered project and explicitly take it over after
+  deciding the prior worker has stopped.
 - If one parallel worker pauses or fails, unrelated ready tasks remain
   claimable.
 - Corrective workflow outcomes may return to an earlier step. Workers decide
@@ -131,6 +134,9 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   can atomically report one allowed result and transition.
 - Pause, answer, completion, and the latest accepted step results survive a
   process restart.
+- Given a registered project identity, a fresh orchestrator can discover every
+  unfinished plan and task, including active claim fences and durable pause and
+  answer state.
 - Built-in and custom workflows execute through the same server transition
   rules without task-type-specific Git, check, review, or publication gates.
 - Skills remain short enough to communicate capabilities, commands, role

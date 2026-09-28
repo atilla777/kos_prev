@@ -75,13 +75,15 @@ kos health
 kos claim-id
 kos project create|show|update
 kos workflow create
-kos plan put|show
-kos task ready|show|context|result|claim|takeover|report|answer
+kos plan put|list|show
+kos task list|ready|show|context|result|claim|takeover|report|answer
 ```
 
 `claim-id` creates a local unpredictable identity for one worker dispatch.
 `project`, `workflow`, and `plan` commands administer durable definitions.
-`task ready` supports orchestrator scheduling; `show` observes lifecycle state;
+`plan list` and `task list` discover unfinished project state after interruption;
+`--include-completed` adds completed state for deliberate inspection. `task
+ready` supports orchestrator scheduling; `show` observes lifecycle state;
 `context` gives one worker its task, project, current instruction, outcomes,
 pause/answer, and result index; `result` returns one latest accepted step result.
 The remaining task commands are version-fenced mutations.
@@ -102,6 +104,8 @@ PATCH /projects/:id
 POST /workflows
 PUT  /projects/:project_id/plan
 GET  /projects/:project_id/plan?key=KEY
+GET  /projects/:project_id/plans[?include_completed=true]
+GET  /projects/:project_id/tasks[?include_completed=true]
 GET  /tasks/ready?project_id=ID
 GET  /tasks/:id
 GET  /tasks/:id/context

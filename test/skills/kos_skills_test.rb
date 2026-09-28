@@ -40,6 +40,8 @@ class KosSkillsTest < ActiveSupport::TestCase
     assert_includes source, "`task_id`, `claim_id`, `version`, and `step`"
     assert_includes source, "It never performs a\nworkflow step"
     assert_includes source, "trust KOS state rather than worker prose"
+    assert_includes source, "discover\nunfinished plans and tasks"
+    assert_includes source, "before creating replacement work"
     assert_includes source, "Take over an active task only after deciding its worker has\nstopped"
     refute_match(/git status|git push|retry|lease|review algorithm/i, source)
   end
@@ -65,12 +67,12 @@ class KosSkillsTest < ActiveSupport::TestCase
     source = File.read(Rails.root.join("skills/kos-cli/SKILL.md"))
 
     %w[KOS_CLI_PATH KOS_API_URL KOS_API_TOKEN health claim-id].each { |value| assert_includes source, value }
-    [ "project create/show/update", "workflow create", "plan\nput/show",
-      "task ready/show/context/result/claim/takeover/report/answer" ].each do |surface|
+    [ "project create/show/update", "workflow create", "plan\nput/list/show",
+      "task list/ready/show/context/result/claim/takeover/report/answer" ].each do |surface|
       assert_includes source, surface
     end
     assert_includes source, "Pass each value as a separate argument"
-    assert_includes source, "use `-` for standard\ninput"
+    assert_includes source, "use `-` for standard input"
     (0..3).each { |status| assert_includes source, "`#{status}`" }
     refute_match(/session-id|task-type|resume|lease|materializ|kos-git|kos-step/, source)
     assert_operator source.lines.length, :<=, 30

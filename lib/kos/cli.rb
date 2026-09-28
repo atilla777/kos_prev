@@ -65,8 +65,8 @@ module Kos
           claim-id
           project create | show | update
           workflow create
-          plan put | show
-          task ready | show | context | result | claim | takeover | report | answer
+          plan put | list | show
+          task list | ready | show | context | result | claim | takeover | report | answer
 
         Options:
           -v, --version             Show the installed CLI version
@@ -94,7 +94,9 @@ module Kos
       when [ "project", "update" ] then project_update
       when [ "workflow", "create" ] then workflow_create
       when [ "plan", "put" ] then plan_put
+      when [ "plan", "list" ] then plan_list
       when [ "plan", "show" ] then plan_show
+      when [ "task", "list" ] then task_list
       when [ "task", "ready" ] then task_ready
       when [ "task", "show" ] then task_show
       when [ "task", "context" ] then task_context
@@ -159,6 +161,19 @@ module Kos
       require_values!(values, :project_id, :key)
       project_id = values.delete(:project_id)
       [ :get, query_path("/projects/#{project_id}/plan", values), nil ]
+    end
+
+    def plan_list
+      project_id, values = project_list_options("kos plan list",
+        "Response task_plans fields: id, project_id, key, title, created_at, updated_at")
+      [ :get, query_path("/projects/#{project_id}/plans", values), nil ]
+    end
+
+    def task_list
+      project_id, values = project_list_options("kos task list",
+        "Response tasks fields: id, task_plan_id, workflow_id, key, title, status, current_step, claim_id, " \
+        "version, pause_kind, pause_message, pause_step, answer, created_at, updated_at, blocker_ids")
+      [ :get, query_path("/projects/#{project_id}/tasks", values), nil ]
     end
 
     def task_ready
@@ -253,7 +268,16 @@ module Kos
       )
     end
 
-    def parse_options(usage, definitions)
+    def project_list_options(usage, response_help)
+      values = parse_options(usage, {
+        "--project-id ID" => [ :project_id, Integer, "Project ID" ],
+        "--include-completed" => [ :include_completed, nil, "Include completed state" ]
+      }, footer: response_help)
+      require_values!(values, :project_id)
+      [ values.delete(:project_id), values ]
+    end
+
+    def parse_options(usage, definitions, footer: nil)
       values = {}
       parser = OptionParser.new do |option_parser|
         option_parser.banner = "Usage: #{usage} [options]"
@@ -263,8 +287,13 @@ module Kos
         end
       end
       definitions.each do |switch, (name, type, description)|
-        parser.on(switch, type, description) { |value| values[name] = value }
+        if type
+          parser.on(switch, type, description) { |value| values[name] = value }
+        else
+          parser.on(switch, description) { values[name] = true }
+        end
       end
+      parser.separator("\n#{footer}") if footer
       parse!(parser)
       values
     end
@@ -352,6 +381,8 @@ module Kos
     end
 
     def query_path(path, values)
+      return path if values.empty?
+
       "#{path}?#{URI.encode_www_form(values)}"
     end
 

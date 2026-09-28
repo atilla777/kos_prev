@@ -94,10 +94,59 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     assert_equal [ "pending", "A", 4 ], response.parsed_body.fetch("task").values_at("status", "answer", "version")
   end
 
+  test "discovers project plans and unfinished task lifecycle state" do
+    plan = create_task_plan(project: @project, key: "current")
+    pending = create_task(task_plan: plan, workflow: @workflow, key: "pending")
+    pending.update!(pause_kind: "needs_human", pause_message: "Choose", pause_step: "work", answer: "A", version: 4)
+    active = create_task(task_plan: plan, workflow: @workflow, key: "active")
+    active.update!(status: "active", claim_id: "worker", version: 2)
+    paused = create_task(task_plan: plan, workflow: @workflow, key: "paused")
+    paused.update!(status: "needs_human", pause_kind: "needs_human", pause_message: "Which option?",
+      pause_step: "work", version: 3)
+    blocked = create_task(task_plan: plan, workflow: @workflow, key: "blocked")
+    blocked.update!(status: "blocked", pause_kind: "blocked", pause_message: "Service unavailable",
+      pause_step: "work", version: 5)
+    completed_plan = create_task_plan(project: @project, key: "finished")
+    completed = create_task(task_plan: completed_plan, workflow: @workflow, key: "completed")
+    completed.update!(status: "completed", current_step: "review", version: 6)
+    create_task(project: create_project(name: "Other"), workflow: @workflow, key: "other")
+
+    get project_plans_path(@project), headers: @headers
+    assert_response :success
+    assert_equal [ "current" ], response.parsed_body.fetch("task_plans").pluck("key")
+
+    get project_tasks_path(@project), headers: @headers
+    assert_response :success
+    tasks = response.parsed_body.fetch("tasks")
+    assert_equal %w[pending active paused blocked], tasks.pluck("key")
+    assert_equal [ active.id, "work", 2, "worker" ],
+      tasks.find { |task| task["key"] == "active" }.values_at("id", "current_step", "version", "claim_id")
+    assert_equal [ "needs_human", "Which option?", "work", nil ],
+      tasks.find { |task| task["key"] == "paused" }.values_at("pause_kind", "pause_message", "pause_step", "answer")
+    assert_equal [ "needs_human", "Choose", "work", "A" ],
+      tasks.find { |task| task["key"] == "pending" }.values_at("pause_kind", "pause_message", "pause_step", "answer")
+
+    get project_plans_path(@project), params: { include_completed: true }, headers: @headers
+    assert_equal %w[current finished], response.parsed_body.fetch("task_plans").pluck("key")
+    get project_tasks_path(@project), params: { include_completed: true }, headers: @headers
+    assert_equal %w[pending active paused blocked completed], response.parsed_body.fetch("tasks").pluck("key")
+  end
+
+  test "validates discovery filters and project scope" do
+    get project_tasks_path(@project), params: { include_completed: "yes" }, headers: @headers
+    assert_response :bad_request
+    assert_equal "include_completed must be true or false", response.parsed_body.fetch("message")
+
+    get project_plans_path(0), headers: @headers
+    assert_response :not_found
+  end
+
   test "requires authentication on all task routes" do
     requests = [
       -> { put project_plan_path(1), params: {}, as: :json },
       -> { get project_plan_path(1) },
+      -> { get project_plans_path(1) },
+      -> { get project_tasks_path(1) },
       -> { get tasks_ready_path },
       -> { get task_path(1) },
       -> { get context_task_path(1) },

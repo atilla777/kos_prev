@@ -1,4 +1,12 @@
 class TasksController < ApplicationController
+  def index
+    project = Project.find(params[:project_id])
+    tasks = project.tasks.includes(:blockers).order(:id)
+    tasks = tasks.where.not(status: "completed") unless optional_query_boolean(:include_completed)
+
+    render json: { tasks: tasks.map { |task| serialize_task(task) } }
+  end
+
   def ready
     project = Project.find(required_query_integer(:project_id))
     plan = TaskPlan.find(required_query_integer(:task_plan_id)) if params.key?(:task_plan_id)

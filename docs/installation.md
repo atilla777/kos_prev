@@ -39,8 +39,10 @@ bin/rails server
 ```
 
 Use `project create`, `workflow create`, and `plan put` to create the durable
-state needed by `/kos`. Use `project show` and `plan show` to verify it. Consult
-per-command help for exact file and standard-input options.
+state needed by `/kos`. Use `project show`, `plan list`, and `task list` to
+recover unfinished state after a restart; use `plan show` for one detailed plan.
+The list commands exclude completed state unless `--include-completed` is given.
+Consult per-command help for exact file and standard-input options.
 
 ## OpenCode Inventory
 
@@ -55,9 +57,10 @@ The installer manages exactly:
 - skills `kos`, `kos-cli`, `kos-worker`, and `okf`.
 
 Restart OpenCode after installation or any managed-file change. The `/kos`
-agent coordinates only: it stores plans, finds and claims ready work, dispatches
-workers, presents pauses, performs explicit takeover, and observes state. Each
-`kos-worker` performs and reports one current step.
+agent coordinates only: it discovers unfinished state before creating work,
+stores plans, finds and claims ready work, dispatches workers, presents pauses,
+performs explicit takeover, and observes state. Each `kos-worker` performs and
+reports one current step.
 
 ## Production
 

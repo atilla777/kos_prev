@@ -62,6 +62,15 @@ class ApplicationController < ActionController::API
     raise ActionController::BadRequest, "#{name} must be an integer"
   end
 
+  def optional_query_boolean(name, default: false)
+    return default unless params.key?(name)
+
+    return true if params[name] == "true"
+    return false if params[name] == "false"
+
+    raise ActionController::BadRequest, "#{name} must be true or false"
+  end
+
   def optional_integer_array(name, default: nil)
     return default unless params.key?(name)
 

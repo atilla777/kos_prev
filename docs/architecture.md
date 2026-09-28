@@ -56,16 +56,16 @@ health
 claim-id
 project create|show|update
 workflow create
-plan put|show
-task ready|show|context|result|claim|takeover|report|answer
+plan put|list|show
+task list|ready|show|context|result|claim|takeover|report|answer
 ```
 
 The JSON API mirrors these operations with `GET /up`, project resources,
 immutable workflow creation, project-scoped plan storage, ready-task discovery,
-task reads, and task claim/takeover/report/answer mutations. The CLI validates
-local arguments and input, sends one request, preserves server output, and does
-not duplicate workflow or recovery policy. Per-command help is the syntax
-authority.
+project-scoped unfinished-state discovery, task reads, and task
+claim/takeover/report/answer mutations. The CLI validates local arguments and
+input, sends one request, preserves server output, and does not duplicate
+workflow or recovery policy. Per-command help is the syntax authority.
 
 `task show` is the orchestrator's focused lifecycle view. `task context` is the
 worker view and includes the current immutable instruction, outcomes, prior
@@ -100,10 +100,13 @@ Independent tasks can be claimed in parallel. Serial transactions and
 optimistic versions prevent duplicate claims and stale reports for the same
 task. KOS does not support parallel workers or parallel steps within one task.
 
-Recovery is observational. A new orchestrator reads task state and may take over
-only after deciding the prior worker stopped. A delayed worker's report fails
-because takeover changed both claim identity and task version. An ambiguous
-mutation is resolved by reading current state before another write.
+Recovery is observational. A new orchestrator resolves a registered project,
+lists its unfinished plans and tasks, and may take over an active task only
+after deciding the prior worker stopped. Discovery returns persisted lifecycle
+and pause state; it does not infer readiness, staleness, or takeover policy. A
+delayed worker's report fails because takeover changed both claim identity and
+task version. An ambiguous mutation is resolved by reading current state before
+another write.
 
 There are no leases, heartbeat, clocks, owner sessions, automatic stale-worker
 detection, request creation keys, local protocol files, or pending-report
