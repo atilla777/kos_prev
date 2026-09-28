@@ -45,6 +45,60 @@ recover unfinished state after a restart; use `plan show` for one detailed plan.
 The list commands exclude completed state unless `--include-completed` is given.
 Consult per-command help for exact file and standard-input options.
 
+For a minimal first run, save this one-step workflow as `workflow.json`:
+
+```json
+{
+  "steps": [
+    {
+      "id": "work",
+      "name": "Work",
+      "instruction": "Perform the task description and report the observed result.",
+      "outcomes": {
+        "completed": { "complete_task": true },
+        "question": { "pause": "needs_human" },
+        "blocked": { "pause": "blocked" }
+      }
+    }
+  ]
+}
+```
+
+Register it, then save a two-task plan as `plan.json` and store it. Replace `1`
+with the project ID returned by `project create`:
+
+```sh
+"$KOS_CLI_PATH" workflow create --key first-run --name "First run" \
+  --definition-file workflow.json
+```
+
+```json
+{
+  "key": "first-run",
+  "title": "First KOS plan",
+  "tasks": [
+    {
+      "key": "first",
+      "title": "First independent task",
+      "description_markdown": "Create `first.txt` containing `first`.",
+      "workflow_key": "first-run",
+      "blocker_keys": []
+    },
+    {
+      "key": "second",
+      "title": "Second independent task",
+      "description_markdown": "Create `second.txt` containing `second`.",
+      "workflow_key": "first-run",
+      "blocker_keys": []
+    }
+  ]
+}
+```
+
+```sh
+"$KOS_CLI_PATH" plan put --project-id 1 --definition-file plan.json
+```
+
 Run `bin/rails db:seed` after each KOS upgrade. Seeding idempotently installs the
 current built-in catalog revision while preserving obsolete workflow revisions
 used by existing tasks.
@@ -65,7 +119,9 @@ Restart OpenCode after installation or any managed-file change. The `/kos`
 agent coordinates only: it discovers unfinished state before creating work,
 stores plans, finds and claims ready work, dispatches workers, presents pauses,
 performs explicit takeover, and observes state. Each `kos-worker` performs and
-reports one current step.
+reports one current step. The managed command and agent inherit the model and
+provider selected by OpenCode; configure and authenticate a provider before the
+first run.
 
 ## Production
 

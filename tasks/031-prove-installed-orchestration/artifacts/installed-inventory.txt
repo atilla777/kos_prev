@@ -1,0 +1,7 @@
+commands/kos.md
+agents/kos-worker.md
+skills/kos/SKILL.md
+skills/kos-cli/SKILL.md
+skills/kos-worker/SKILL.md
+skills/okf/SKILL.md
+kos-installation.json

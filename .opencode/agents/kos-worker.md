@@ -1,7 +1,6 @@
 ---
 description: Performs exactly one claimed KOS workflow step
 mode: subagent
-model: openai/gpt-5.6-sol
 reasoningEffort: high
 ---
 

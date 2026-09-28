@@ -25,7 +25,7 @@ class KosSkillsTest < ActiveSupport::TestCase
     metadata = frontmatter(path)
 
     assert_equal "build", metadata.fetch("agent")
-    assert_equal "openai/gpt-5.6-sol", metadata.fetch("model")
+    refute metadata.key?("model")
     assert_includes source, "Load the `kos` skill"
     assert_equal 1, source.scan("$ARGUMENTS").length
     assert_includes source, "<kos-goal>"
@@ -53,7 +53,7 @@ class KosSkillsTest < ActiveSupport::TestCase
     metadata = frontmatter(agent_path)
 
     assert_equal "subagent", metadata.fetch("mode")
-    assert_equal %w[description mode model reasoningEffort], metadata.keys.sort
+    assert_equal %w[description mode reasoningEffort], metadata.keys.sort
     assert_includes agent, "immutable JSON envelope"
     assert_includes skill, "require\nall four values to match"
     assert_includes skill, "original\nenvelope's `claim_id`, `version`, and `step`"

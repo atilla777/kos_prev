@@ -1,0 +1,16 @@
+{
+  "streams": [
+    {
+      "name": "first",
+      "sha256": "b29ef0b39d169895128bbd4847b9dd950bf307123af3b401500dce6584157d58",
+      "bytes": 43757,
+      "lines": 45
+    },
+    {
+      "name": "recovery",
+      "sha256": "4d8f2dbeca9ec6338d03fd7b7172e5d1a0dff7a9f16cf1f5407c7716c72bc89d",
+      "bytes": 44601,
+      "lines": 53
+    }
+  ]
+}

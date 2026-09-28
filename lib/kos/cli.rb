@@ -147,7 +147,8 @@ module Kos
       values = parse_options("kos plan put", {
         "--project-id ID" => [ :project_id, Integer, "Project ID" ],
         "--definition-file FILE" => [ :definition_file, String, "Plan JSON file, or - for STDIN" ]
-      })
+      }, footer: "Plan JSON fields: key, title, tasks. Each task requires exactly: " \
+        "key, title, description_markdown, workflow_key, blocker_keys.")
       require_values!(values, :project_id, :definition_file)
       project_id = values.delete(:project_id)
       [ :put, "/projects/#{project_id}/plan", read_json_object(values.delete(:definition_file)) ]

@@ -43,6 +43,10 @@ class CliTest < ActiveSupport::TestCase
 
     plan_list_help, = run_cli("plan", "list", "--help", environment: {})
     assert_includes plan_list_help, "task_plans fields: id, project_id, key, title"
+    plan_put_help, = run_cli("plan", "put", "--help", environment: {})
+    %w[description_markdown workflow_key blocker_keys].each do |field|
+      assert_includes plan_put_help, field
+    end
     task_list_help, = run_cli("task", "list", "--help", environment: {})
     %w[claim_id version pause_kind pause_message pause_step answer blocker_ids].each do |field|
       assert_includes task_list_help, field

@@ -1,0 +1,75 @@
+{
+  "project": {
+    "repository_identity": "example.test/kos/acceptance-031-final",
+    "discovered_without_numeric_id": true
+  },
+  "plan": {
+    "key": "installed-orchestration-031",
+    "created_by_first_session": true,
+    "workflow_key": "acceptance",
+    "workflow_revision": 1,
+    "tasks": [
+      { "id": 1, "key": "alpha", "blocker_keys": [] },
+      { "id": 2, "key": "color", "blocker_keys": [] },
+      { "id": 3, "key": "recovery", "blocker_keys": [] }
+    ]
+  },
+  "initial_claims": [
+    { "task_id": 1, "timestamp_ms": 1790581542290, "version": 1 },
+    { "task_id": 2, "timestamp_ms": 1790581542337, "version": 1 },
+    { "task_id": 3, "timestamp_ms": 1790581542347, "version": 1 }
+  ],
+  "interrupted": [
+    {
+      "task_id": 1,
+      "status": "active",
+      "version": 1,
+      "claim_sha256": "b77aaaf998e3846dbe57668060e27b05507e904db79e212a2ac42aef5bd72f8f"
+    },
+    {
+      "task_id": 2,
+      "status": "needs_human",
+      "version": 2,
+      "question": "Which color should color.txt contain?"
+    },
+    {
+      "task_id": 3,
+      "status": "active",
+      "version": 1,
+      "claim_sha256": "e30971f6a96471926074db03a0411e6da2ce553dd02a8d42e057c0a0b2db01bc"
+    }
+  ],
+  "recovery": {
+    "fresh_session": true,
+    "goal_contained_project_id": false,
+    "goal_contained_plan_key": false,
+    "answer": { "task_id": 2, "step": "work", "value": "blue", "version": 3 },
+    "takeovers": [
+      {
+        "task_id": 1,
+        "version": 2,
+        "claim_sha256": "3134e8169c331ade661cbdf64549f29e0d9657525357d274dd8a27eaf9649c6e"
+      },
+      {
+        "task_id": 3,
+        "version": 2,
+        "claim_sha256": "960e1f3c142701d08c3b3c53226582f68f2fa896d92f4ec749884940f3b77341"
+      }
+    ]
+  },
+  "worker_launches": [
+    { "task_id": 1, "version": 2, "step": "work", "profile": "kos-worker", "model": "openai/gpt-5.6-sol" },
+    { "task_id": 2, "version": 4, "step": "work", "profile": "kos-worker", "model": "openai/gpt-5.6-sol" },
+    { "task_id": 3, "version": 2, "step": "work", "profile": "kos-worker", "model": "openai/gpt-5.6-sol" }
+  ],
+  "final_tasks": [
+    { "task_id": 1, "status": "completed", "version": 3 },
+    { "task_id": 2, "status": "completed", "version": 5 },
+    { "task_id": 3, "status": "completed", "version": 3 }
+  ],
+  "fixture_files": [
+    { "path": "alpha.txt", "lines": 1, "sha256": "4435a2761023393ef48eaebe7e7c384d40db8bd8d39512655074155434e98f9d" },
+    { "path": "color.txt", "lines": 1, "sha256": "a0bee6616b5e5eae6799cb4525a884a82e7161614f11122bbdf4383b2ac05998" },
+    { "path": "recovered.txt", "lines": 1, "sha256": "8f29539cde635e2a8cde76d2574f7faf9fafee3bb7f514d980ae23bf7742597a" }
+  ]
+}

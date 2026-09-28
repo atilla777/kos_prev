@@ -1,0 +1,9 @@
+{
+  "candidate_commit": "5fe2e31c7f41f5adb8082dabc28a41457a6d6729",
+  "candidate_source_id": "sha256:2a849431b46131d1e684eff5cee4b62b9307a8630c335fe7a64a787eeba7f651",
+  "kos_version": "0.1.0",
+  "ruby": "3.4.10",
+  "bundler": "4.0.20",
+  "opencode": "1.18.26",
+  "run_date": "2026-09-28"
+}
