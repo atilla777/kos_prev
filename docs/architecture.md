@@ -86,6 +86,12 @@ version; report additionally requires the current `claim_id` and step. Stable
 validation and conflict errors let agents reread authoritative state without
 requiring an encoded retry algorithm.
 
+Finite count and UTF-8 byte limits bound request bodies, definitions, lifecycle
+text, and accepted-result state. Plan cycle detection is iterative and bounded
+by the plan task and dependency limits. Aggregate accepted-result validation is
+part of the report transaction, before task or plan versions advance. The exact
+public limits are listed in [the system specification](specification.md).
+
 Plan abandonment uses the observed plan version. It shares one transactional
 plan fence with claim, report, answer, and takeover, so concurrent operations
 have one winner and cannot expose partially abandoned state.

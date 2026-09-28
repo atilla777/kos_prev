@@ -47,6 +47,9 @@ unless `--include-completed` is given. Use `plan abandon` only with explicit
 intent to retire erroneous or obsolete started work, passing the current plan
 version from `plan show` or `plan list`. It does not undo external effects.
 Consult per-command help for exact file and standard-input options.
+The service rejects JSON request bodies over 8 MiB; coordination field, graph,
+and result limits are documented in the
+[product specification](specification.md#coordination-limits).
 
 For a minimal first run, save this one-step workflow as `workflow.json`:
 

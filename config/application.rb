@@ -2,6 +2,7 @@ require_relative "boot"
 require_relative "kos"
 require_relative "../lib/kos/version"
 require_relative "../lib/kos/build_identity"
+require_relative "../lib/kos/request_body_limit"
 
 require "rails"
 # Pick the frameworks you want:
@@ -34,6 +35,7 @@ module Kos
     config.x.kos.api_token = ENV["KOS_API_TOKEN"]
     config.x.kos.data_home = Rails.env.test? ? Rails.root.join("tmp").to_s : Kos::Configuration.data_home
     config.x.kos.source_id = Kos::BuildIdentity.source_id(root: Rails.root)
+    config.middleware.insert_before 0, Kos::RequestBodyLimit, max_bytes: 8 * 1024 * 1024
 
     # Configuration for the application, engines, and railties goes here.
     #

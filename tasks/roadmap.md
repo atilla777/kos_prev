@@ -40,12 +40,12 @@ development records and are not read by the KOS server or CLI.
 | 030 | [Correct built-in workflow contracts](030-correct-built-in-contracts/task.md) | done | 029 |
 | 031 | [Prove installed orchestration](031-prove-installed-orchestration/task.md) | done | 030 |
 | 032 | [Add plan abandonment](032-add-plan-abandonment/task.md) | done | 031 |
+| 033 | [Bound coordination state](033-bound-coordination-state/task.md) | done | 032 |
 
 ## Planned
 
 | ID | Task | Status | Dependencies |
 | --- | --- | --- | --- |
-| 033 | [Bound coordination state](033-bound-coordination-state/task.md) | planned | 032 |
 | 034 | [Finish operational readiness](034-finish-operational-readiness/task.md) | planned | 033 |
 
 ## Resolved Decisions

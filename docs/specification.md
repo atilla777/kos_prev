@@ -157,6 +157,31 @@ file/standard-input values through the CLI. Complete command help defines exact
 options and response fields. Failed validation, dependency cycles, conflicting
 claims, and stale writes produce no partial state change.
 
+## Coordination Limits
+
+All text limits are measured as valid UTF-8 bytes. The limits apply before an
+API mutation can partially change authoritative state.
+
+| Input or state | Limit |
+| --- | ---: |
+| JSON request body | 8 MiB |
+| Keys, workflow step IDs, outcome names, and transition targets | 100 bytes each |
+| Names, titles, and default branch names | 200 bytes each |
+| Repository URLs and identities | 2 KiB each |
+| Task descriptions, workflow instructions, pause messages, and answers | 16 KiB each |
+| Claim IDs | 200 bytes each |
+| Tasks in one plan | 64 |
+| Dependencies in one plan | 256 total |
+| Steps in one workflow revision | 64 |
+| Outcomes in one workflow revision | 256 total |
+| One accepted result | 1 MiB |
+| Serialized latest accepted results for one task | 4 MiB total |
+
+The aggregate result limit includes stored step and outcome keys plus JSON
+encoding overhead. Reporting a repeated step replaces its prior result within
+the same aggregate limit. These are trusted single-installation safety bounds,
+not tenant quotas or rate limits.
+
 ## Recovery And Upgrade
 
 Authoritative recovery starts by resolving the registered project and listing

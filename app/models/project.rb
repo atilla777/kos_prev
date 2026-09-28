@@ -3,6 +3,8 @@ class Project < ApplicationRecord
   has_many :tasks, through: :task_plans
 
   validates :name, :remote_url, :default_branch, :repository_identity, presence: true
+  validates :name, :default_branch, bounded_text: { maximum: CoordinationLimits::MAX_NAME_BYTES }
+  validates :remote_url, :repository_identity, bounded_text: { maximum: CoordinationLimits::MAX_URL_BYTES }
   validates :repository_identity, uniqueness: true
   validate :repository_identity_matches_remote
   validate :default_branch_is_valid

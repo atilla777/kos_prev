@@ -34,6 +34,41 @@ class AdministrationApiTest < ActionDispatch::IntegrationTest
     assert_equal 2, response.parsed_body.dig("workflow", "revision")
   end
 
+  test "rejects oversized API input without persistence" do
+    assert_no_difference -> { Project.count } do
+      post projects_path, params: {
+        name: "x" * (CoordinationLimits::MAX_NAME_BYTES + 1),
+        remote_url: "https://example.test/test/large.git", default_branch: "main"
+      }, headers: @headers, as: :json
+    end
+    assert_response :bad_request
+
+    assert_no_difference -> { Workflow.count } do
+      post workflows_path, params: {
+        key: "large", name: "Large", definition_json: {
+          steps: [ { id: "work", name: "Work", instruction: "x" * (CoordinationLimits::MAX_TEXT_BYTES + 1),
+            outcomes: { done: { complete_task: true } } } ]
+        }
+      }, headers: @headers, as: :json
+    end
+    assert_response :unprocessable_entity
+  end
+
+  test "rejects request bodies over 8 MiB before dispatch" do
+    prefix = '{"ignored":"'
+    suffix = '"}'
+    body = prefix + ("x" * (CoordinationLimits::MAX_REQUEST_BODY_BYTES - prefix.bytesize - suffix.bytesize)) + suffix
+    post projects_path, params: body, headers: @headers.merge("CONTENT_TYPE" => "application/json")
+    assert_response :bad_request
+
+    body << "x"
+    assert_no_difference -> { Project.count } do
+      post projects_path, params: body, headers: @headers.merge("CONTENT_TYPE" => "application/json")
+    end
+    assert_response :content_too_large
+    assert_equal "request_too_large", response.parsed_body.fetch("error")
+  end
+
   test "requires authentication" do
     get projects_path, params: { repository_identity: "example.test/test/kos" }
     assert_response :unauthorized

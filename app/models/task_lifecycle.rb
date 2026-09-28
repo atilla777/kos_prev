@@ -4,7 +4,7 @@ class TaskLifecycle
   class InvalidTransition < Error; end
   class InvalidInput < Error; end
 
-  MAX_RESULT_BYTES = 1.megabyte
+  MAX_RESULT_BYTES = CoordinationLimits::MAX_RESULT_BYTES
   PAUSED_STATUSES = %w[needs_human blocked].freeze
 
   def ready(project:, task_plan: nil)
@@ -52,6 +52,9 @@ class TaskLifecycle
 
       results = task.accepted_results.deep_dup
       results[step] = { "outcome" => outcome, "result" => result }
+      if JSON.generate(results).bytesize > CoordinationLimits::MAX_ACCEPTED_RESULTS_BYTES
+        raise InvalidInput, "accepted results must total at most 4 MiB"
+      end
       changes = transition_changes(action, step:, message:).merge(
         accepted_results: results, version: Arel.sql("version + 1"), claim_id: nil, updated_at: Time.current
       )
@@ -133,7 +136,8 @@ class TaskLifecycle
   end
 
   def validate_claim_id!(claim_id)
-    raise InvalidInput, "claim_id must be a nonblank string" unless claim_id.is_a?(String) && claim_id.present?
+    valid = CoordinationLimits.valid_text?(claim_id, max_bytes: CoordinationLimits::MAX_CLAIM_ID_BYTES)
+    raise InvalidInput, "claim_id must be a nonblank valid UTF-8 string of at most 200 bytes" unless valid
   end
 
   def validate_result!(result)
@@ -143,11 +147,12 @@ class TaskLifecycle
   end
 
   def validate_pause_message!(message)
-    raise InvalidInput, "message must be a nonblank string for a pause" unless message.is_a?(String) && message.present?
+    valid = CoordinationLimits.valid_text?(message, max_bytes: CoordinationLimits::MAX_TEXT_BYTES)
+    raise InvalidInput, "message must be a nonblank valid UTF-8 string of at most 16 KiB for a pause" unless valid
   end
 
   def validate_answer!(answer)
-    valid = answer.is_a?(String) && answer.present? && answer.encoding == Encoding::UTF_8 && answer.valid_encoding?
-    raise InvalidInput, "answer must be a nonblank valid UTF-8 string" unless valid
+    valid = CoordinationLimits.valid_text?(answer, max_bytes: CoordinationLimits::MAX_TEXT_BYTES)
+    raise InvalidInput, "answer must be a nonblank valid UTF-8 string of at most 16 KiB" unless valid
   end
 end

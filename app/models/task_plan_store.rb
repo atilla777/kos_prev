@@ -3,12 +3,11 @@ class TaskPlanStore
 
   def replace!(project:, key:, title:, task_definitions:)
     definitions = normalize(task_definitions)
+    validate_graph!(definitions)
     workflows = definitions.to_h do |definition|
       workflow_key = definition.fetch("workflow_key")
       [ workflow_key, Workflow.where(key: workflow_key).order(revision: :desc).first! ]
     end
-    validate_graph!(definitions)
-
     TaskPlan.transaction do
       plan = TaskPlan.find_or_initialize_by(project:, key:)
       if plan.persisted?
@@ -48,23 +47,36 @@ class TaskPlanStore
 
   def normalize(task_definitions)
     raise InvalidDefinition, "tasks must be a non-empty array" unless task_definitions.is_a?(Array) && task_definitions.any?
+    if task_definitions.length > CoordinationLimits::MAX_TASKS_PER_PLAN
+      raise InvalidDefinition, "tasks must contain at most #{CoordinationLimits::MAX_TASKS_PER_PLAN} items"
+    end
 
-    task_definitions.map.with_index do |raw, index|
+    definitions = task_definitions.map.with_index do |raw, index|
       definition = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : raw
       unless definition.is_a?(Hash) && definition.keys.map(&:to_s).sort ==
           %w[blocker_keys description_markdown key title workflow_key]
         raise InvalidDefinition, "task #{index} must contain exactly the required fields"
       end
       definition.stringify_keys.tap do |item|
-        %w[key title description_markdown workflow_key].each do |field|
-          raise InvalidDefinition, "task #{index} #{field} must be a nonblank string" unless
-            item[field].is_a?(String) && item[field].present?
-        end
+        validate_text!(item["key"], "task #{index} key", CoordinationLimits::MAX_KEY_BYTES)
+        validate_text!(item["title"], "task #{index} title", CoordinationLimits::MAX_NAME_BYTES)
+        validate_text!(item["description_markdown"], "task #{index} description_markdown", CoordinationLimits::MAX_TEXT_BYTES)
+        validate_text!(item["workflow_key"], "task #{index} workflow_key", CoordinationLimits::MAX_KEY_BYTES)
         unless item["blocker_keys"].is_a?(Array) && item["blocker_keys"].all? { |value| value.is_a?(String) && value.present? }
           raise InvalidDefinition, "task #{index} blocker_keys must be an array of nonblank strings"
         end
+        item["blocker_keys"].each do |blocker|
+          validate_text!(blocker, "task #{index} blocker key", CoordinationLimits::MAX_KEY_BYTES)
+        end
+        raise InvalidDefinition, "task #{index} blocker keys must be unique" unless
+          item["blocker_keys"].uniq.length == item["blocker_keys"].length
       end
     end
+    dependency_count = definitions.sum { |definition| definition.fetch("blocker_keys").length }
+    if dependency_count > CoordinationLimits::MAX_DEPENDENCIES_PER_PLAN
+      raise InvalidDefinition, "tasks must contain at most #{CoordinationLimits::MAX_DEPENDENCIES_PER_PLAN} dependencies"
+    end
+    definitions
   end
 
   def validate_graph!(definitions)
@@ -75,17 +87,27 @@ class TaskPlanStore
     missing = edges.values.flatten.uniq - keys
     raise InvalidDefinition, "unknown blocker key #{missing.first.inspect}" if missing.any?
 
-    visiting = {}
-    visited = {}
-    visit = lambda do |key|
-      raise InvalidDefinition, "task dependencies must be acyclic" if visiting[key]
-      return if visited[key]
-
-      visiting[key] = true
-      edges.fetch(key).each { |blocker| visit.call(blocker) }
-      visiting.delete(key)
-      visited[key] = true
+    dependents = keys.to_h { |key| [ key, [] ] }
+    indegrees = edges.transform_values(&:length)
+    edges.each do |dependent, blockers|
+      blockers.each { |blocker| dependents.fetch(blocker) << dependent }
     end
-    keys.each { |key| visit.call(key) }
+    pending = indegrees.filter_map { |key, count| key if count.zero? }
+    visited_count = 0
+    until pending.empty?
+      key = pending.pop
+      visited_count += 1
+      dependents.fetch(key).each do |dependent|
+        indegrees[dependent] -= 1
+        pending << dependent if indegrees[dependent].zero?
+      end
+    end
+    raise InvalidDefinition, "task dependencies must be acyclic" unless visited_count == keys.length
+  end
+
+  def validate_text!(value, label, max_bytes)
+    return if CoordinationLimits.valid_text?(value, max_bytes:)
+
+    raise InvalidDefinition, "#{label} must be a nonblank valid UTF-8 string of at most #{max_bytes} bytes"
   end
 end

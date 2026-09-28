@@ -105,11 +105,16 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 - Project-scoped discovery returns every non-completed plan and task needed for
   recovery, including terminal abandoned state. Completed state remains
   available through deliberate inspection.
+- Coordination definitions and lifecycle text have documented finite byte and
+  count limits. Oversized input is rejected without changing authoritative
+  state, and accepted results are bounded both individually and in aggregate.
 
 # Errors
 
 - Invalid workflow definitions, unknown transitions, stale reports, conflicting
   claims, and dependency cycles fail without a partial state change.
+- Oversized requests, definitions, results, pauses, and answers fail with stable
+  errors and no partial state change.
 - Stale or concurrent plan abandonment fails without partially abandoning the
   plan; claim, report, answer, takeover, and abandonment have one winner.
 - A scheduler that finds no ready task reports that fact without creating

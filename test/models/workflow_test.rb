@@ -34,4 +34,36 @@ class WorkflowTest < ActiveSupport::TestCase
     assert_not workflow.update(name: "Renamed")
     assert_not workflow.update(revision: 3)
   end
+
+
+  test "bounds workflow steps outcomes and text by bytes" do
+    steps = CoordinationLimits::MAX_STEPS_PER_WORKFLOW.times.map do |index|
+      action = index == CoordinationLimits::MAX_STEPS_PER_WORKFLOW - 1 ?
+        { "complete_task" => true } : { "next_step" => "step-#{index + 1}" }
+      { "id" => "step-#{index}", "name" => "Step", "instruction" => "Work", "outcomes" => { "done" => action } }
+    end
+    assert Workflow.new(key: "bounded", name: "Bounded", revision: 1,
+      definition_json: { "steps" => steps }).valid?
+
+    too_many_steps = steps + [ steps.last.merge("id" => "extra") ]
+    assert_not Workflow.new(key: "large", name: "Large", revision: 1,
+      definition_json: { "steps" => too_many_steps }).valid?
+
+    outcomes = CoordinationLimits::MAX_OUTCOMES_PER_WORKFLOW.times.to_h do |index|
+      [ "outcome-#{index}", { "complete_task" => true } ]
+    end
+    definition = { "steps" => [ {
+      "id" => "work", "name" => "Work", "instruction" => "x" * CoordinationLimits::MAX_TEXT_BYTES,
+      "outcomes" => outcomes
+    } ] }
+    assert Workflow.new(key: "outcomes", name: "Outcomes", revision: 1, definition_json: definition).valid?
+    definition["steps"][0]["outcomes"]["extra"] = { "complete_task" => true }
+    assert_not Workflow.new(key: "too-many", name: "Too many", revision: 1, definition_json: definition).valid?
+
+    definition = valid_workflow_definition.deep_dup
+    definition["steps"][0]["id"] = "é" * 51
+    assert_not Workflow.new(key: "bytes", name: "Bytes", revision: 1, definition_json: definition).valid?
+    assert_not Workflow.new(key: "name-bytes", name: "é" * 101, revision: 1,
+      definition_json: valid_workflow_definition).valid?
+  end
 end

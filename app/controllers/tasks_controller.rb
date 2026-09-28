@@ -37,42 +37,47 @@ class TasksController < ApplicationController
 
   def result
     task = Task.find(params[:id])
-    accepted = task.accepted_results[required_query_string(:step)]
+    accepted = task.accepted_results[required_query_string(:step, max_bytes: CoordinationLimits::MAX_KEY_BYTES)]
     raise ActiveRecord::RecordNotFound unless accepted
 
     render json: accepted
   end
 
   def claim
-    task = lifecycle.claim!(task_id: params[:id], claim_id: required_string(:claim_id),
+    task = lifecycle.claim!(task_id: params[:id], claim_id: required_string(:claim_id,
+      max_bytes: CoordinationLimits::MAX_CLAIM_ID_BYTES),
       version: required_integer(:version))
     render json: { task: serialize_task(task) }
   end
 
   def takeover
-    task = lifecycle.takeover!(task_id: params[:id], claim_id: required_string(:claim_id),
+    task = lifecycle.takeover!(task_id: params[:id], claim_id: required_string(:claim_id,
+      max_bytes: CoordinationLimits::MAX_CLAIM_ID_BYTES),
       version: required_integer(:version), step: required_string(:step))
     render json: { task: serialize_task(task) }
   end
 
   def report
-    task = lifecycle.report!(task_id: params[:id], claim_id: required_string(:claim_id),
+    task = lifecycle.report!(task_id: params[:id], claim_id: required_string(:claim_id,
+      max_bytes: CoordinationLimits::MAX_CLAIM_ID_BYTES),
       version: required_integer(:version), step: required_string(:step), outcome: required_string(:outcome),
-      result: required_text(:result), message: optional_string(:message))
+      result: required_text(:result, max_bytes: CoordinationLimits::MAX_RESULT_BYTES),
+      message: optional_string(:message, max_bytes: CoordinationLimits::MAX_TEXT_BYTES))
     render json: { task: serialize_task(task) }
   end
 
   def answer
     task = lifecycle.answer!(task_id: params[:id], version: required_integer(:version),
-      step: required_string(:step), answer: required_text(:answer))
+      step: required_string(:step), answer: required_text(:answer, max_bytes: CoordinationLimits::MAX_TEXT_BYTES))
     render json: { task: serialize_task(task) }
   end
 
   private
 
-  def required_query_string(name)
+  def required_query_string(name, max_bytes:)
     value = params.require(name)
-    raise ActionController::BadRequest, "#{name} must be a non-empty string" unless value.is_a?(String) && value.present?
+    raise ActionController::BadRequest, "#{name} must be a bounded non-empty valid UTF-8 string" unless
+      CoordinationLimits.valid_text?(value, max_bytes:)
 
     value
   end

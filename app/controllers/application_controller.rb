@@ -14,9 +14,11 @@ class ApplicationController < ActionController::API
 
   private
 
-  def required_string(name)
+  def required_string(name, max_bytes: CoordinationLimits::MAX_KEY_BYTES)
     value = params.require(name)
-    raise ActionController::BadRequest, "#{name} must be a non-empty string" unless value.is_a?(String) && value.present?
+    unless CoordinationLimits.valid_text?(value, max_bytes:)
+      raise ActionController::BadRequest, "#{name} must be a non-empty valid UTF-8 string of at most #{max_bytes} bytes"
+    end
 
     value
   end
@@ -28,19 +30,22 @@ class ApplicationController < ActionController::API
     value
   end
 
-  def required_text(name)
+  def required_text(name, max_bytes: CoordinationLimits::MAX_TEXT_BYTES)
     value = params.require(name)
     raise ActionController::BadRequest, "#{name} must be a non-empty valid UTF-8 string" unless
       value.is_a?(String) && !value.empty? && value.encoding == Encoding::UTF_8 && value.valid_encoding?
+    raise ActionController::BadRequest, "#{name} must be at most #{max_bytes} bytes" if value.bytesize > max_bytes
 
     value
   end
 
-  def optional_string(name)
+  def optional_string(name, max_bytes: CoordinationLimits::MAX_TEXT_BYTES)
     return unless params.key?(name)
 
     value = params[name]
-    raise ActionController::BadRequest, "#{name} must be a string" unless value.is_a?(String)
+    unless value.is_a?(String) && value.encoding == Encoding::UTF_8 && value.valid_encoding? && value.bytesize <= max_bytes
+      raise ActionController::BadRequest, "#{name} must be a valid UTF-8 string of at most #{max_bytes} bytes"
+    end
 
     value
   end

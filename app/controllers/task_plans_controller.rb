@@ -13,14 +13,16 @@ class TaskPlansController < ApplicationController
     raise ActionController::BadRequest, "tasks must be an array" unless definitions.is_a?(Array)
 
     project = Project.find(params[:project_id])
-    plan = TaskPlanStore.new.replace!(project:, key: required_string(:key), title: required_string(:title),
+    plan = TaskPlanStore.new.replace!(project:, key: required_string(:key),
+      title: required_string(:title, max_bytes: CoordinationLimits::MAX_NAME_BYTES),
       task_definitions: definitions)
     render json: serialize(plan)
   end
 
   def show
     project = Project.find(params[:project_id])
-    render json: serialize(project.task_plans.find_by!(key: required_string(:key)))
+    render json: serialize(project.task_plans.find_by!(key: required_string(:key,
+      max_bytes: CoordinationLimits::MAX_KEY_BYTES)))
   end
 
   def abandon

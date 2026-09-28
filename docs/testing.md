@@ -22,7 +22,7 @@ agent intelligence.
   report, and process restart.
 - Request tests cover authentication, project-scoped non-completed-state
   discovery, API projections, stable validation and conflict errors,
-  transaction rollback, and persistence.
+  transaction rollback, bounded request and definition inputs, and persistence.
 - CLI tests execute the packaged client and cover discoverable help, health,
   claim identity generation, argument and standard-input mapping, output
   preservation, and exit statuses for every public command family.
@@ -35,6 +35,9 @@ agent intelligence.
   scheduler in the test suite.
 - Persistence tests use isolated SQLite databases and restart the application
   across claims, accepted reports, pauses, answers, and fresh-session discovery.
+- Limit tests cover exact boundaries, one-over rejection, iterative maximum-depth
+  dependency validation, aggregate accepted-result bounds, and unchanged state
+  after rejected writes.
 
 Tests must not use a developer's database, credentials, OpenCode configuration,
 or repository state. Concurrency tests assert both the winning write and the

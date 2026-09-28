@@ -60,6 +60,42 @@ class TaskLifecycleTest < ActiveSupport::TestCase
     assert_equal [ "first" ], plan.reload.tasks.pluck(:key)
   end
 
+  test "accepts the maximum iterative dependency chain and rejects oversized plans atomically" do
+    definitions = CoordinationLimits::MAX_TASKS_PER_PLAN.times.map do |index|
+      plan_task(key: "task-#{index}", workflow: @workflow, blockers: index.zero? ? [] : [ "task-#{index - 1}" ])
+    end
+    plan = @store.replace!(project: @project, key: "deep", title: "Deep", task_definitions: definitions)
+    assert_equal CoordinationLimits::MAX_TASKS_PER_PLAN, plan.tasks.count
+
+    oversized = definitions + [ plan_task(key: "extra", workflow: @workflow) ]
+    assert_raises(TaskPlanStore::InvalidDefinition) do
+      @store.replace!(project: @project, key: "deep", title: "Changed", task_definitions: oversized)
+    end
+    assert_equal [ "Deep", CoordinationLimits::MAX_TASKS_PER_PLAN ], plan.reload.values_at(:title).push(plan.tasks.count)
+  end
+
+  test "accepts the dependency limit and rejects one more without changing the plan" do
+    remaining = CoordinationLimits::MAX_DEPENDENCIES_PER_PLAN
+    definitions = CoordinationLimits::MAX_TASKS_PER_PLAN.times.map do |index|
+      blocker_count = [ index, remaining ].min
+      remaining -= blocker_count
+      blockers = (0...blocker_count).map { |blocker| "task-#{blocker}" }
+      plan_task(key: "task-#{index}", workflow: @workflow, blockers:)
+    end
+    plan = @store.replace!(project: @project, key: "dense", title: "Dense", task_definitions: definitions)
+    assert_equal CoordinationLimits::MAX_DEPENDENCIES_PER_PLAN, plan.tasks.joins(:task_dependencies).count
+
+    oversized = definitions.deep_dup
+    oversized.last.fetch("blocker_keys") << "task-0"
+    assert_no_difference [ -> { Task.count }, -> { TaskDependency.count } ] do
+      assert_raises(TaskPlanStore::InvalidDefinition) do
+        @store.replace!(project: @project, key: "dense", title: "Changed", task_definitions: oversized)
+      end
+    end
+    assert_equal [ "Dense", CoordinationLimits::MAX_DEPENDENCIES_PER_PLAN ],
+      plan.reload.values_at(:title).push(plan.tasks.joins(:task_dependencies).count)
+  end
+
   test "only dependency-ready pending tasks are claimable" do
     plan = @store.replace!(project: @project, key: "release", title: "Release", task_definitions: [
       plan_task(key: "first", workflow: @workflow),
@@ -124,6 +160,70 @@ class TaskLifecycleTest < ActiveSupport::TestCase
     task = @lifecycle.report!(task_id: task.id, claim_id: "worker-2", version: 5, step: "work", outcome: "done",
       result: "Reimplemented")
     assert_equal "Reimplemented", task.accepted_results.dig("work", "result")
+  end
+
+  test "bounds individual and aggregate accepted results without changing lifecycle state" do
+    task = create_task(project: @project, workflow: @workflow)
+    task = @lifecycle.claim!(task_id: task.id, claim_id: "worker", version: 0)
+    task = @lifecycle.report!(task_id: task.id, claim_id: "worker", version: 1, step: "work", outcome: "done",
+      result: "x" * CoordinationLimits::MAX_RESULT_BYTES)
+    assert_equal CoordinationLimits::MAX_RESULT_BYTES, task.accepted_results.dig("work", "result").bytesize
+
+    task = @lifecycle.claim!(task_id: task.id, claim_id: "reviewer", version: 2)
+    before_plan_version = task.task_plan.reload.version
+    assert_raises(TaskLifecycle::InvalidInput) do
+      @lifecycle.report!(task_id: task.id, claim_id: "reviewer", version: 3, step: "review", outcome: "approved",
+        result: "x" * (CoordinationLimits::MAX_RESULT_BYTES + 1))
+    end
+    assert_equal [ "active", "reviewer", 3 ], task.reload.values_at(:status, :claim_id, :version)
+    assert_equal before_plan_version, task.task_plan.reload.version
+
+    task.accepted_results = { "work" => { "outcome" => "done",
+      "result" => "x" * (CoordinationLimits::MAX_RESULT_BYTES + 1) } }
+    assert_not task.valid?
+
+    existing = 3.times.to_h do |index|
+      [ "prior-#{index}", { "outcome" => "done", "result" => "x" * CoordinationLimits::MAX_RESULT_BYTES } ]
+    end
+    task.update_columns(accepted_results: existing)
+    proposed = existing.merge("review" => { "outcome" => "approved", "result" => "" })
+    exact_result_size = CoordinationLimits::MAX_ACCEPTED_RESULTS_BYTES - JSON.generate(proposed).bytesize
+    task = @lifecycle.report!(task_id: task.id, claim_id: "reviewer", version: 3, step: "review", outcome: "approved",
+      result: "x" * exact_result_size)
+    assert_equal CoordinationLimits::MAX_ACCEPTED_RESULTS_BYTES, JSON.generate(task.accepted_results).bytesize
+
+    overflow = create_task(project: @project, workflow: @workflow)
+    overflow.update_columns(accepted_results: existing)
+    overflow = @lifecycle.claim!(task_id: overflow.id, claim_id: "overflow", version: 0)
+    before_plan_version = overflow.task_plan.reload.version
+    proposed = existing.merge("work" => { "outcome" => "done", "result" => "" })
+    overflow_result_size = CoordinationLimits::MAX_ACCEPTED_RESULTS_BYTES - JSON.generate(proposed).bytesize + 1
+    assert_raises(TaskLifecycle::InvalidInput) do
+      @lifecycle.report!(task_id: overflow.id, claim_id: "overflow", version: 1, step: "work", outcome: "done",
+        result: "x" * overflow_result_size)
+    end
+    assert_equal [ "active", "overflow", 1, existing ],
+      overflow.reload.values_at(:status, :claim_id, :version, :accepted_results)
+    assert_equal before_plan_version, overflow.task_plan.reload.version
+  end
+
+  test "bounds pause messages and answers without partial transitions" do
+    task = create_task(project: @project, workflow: @workflow)
+    task = @lifecycle.claim!(task_id: task.id, claim_id: "worker", version: 0)
+    assert_raises(TaskLifecycle::InvalidInput) do
+      @lifecycle.report!(task_id: task.id, claim_id: "worker", version: 1, step: "work", outcome: "question",
+        result: "Need input", message: "x" * (CoordinationLimits::MAX_TEXT_BYTES + 1))
+    end
+    assert_equal [ "active", "worker", 1, {} ], task.reload.values_at(:status, :claim_id, :version, :accepted_results)
+
+    task = @lifecycle.report!(task_id: task.id, claim_id: "worker", version: 1, step: "work", outcome: "question",
+      result: "Need input", message: "x" * CoordinationLimits::MAX_TEXT_BYTES)
+    assert_equal CoordinationLimits::MAX_TEXT_BYTES, task.pause_message.bytesize
+    assert_raises(TaskLifecycle::InvalidInput) do
+      @lifecycle.answer!(task_id: task.id, version: 2, step: "work",
+        answer: "x" * (CoordinationLimits::MAX_TEXT_BYTES + 1))
+    end
+    assert_equal [ "needs_human", 2, nil ], task.reload.values_at(:status, :version, :answer)
   end
 
   test "pause and answer remain bound to the same step" do

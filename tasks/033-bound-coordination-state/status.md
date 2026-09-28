@@ -1,22 +1,24 @@
 # Status
 
-State: planned
+State: done
 Updated: 2026-09-28
 
 ## Current
 
-Only one result is size-limited. Plans, workflows, pause and answer text, and
-aggregate accepted results are unbounded, while dependency-cycle validation uses
-recursive Ruby calls.
+Coordination inputs now have documented UTF-8 byte and collection limits. Plan
+cycle validation is iterative, request bodies and accepted-result state are
+bounded, and rejected writes preserve task and plan state.
 
 ## Next
 
-Start after task 032 and define explicit MVP input and state limits.
+Task 034 can build on the bounded coordination baseline.
 
 ## Blockers
 
-Depends on task 032.
+None.
 
 ## Checks
 
-Not started.
+- `bin/check` passed: 95 tests, 1269 assertions.
+- Independent review found no remaining API, transaction, graph, or middleware
+  correctness issues after short-read and byte-validation fixes.
