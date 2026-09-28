@@ -49,6 +49,10 @@ development records and are not read by the KOS server or CLI.
 
 | ID | Task | Status | Dependencies |
 | --- | --- | --- | --- |
+| 037 | [Make orchestration intent safe](037-make-orchestration-intent-safe/task.md) | planned | 036 |
+| 038 | [Add repository recovery status](038-add-repository-recovery-status/task.md) | planned | 036 |
+| 039 | [Add fenced claim release](039-add-fenced-claim-release/task.md) | planned | 037, 038 |
+| 040 | [Prove recovery usability](040-prove-recovery-usability/task.md) | planned | 036, 037, 038, 039 |
 
 ## Resolved Decisions
 
