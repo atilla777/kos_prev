@@ -136,6 +136,7 @@ administration and inspection.
 | CLI | API | Purpose |
 | --- | --- | --- |
 | `health` | `GET /up` | Public process liveness |
+| `installation check` | `GET /ready` plus local manifest | Verify matching OpenCode, CLI, and ready server installation |
 | - | `GET /ready` | Public database, migration, catalog, and data-directory readiness |
 | `claim-id` | local | Create one dispatch claim identity |
 | `project create`, `project show`, `project update` | `POST /projects`, `GET /projects`, `PATCH /projects/:id` | Register, inspect, and update project metadata |

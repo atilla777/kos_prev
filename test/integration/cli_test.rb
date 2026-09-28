@@ -4,6 +4,7 @@ require "open3"
 require "rbconfig"
 require "socket"
 require "tempfile"
+require "kos/open_code_installation"
 
 class CliTest < ActiveSupport::TestCase
   test "advertises only the focused command surface" do
@@ -13,6 +14,7 @@ class CliTest < ActiveSupport::TestCase
     assert_empty error
     assert_match(/^\s*health\s*$/, output)
     assert_match(/^\s*claim-id\s*$/, output)
+    assert_match(/^\s*installation check\s*$/, output)
     assert_match(/^\s*project create \| show \| update\s*$/, output)
     assert_match(/^\s*workflow create\s*$/, output)
     assert_match(/^\s*plan put \| list \| show \| abandon\s*$/, output)
@@ -22,6 +24,7 @@ class CliTest < ActiveSupport::TestCase
     end
 
     {
+      %w[installation check] => %w[--manifest],
       %w[workflow create] => %w[--key --name --definition-file],
       %w[plan put] => %w[--project-id --definition-file],
       %w[plan list] => %w[--project-id --include-completed],
@@ -79,6 +82,67 @@ class CliTest < ActiveSupport::TestCase
     refute request.fetch(:headers).key?("authorization")
   end
 
+  test "checks matching OpenCode CLI and server installation identities without a token" do
+    Dir.mktmpdir("kos-installation-check") do |directory|
+      manifest = write_manifest(Pathname(directory).join("kos-installation.json"))
+      identity = { status: "ready", version: Kos::VERSION, source_id: Kos::BuildIdentity.installed_source_id }
+
+      output, error, status, request = run_cli_with_server("installation", "check", "--manifest", manifest.to_s,
+        response_body: JSON.generate(identity), token: nil)
+
+      assert_predicate status, :success?
+      assert_empty error
+      assert_equal [ "GET", "/api/ready" ], request.values_at(:method, :path)
+      refute request.fetch(:headers).key?("authorization")
+      assert_equal identity.merge(manifest: manifest.to_s).stringify_keys, JSON.parse(output)
+    end
+  end
+
+  test "rejects missing stale and mismatched installation state before workflow operations" do
+    Dir.mktmpdir("kos-installation-check") do |directory|
+      root = Pathname(directory)
+      missing = root.join("missing.json")
+      _output, error, status = run_cli("installation", "check", "--manifest", missing.to_s, environment: {})
+      assert_equal 2, status.exitstatus
+      assert_equal "installation_error", JSON.parse(error).fetch("error")
+
+      stale = write_manifest(root.join("stale.json"), source_id: "sha256:#{"0" * 64}")
+      _output, error, status = run_cli("installation", "check", "--manifest", stale.to_s, environment: {})
+      assert_equal 1, status.exitstatus
+      assert_equal "compatibility_error", JSON.parse(error).fetch("error")
+
+      stale_version = write_manifest(root.join("stale-version.json"), version: "9.9.9")
+      _output, error, status = run_cli("installation", "check", "--manifest", stale_version.to_s,
+        environment: {})
+      assert_equal 1, status.exitstatus
+      assert_equal "compatibility_error", JSON.parse(error).fetch("error")
+
+      invalid_inventory = write_manifest(root.join("inventory.json"), skills: %w[kos])
+      _output, error, status = run_cli("installation", "check", "--manifest", invalid_inventory.to_s,
+        environment: {})
+      assert_equal 2, status.exitstatus
+      assert_equal "installation_error", JSON.parse(error).fetch("error")
+    end
+  end
+
+  test "distinguishes server incompatibility from matching server unavailability" do
+    Dir.mktmpdir("kos-installation-check") do |directory|
+      manifest = write_manifest(Pathname(directory).join("kos-installation.json"))
+      mismatch = { status: "ready", version: Kos::VERSION, source_id: "sha256:#{"f" * 64}" }
+      _output, error, status, = run_cli_with_server("installation", "check", "--manifest", manifest.to_s,
+        response_body: JSON.generate(mismatch), token: nil)
+      assert_equal 1, status.exitstatus
+      assert_equal "compatibility_error", JSON.parse(error).fetch("error")
+
+      unavailable = { status: "unavailable", version: Kos::VERSION,
+                      source_id: Kos::BuildIdentity.installed_source_id }
+      _output, error, status, = run_cli_with_server("installation", "check", "--manifest", manifest.to_s,
+        response_status: 503, response_body: JSON.generate(unavailable), token: nil)
+      assert_equal 1, status.exitstatus
+      assert_equal "not_ready", JSON.parse(error).fetch("error")
+    end
+  end
+
   test "maps every server operation with separate arguments and file input" do
     Tempfile.create([ "definition", ".json" ]) do |definition|
       definition.write(JSON.generate(steps: [ { id: "work" } ]))
@@ -93,9 +157,9 @@ class CliTest < ActiveSupport::TestCase
 
           cases = [
             [ [ "project", "create", "--name", "KOS", "--remote-url", "https://example.test/acme/kos.git",
-              "--default-branch", "main", "--repository-identity", "example.test/acme/kos" ],
+              "--default-branch", "main" ],
               "POST", "/projects", { "name" => "KOS", "remote_url" => "https://example.test/acme/kos.git",
-                "default_branch" => "main", "repository_identity" => "example.test/acme/kos" } ],
+                "default_branch" => "main" } ],
             [ [ "project", "show", "--repository-identity", "example.test/acme/kos" ],
               "GET", "/projects?repository_identity=example.test%2Facme%2Fkos", nil ],
             [ [ "project", "update", "7", "--name", "Renamed" ], "PATCH", "/projects/7", { "name" => "Renamed" } ],
@@ -211,7 +275,7 @@ class CliTest < ActiveSupport::TestCase
       raw_body = socket.read(headers.fetch("content-length", "0").to_i)
       requests << { method: request_line.split.fetch(0), path: request_line.split.fetch(1), headers:,
                     body: raw_body.empty? ? nil : JSON.parse(raw_body) }
-      reason = { 200 => "OK", 409 => "Conflict" }.fetch(response_status)
+      reason = { 200 => "OK", 404 => "Not Found", 409 => "Conflict", 503 => "Service Unavailable" }.fetch(response_status)
       socket.write("HTTP/1.1 #{response_status} #{reason}\r\nContent-Type: application/json\r\n" \
         "Content-Length: #{response_body.bytesize}\r\nConnection: close\r\n\r\n#{response_body}")
       socket.close
@@ -235,5 +299,14 @@ class CliTest < ActiveSupport::TestCase
     isolated = { "KOS_API_TOKEN" => nil, "KOS_API_URL" => nil, "RUBYOPT" => nil, "RUBYLIB" => nil }.merge(environment)
     Open3.capture3(isolated, RbConfig.ruby, "--disable-gems", Rails.root.join("bin/kos").to_s, *arguments,
       stdin_data:)
+  end
+
+  def write_manifest(path, version: Kos::VERSION, source_id: Kos::BuildIdentity.installed_source_id,
+    commands: Kos::OpenCodeInstallation::INVENTORY.fetch("commands"),
+    agents: Kos::OpenCodeInstallation::INVENTORY.fetch("agents"),
+    skills: Kos::OpenCodeInstallation::INVENTORY.fetch("skills"))
+    path.write(JSON.generate(schema: Kos::OpenCodeInstallation::SCHEMA, version:, source_id:,
+      commands:, agents:, skills:))
+    path
   end
 end

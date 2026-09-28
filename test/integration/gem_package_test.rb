@@ -1,4 +1,5 @@
 require "test_helper"
+require "kos/open_code_installation"
 require "json"
 require "net/http"
 require "open3"
@@ -301,11 +302,16 @@ class GemPackageTest < ActiveSupport::TestCase
 
         assert_predicate status, :success?, error
         assert_includes output, config_home.to_s
+        assert_includes output, "Fully restart OpenCode"
+        assert_includes output, "installation check"
       end
       manifest = JSON.parse(config_home.join("kos-installation.json").read)
+      assert_equal Kos::OpenCodeInstallation::SCHEMA, manifest.fetch("schema")
       assert_equal Kos::VERSION, manifest.fetch("version")
       assert_equal Kos::BuildIdentity.source_id(root: Rails.root), manifest.fetch("source_id")
       assert_equal %w[kos.md], manifest.fetch("commands")
+      assert_equal %w[kos-worker.md], manifest.fetch("agents")
+      assert_equal %w[kos kos-cli kos-worker okf], manifest.fetch("skills")
       assert_equal %w[kos.md], installed_names(config_home.join("commands"))
       assert_equal %w[kos-worker.md], installed_names(config_home.join("agents"))
       assert_equal %w[kos kos-cli kos-worker okf],
@@ -325,6 +331,96 @@ class GemPackageTest < ActiveSupport::TestCase
       assert_matching_tree Rails.root.join(".opencode/commands"), config_home.join("commands")
       assert_matching_tree Rails.root.join(".opencode/agents"), config_home.join("agents")
       assert_matching_tree Rails.root.join("skills"), config_home.join("skills")
+    end
+  end
+
+  test "removes assets owned by a prior manifest and preserves unmanaged OpenCode files" do
+    Dir.mktmpdir("kos-opencode") do |directory|
+      config_home = Pathname(directory).join("config/opencode")
+      stale_command = config_home.join("commands/kos-old.md")
+      stale_agent = config_home.join("agents/kos-old.md")
+      stale_skill = config_home.join("skills/kos-old/SKILL.md")
+      user_command = config_home.join("commands/user-command.md")
+      reserved_user_command = config_home.join("commands/kos-fix.md")
+      user_agent = config_home.join("agents/user-agent.md")
+      user_skill = config_home.join("skills/user-skill/SKILL.md")
+      [ stale_command, stale_agent, stale_skill, user_command, reserved_user_command, user_agent, user_skill ].each do |path|
+        FileUtils.mkdir_p(path.dirname)
+        path.write("preserved unless managed\n")
+      end
+      config_home.join("kos-installation.json").write(JSON.generate({
+        schema: Kos::OpenCodeInstallation::SCHEMA,
+        version: "0.0.1",
+        source_id: "sha256:#{"0" * 64}",
+        commands: %w[kos.md kos-old.md],
+        agents: %w[kos-worker.md kos-old.md],
+        skills: %w[kos kos-cli kos-worker okf kos-old]
+      }))
+
+      _output, error, status = Open3.capture3(Rails.root.join("bin/install-opencode").to_s,
+        "--config-home", config_home.to_s)
+
+      assert_predicate status, :success?, error
+      [ stale_command, stale_agent, stale_skill.dirname ].each { |path| refute_predicate path, :exist? }
+      [ user_command, reserved_user_command, user_agent, user_skill ].each { |path| assert_predicate path, :file? }
+      assert_predicate config_home.join("commands/kos.md"), :file?
+      assert_predicate config_home.join("agents/kos-worker.md"), :file?
+      assert_predicate config_home.join("skills/kos/SKILL.md"), :file?
+    end
+  end
+
+  test "rejects an invalid prior manifest before changing OpenCode files" do
+    Dir.mktmpdir("kos-opencode") do |directory|
+      root = Pathname(directory)
+      config_home = root.join("config/opencode")
+      FileUtils.mkdir_p(config_home.join("commands"))
+      config_home.join("commands/user-command.md").write("user\n")
+      config_home.join("kos-installation.json").write("{invalid")
+      before = tree_snapshot(root)
+
+      _output, error, status = Open3.capture3(Rails.root.join("bin/install-opencode").to_s,
+        "--config-home", config_home.to_s)
+
+      refute_predicate status, :success?
+      assert_includes error, "No files were changed"
+      assert_equal before, tree_snapshot(root)
+    end
+  end
+
+  test "rejects unowned current destinations and non-KOS manifest claims before changing files" do
+    Dir.mktmpdir("kos-opencode") do |directory|
+      root = Pathname(directory)
+      config_home = root.join("config/opencode")
+      FileUtils.mkdir_p(config_home.join("commands"))
+      config_home.join("commands/kos.md").write("user collision\n")
+      manifest = {
+        schema: Kos::OpenCodeInstallation::SCHEMA,
+        version: "0.0.1",
+        source_id: "sha256:#{"0" * 64}",
+        commands: [],
+        agents: [],
+        skills: []
+      }
+      config_home.join("kos-installation.json").write(JSON.generate(manifest))
+      before = tree_snapshot(root)
+
+      _output, error, status = Open3.capture3(Rails.root.join("bin/install-opencode").to_s,
+        "--config-home", config_home.to_s)
+
+      refute_predicate status, :success?
+      assert_includes error, "unowned destination"
+      assert_equal before, tree_snapshot(root)
+
+      FileUtils.rm_f(config_home.join("commands/kos.md"))
+      manifest[:commands] = %w[user-command.md]
+      config_home.join("kos-installation.json").write(JSON.generate(manifest))
+      before = tree_snapshot(root)
+      _output, error, status = Open3.capture3(Rails.root.join("bin/install-opencode").to_s,
+        "--config-home", config_home.to_s)
+
+      refute_predicate status, :success?
+      assert_includes error, "KOS-managed names"
+      assert_equal before, tree_snapshot(root)
     end
   end
 

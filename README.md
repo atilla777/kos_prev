@@ -54,6 +54,13 @@ export KOS_CLI_PATH="$(realpath "$(command -v kos)")"
 bin/install-opencode
 ```
 
+Fully restart OpenCode after installation, then verify that the OpenCode
+manifest, CLI, and ready server came from the same source revision:
+
+```sh
+kos installation check
+```
+
 This pre-release architecture is intentionally incompatible with PLAN-022
 databases. Upgrading requires stopping KOS, optionally backing up the old SQLite
 file, deleting it, preparing a new database, and recreating projects, workflows,
@@ -75,6 +82,7 @@ surface is:
 ```text
 kos health
 kos claim-id
+kos installation check
 kos project create|show|update
 kos workflow create
 kos plan put|list|show|abandon
@@ -82,6 +90,8 @@ kos task list|ready|show|context|result|claim|takeover|report|answer
 ```
 
 `claim-id` creates a local unpredictable identity for one worker dispatch.
+`installation check` validates the successful OpenCode installation manifest
+and requires its version and `source_id` to match both the CLI and `/ready`.
 `project`, `workflow`, and `plan` commands administer durable definitions.
 `plan list` and `task list` discover non-completed project state after
 interruption, including terminal abandoned records; `--include-completed` adds
@@ -94,6 +104,23 @@ The remaining task commands are version-fenced mutations.
 Use `kos --help` and per-command help for exact options. Prefer standard input
 or file options for workflow definitions, plans, results, questions, and answers
 rather than interpolating structured content into shell commands.
+
+Register a project once before using `/kos`:
+
+```sh
+kos project create \
+  --name "Widget" \
+  --remote-url "git@github.com:acme/widget.git" \
+  --default-branch "main"
+kos project show --repository-identity "github.com/acme/widget"
+```
+
+Use the `id` and canonical `repository_identity` returned by `project create`.
+The remote repository and selected default branch must already exist and be
+published when workers need to clone or create worktrees. KOS does not create
+GitHub repositories, initial commits, branches, clones, or worktrees; run
+OpenCode in the intended existing checkout. See the complete bootstrap in
+[Installation](docs/installation.md#register-a-project).
 
 ## API
 

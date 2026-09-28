@@ -13,8 +13,14 @@ class ProjectsController < ApplicationController
   end
 
   def index
-    project = Project.find_by!(repository_identity: required_string(:repository_identity,
-      max_bytes: CoordinationLimits::MAX_URL_BYTES))
+    identity = required_string(:repository_identity, max_bytes: CoordinationLimits::MAX_URL_BYTES)
+    project = Project.find_by(repository_identity: identity)
+    unless project
+      return render json: {
+        error: "not_found",
+        message: "Project is not registered under #{identity.inspect}; register it with `kos project create` first."
+      }, status: :not_found
+    end
     render_project(project)
   end
 

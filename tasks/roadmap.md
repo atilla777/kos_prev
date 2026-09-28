@@ -42,6 +42,7 @@ development records and are not read by the KOS server or CLI.
 | 032 | [Add plan abandonment](032-add-plan-abandonment/task.md) | done | 031 |
 | 033 | [Bound coordination state](033-bound-coordination-state/task.md) | done | 032 |
 | 034 | [Finish operational readiness](034-finish-operational-readiness/task.md) | done | 033 |
+| 035 | [Harden installation and project bootstrap](035-harden-installation-bootstrap/task.md) | done | 034 |
 
 ## Planned
 

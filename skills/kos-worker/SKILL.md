@@ -6,8 +6,9 @@ description: Execute and report exactly one KOS workflow step from an immutable 
 # KOS Worker
 
 Accept only an envelope with positive `task_id`, nonempty `claim_id`, integer
-`version`, and nonempty `step`. Use `kos-cli` to read task context and require
-all four values to match its active claim before doing work.
+`version`, and nonempty `step`. Use `kos-cli` to run `installation check` before
+reading task context or doing repository work, and stop on failure. Require all
+four envelope values to match the active claim before doing work.
 
 The workflow instruction defines the single step's objective and authority.
 Use your own reasoning and available repository tools, including checks or Git

@@ -51,6 +51,57 @@ The service rejects JSON request bodies over 8 MiB; coordination field, graph,
 and result limits are documented in the
 [product specification](specification.md#coordination-limits).
 
+## Register A Project
+
+Registration is an explicit administrator step before the first `/kos` run. KOS
+requires a supported Git remote URL and a chosen default branch as durable
+metadata. It does not create a local repository, GitHub repository, initial
+commit, branch, clone, or worktree, and it does not check remote reachability.
+
+Create the remote repository first and use an existing checkout for OpenCode.
+If a worker will clone the remote or create a worktree from its default branch,
+publish at least one commit on that branch first. KOS registration itself does
+not require the branch to be reachable and does not perform this Git check.
+
+For example, register an existing private GitHub repository:
+
+```sh
+"$KOS_CLI_PATH" project create \
+  --name "Widget" \
+  --remote-url "git@github.com:acme/widget.git" \
+  --default-branch "main"
+```
+
+The response contains the numeric `id` used by project-scoped plan and task
+commands and the canonical `repository_identity` used for lookup:
+
+```json
+{
+  "project": {
+    "id": 1,
+    "name": "Widget",
+    "repository_identity": "github.com/acme/widget",
+    "remote_url": "git@github.com:acme/widget.git",
+    "default_branch": "main"
+  }
+}
+```
+
+The server derives the identity when `--repository-identity` is omitted. Its
+canonical form includes the lowercased host and repository path, strips a final
+`.git`, and preserves path case. Verify registration with the exact returned
+value before invoking `/kos` from the intended checkout:
+
+```sh
+"$KOS_CLI_PATH" project show \
+  --repository-identity "github.com/acme/widget"
+```
+
+An HTTP 404 with `error: not_found` means no project is registered under that
+exact identity; it is not a request to create one. Recheck the host-qualified
+identity or run `project create`. Local paths and `file://` remotes are not
+stable repository identities and cannot be registered.
+
 For a minimal first run, save this one-step workflow as `workflow.json`:
 
 ```json
@@ -71,7 +122,7 @@ For a minimal first run, save this one-step workflow as `workflow.json`:
 ```
 
 Register it, then save a two-task plan as `plan.json` and store it. Replace `1`
-with the project ID returned by `project create`:
+with the project ID returned by the registration step above:
 
 ```sh
 "$KOS_CLI_PATH" workflow create --key first-run --name "First run" \
@@ -126,7 +177,34 @@ The installer manages exactly:
 - agent `kos-worker.md`; and
 - skills `kos`, `kos-cli`, `kos-worker`, and `okf`.
 
-Restart OpenCode after installation or any managed-file change. The `/kos`
+The successful-install marker is `kos-installation.json`. On update, the
+installer validates the prior marker and removes assets owned by its inventory
+but absent from the new release. With no marker, it removes only the finite
+historical KOS command, agent, and skill names reserved by pre-manifest
+releases, including current names that existed in those integrations. Those
+`kos*` and `okf` paths are reserved for this one-time migration; every unrelated
+name is preserved. With a valid marker, an existing current destination not
+owned by that marker is rejected rather than overwritten. A malformed,
+unsupported, symlinked, or non-KOS inventory marker stops installation before
+any file changes; inspect it and reinstall rather than trusting a partial or
+unknown inventory.
+
+Fully restart OpenCode after installation or any managed-file change; a running
+process can retain already loaded commands, agents, and skills. Then verify the
+manifest, packaged CLI, server identity, and server readiness before `/kos`:
+
+```sh
+"$KOS_CLI_PATH" installation check
+```
+
+The command locates the default manifest through `XDG_CONFIG_HOME` or
+`$HOME/.config/opencode`. For a custom destination, pass `--manifest` with an
+absolute path or set `KOS_OPENCODE_MANIFEST`. A missing, invalid, stale, or
+mismatched manifest fails with reinstall guidance. A matching server that has
+pending migrations, a stale catalog, or unavailable storage fails separately as
+`not_ready`.
+
+The `/kos`
 agent coordinates only: it discovers non-completed state before creating work,
 stores plans, finds and claims ready work, dispatches workers, presents pauses,
 performs explicit takeover, abandons started plans only with explicit user
@@ -266,7 +344,7 @@ set -a
 set +a
 export KOS_API_URL=https://kos.example
 KOS_CLI_PATH="$(command -v kos)"
-"$KOS_CLI_PATH" project show --repository-identity OWNER/REPOSITORY
+"$KOS_CLI_PATH" project show --repository-identity github.com/OWNER/REPOSITORY
 "$KOS_CLI_PATH" plan list --project-id ID
 "$KOS_CLI_PATH" task list --project-id ID
 ```
@@ -295,11 +373,11 @@ systemctl restart kos
 curl --fail --silent --show-error https://kos.example/ready
 test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
   --header "Authorization: Bearer $old_token" \
-  'https://kos.example/projects?repository_identity=OWNER%2FREPOSITORY')" = 401
+  'https://kos.example/projects?repository_identity=github.com%2FOWNER%2FREPOSITORY')" = 401
 export KOS_API_TOKEN="$new_token"
 export KOS_API_URL=https://kos.example
 KOS_CLI_PATH="$(command -v kos)"
-"$KOS_CLI_PATH" project show --repository-identity OWNER/REPOSITORY
+"$KOS_CLI_PATH" project show --repository-identity github.com/OWNER/REPOSITORY
 unset old_token new_token
 ```
 
@@ -372,7 +450,7 @@ set +a
 export KOS_API_URL=https://kos.example
 KOS_CLI_PATH="$(command -v kos)"
 "$KOS_CLI_PATH" --version
-"$KOS_CLI_PATH" project show --repository-identity OWNER/REPOSITORY
+"$KOS_CLI_PATH" project show --repository-identity github.com/OWNER/REPOSITORY
 ```
 
 Never combine one release's database with arbitrary application or integration

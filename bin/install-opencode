@@ -4,7 +4,9 @@ require "fileutils"
 require "json"
 require "optparse"
 require "pathname"
+require "tempfile"
 require_relative "../lib/kos/build_identity"
+require_relative "../lib/kos/open_code_installation"
 require_relative "../lib/kos/version"
 
 root = Pathname(__dir__).join("..").expand_path
@@ -27,11 +29,7 @@ end.parse!
 abort("--config-home must be an absolute path") unless options[:config_home].absolute?
 options[:config_home] = options[:config_home].expand_path
 
-inventory = {
-  "commands" => %w[kos.md],
-  "agents" => %w[kos-worker.md],
-  "skills" => %w[kos kos-cli kos-worker okf]
-}
+inventory = Kos::OpenCodeInstallation::INVENTORY
 obsolete = {
   "agents" => %w[
     kos-brief.md kos-diagnose.md kos-document.md kos-implement.md kos-orchestrator.md kos-plan.md kos-publish.md
@@ -47,6 +45,22 @@ abort("Refusing symbolic-link configuration directory: #{config_home}") if confi
 abort("Configuration path is not a directory: #{config_home}") if config_home.exist? && !config_home.directory?
 abort("Refusing symbolic-link manifest: #{manifest}") if manifest.symlink?
 abort("Manifest path is not a file: #{manifest}") if manifest.exist? && !manifest.file?
+
+had_manifest = manifest.exist?
+previous_inventory = if had_manifest
+  begin
+    Kos::OpenCodeInstallation.read_manifest(manifest).slice(*inventory.keys)
+  rescue Kos::OpenCodeInstallation::Invalid => error
+    abort("Invalid existing KOS installation manifest: #{error.message}. No files were changed.")
+  end
+else
+  inventory.transform_values { [] }
+end
+stale = inventory.to_h { |kind, names| [ kind, previous_inventory.fetch(kind) - names ] }
+removals = inventory.to_h do |kind, _names|
+  [ kind, had_manifest ? stale.fetch(kind) : obsolete.fetch(kind) ]
+end
+source_id = Kos::BuildIdentity.source_id(root:)
 
 # Validate the complete source and destination shape before changing anything.
 inventory.each do |kind, names|
@@ -64,6 +78,9 @@ inventory.each do |kind, names|
     expected_type = kind == "skills" ? :directory? : :file?
     abort("Missing integration source: #{source}") unless source.public_send(expected_type)
     abort("Refusing symbolic-link destination: #{destination}") if destination.symlink?
+    if had_manifest && destination.exist? && !previous_inventory.fetch(kind).include?(name)
+      abort("Refusing to replace unowned destination absent from the prior manifest: #{destination}")
+    end
     if destination.exist? && !destination.public_send(expected_type)
       abort("Destination has the wrong type: #{destination}")
     end
@@ -75,17 +92,17 @@ inventory.each do |kind, names|
   end
 end
 
-obsolete.each do |kind, names|
+removals.each do |kind, names|
   names.each do |name|
     destination = config_home.join(kind, name)
     abort("Refusing symbolic-link destination: #{destination}") if destination.symlink?
     expected_type = kind == "skills" ? :directory? : :file?
     if destination.exist? && !destination.public_send(expected_type)
-      abort("Obsolete managed destination has the wrong type: #{destination}")
+      abort("Stale managed destination has the wrong type: #{destination}")
     end
     if kind == "skills" && destination.exist?
       linked_entry = destination.glob("**/*", File::FNM_DOTMATCH).find(&:symlink?)
-      abort("Refusing symbolic link in obsolete managed skill: #{linked_entry}") if linked_entry
+      abort("Refusing symbolic link in stale managed skill: #{linked_entry}") if linked_entry
     end
   end
 end
@@ -107,9 +124,9 @@ inventory.fetch("agents").each do |name|
   FileUtils.mkdir_p(destination.dirname)
   FileUtils.cp(source, destination)
 end
-obsolete.fetch("agents").each { |name| FileUtils.rm_f(config_home.join("agents", name)) }
-obsolete.fetch("commands").each { |name| FileUtils.rm_f(config_home.join("commands", name)) }
-obsolete.fetch("skills").each { |name| FileUtils.rm_r(config_home.join("skills", name)) if config_home.join("skills", name).exist? }
+removals.fetch("agents").each { |name| FileUtils.rm_f(config_home.join("agents", name)) }
+removals.fetch("commands").each { |name| FileUtils.rm_f(config_home.join("commands", name)) }
+removals.fetch("skills").each { |name| FileUtils.rm_r(config_home.join("skills", name)) if config_home.join("skills", name).exist? }
 
 inventory.fetch("skills").each do |name|
   source = root.join("skills", name)
@@ -121,15 +138,20 @@ inventory.fetch("skills").each do |name|
 end
 
 FileUtils.mkdir_p(config_home)
-temporary_manifest = config_home.join(".kos-installation-#{Process.pid}.json")
-temporary_manifest.write(JSON.pretty_generate({
-  "schema" => 1,
-  "version" => Kos::VERSION,
-  "source_id" => Kos::BuildIdentity.source_id(root:),
-  "commands" => inventory.fetch("commands").sort,
-  "agents" => inventory.fetch("agents").sort,
-  "skills" => inventory.fetch("skills").sort
-}) << "\n")
-File.rename(temporary_manifest, manifest)
+Tempfile.create([ ".kos-installation-", ".json" ], config_home) do |temporary_manifest|
+  temporary_manifest.write(JSON.pretty_generate({
+    "schema" => Kos::OpenCodeInstallation::SCHEMA,
+    "version" => Kos::VERSION,
+    "source_id" => source_id,
+    "commands" => inventory.fetch("commands").sort,
+    "agents" => inventory.fetch("agents").sort,
+    "skills" => inventory.fetch("skills").sort
+  }) << "\n")
+  temporary_manifest.flush
+  temporary_manifest.fsync
+  File.rename(temporary_manifest.path, manifest)
+end
 
 puts "Installed KOS OpenCode integration in #{config_home}"
+puts "Fully restart OpenCode before using /kos so it reloads the installed command, agent, and skills."
+puts "After restart, verify the installation with: kos installation check --manifest #{manifest}"

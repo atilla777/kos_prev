@@ -36,6 +36,8 @@ class KosSkillsTest < ActiveSupport::TestCase
     source = normalized(Rails.root.join("skills/kos/SKILL.md"))
 
     assert_match(/discover unfinished plans and tasks before creating replacement work/i, source)
+    assert_match(/before project discovery .* run `installation check`/i, source)
+    assert_match(/project is not registered, stop/i, source)
     assert_match(/dispatch independent claims in parallel/i, source)
     assert_equal %w[claim_id step task_id version], envelope_fields(source)
     assert_match(/never performs a workflow step/i, source)
@@ -55,7 +57,8 @@ class KosSkillsTest < ActiveSupport::TestCase
     assert_equal %w[description mode reasoningEffort], metadata.keys.sort
     assert_match(/immutable JSON envelope/i, agent)
     assert_equal %w[claim_id step task_id version], envelope_fields(agent)
-    assert_match(/require all four values to match its active claim before doing work/i, skill)
+    assert_match(/run `installation check` before reading task context or doing repository work/i, skill)
+    assert_match(/require all four envelope values to match the active claim before doing work/i, skill)
     assert_match(/report exactly one allowed outcome .* using the original envelope/i, skill)
     assert_match(/never adopt a later claim, version, or step/i, skill)
     assert_match(/never execute the next step/i, skill)
@@ -65,13 +68,16 @@ class KosSkillsTest < ActiveSupport::TestCase
   test "CLI skill is concise and names the complete public surface" do
     source = normalized(Rails.root.join("skills/kos-cli/SKILL.md"))
 
-    %w[KOS_CLI_PATH KOS_API_URL KOS_API_TOKEN health claim-id].each { |value| assert_includes source, value }
+    %w[KOS_CLI_PATH KOS_API_URL KOS_API_TOKEN KOS_OPENCODE_MANIFEST health claim-id].each do |value|
+      assert_includes source, value
+    end
+    assert_includes source, "installation check"
     [ "project create/show/update", "workflow create", "plan put/list/show/abandon",
       "task list/ready/show/context/result/claim/takeover/report/answer" ].each do |surface|
       assert_includes source, surface
     end
     (0..3).each { |status| assert_includes source, "`#{status}`" }
-    refute_match(/session-id|task-type|resume|lease|materializ|kos-git|kos-step|Net::HTTP|ActiveRecord/, source)
+    refute_match(/session-id|task-type|resume|\blease\b|materializ|kos-git|kos-step|Net::HTTP|ActiveRecord/, source)
   end
 
   private

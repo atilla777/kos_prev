@@ -63,6 +63,7 @@ The public command families are:
 ```text
 health
 claim-id
+installation check
 project create|show|update
 workflow create
 plan put|list|show|abandon
@@ -76,6 +77,12 @@ ready-task discovery, project-scoped non-completed-state discovery, task reads,
 and task claim/takeover/report/answer mutations. The CLI validates local arguments and
 input, sends one request, preserves server output, and does not duplicate
 workflow or recovery policy. Per-command help is the syntax authority.
+
+`installation check` is the one local installation exception to ordinary API
+mapping. It validates the OpenCode successful-install manifest, compares its
+version and source identity with the packaged CLI, then compares both with the
+public `/ready` response. Exact equality is intentional for the single-release
+pre-release deployment; KOS has no mixed-release compatibility matrix.
 
 `task show` is the orchestrator's focused lifecycle view. `task context` is the
 worker view and includes the current immutable instruction, outcomes, prior
@@ -101,6 +108,12 @@ have one winner and cannot expose partially abandoned state.
 
 The managed OpenCode inventory is one `/kos` command, one `kos-worker` agent,
 and skills `kos`, `kos-cli`, `kos-worker`, and `okf`.
+
+Both the orchestrator and independently invoked workers run `installation
+check` before project or task access. A missing or invalid manifest, inventory
+or release mismatch, or unavailable server stops execution before repository or
+coordination changes. Replacing installed files requires a full OpenCode restart
+because a running process may retain previously loaded assets.
 
 The orchestrator may claim several independent ready tasks and dispatch one
 worker per task concurrently. It passes only the identity needed for the worker
@@ -139,6 +152,12 @@ or eligible for lifecycle mutations.
 There are no leases, heartbeat, clocks, owner sessions, automatic stale-worker
 detection, request creation keys, local protocol files, or pending-report
 receipts.
+
+Project registration is administrator-owned. The server normalizes a supported
+Git remote into the durable repository identity and stores the selected default
+branch, but neither server nor CLI inspects a checkout, chooses a remote, creates
+GitHub resources, publishes an initial branch, clones, or manages worktrees.
+OpenCode must run in the intended existing checkout.
 
 ## Deployment And Upgrade
 

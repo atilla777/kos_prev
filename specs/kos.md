@@ -98,6 +98,12 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 - KOS skills describe available commands, role boundaries, and a small set of
   invariants. They do not encode shell, Git, locking, retry, review, testing, or
   publication algorithms that capable agents can determine from context.
+- Project registration is an explicit administrator action over a published Git
+  remote and chosen default branch. KOS derives a canonical host/path identity
+  but does not create repositories, commits, branches, clones, or worktrees.
+- Before installed OpenCode orchestration or worker execution, the supported
+  integration compares its successful-install manifest, CLI, and server release
+  identity and verifies server readiness.
 - Skills and workflow instructions favor concise goals and observable
   postconditions over exhaustive negative rules or exact command sequences.
 - KOS state, not a worker's conversational response, is authoritative progress
@@ -125,6 +131,9 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 - A failed or ambiguous state mutation is resolved by rereading authoritative
   KOS state before another mutation; KOS does not require a prose retry
   algorithm.
+- Missing, invalid, stale, or mismatched installation metadata fails before
+  project discovery or worker activity and directs the operator to reinstall all
+  components from one release and restart OpenCode.
 
 # Edge Cases
 
@@ -147,6 +156,9 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 
 - A clean installation can store a project, a generic workflow, a task plan,
   dependencies, and task state without hand-editing application data.
+- A clean administrator can register and verify a published repository using
+  the CLI, and a matching OpenCode manifest, CLI, and ready server pass one
+  explicit preflight before orchestration.
 - The main orchestrator can atomically claim multiple independent ready tasks
   and dispatch separate workers without performing their substantive steps.
 - Two workers cannot successfully report the same claimed task version, and an

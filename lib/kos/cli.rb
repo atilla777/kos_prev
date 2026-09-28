@@ -6,6 +6,7 @@ require "securerandom"
 require "uri"
 require "kos/api_token"
 require "kos/build_identity"
+require "kos/open_code_installation"
 require_relative "version"
 
 module Kos
@@ -34,6 +35,7 @@ module Kos
       return print_version if @arguments == [ "--version" ] || @arguments == [ "-v" ]
       return print_help if @arguments.empty? || @arguments == [ "--help" ] || @arguments == [ "-h" ]
       return claim_id if @arguments.first == "claim-id"
+      return installation_check if @arguments.first(2) == %w[installation check]
 
       method, path, payload = command
       response = request(method, path, payload)
@@ -63,6 +65,7 @@ module Kos
         Resources and actions:
           health
           claim-id
+          installation check
           project create | show | update
           workflow create
           plan put | list | show | abandon
@@ -81,6 +84,33 @@ module Kos
       parse_options("kos claim-id", {})
       @stdout.puts("kos-claim-#{SecureRandom.hex(16)}")
       0
+    end
+
+    def installation_check
+      @arguments.shift(2)
+      values = parse_options("kos installation check", {
+        "--manifest PATH" => [ :manifest, String, "Absolute OpenCode installation manifest path" ]
+      })
+      manifest_path = Kos::OpenCodeInstallation.manifest_path(environment: @environment, explicit: values[:manifest])
+      manifest = Kos::OpenCodeInstallation.read_manifest(manifest_path, require_current_inventory: true)
+      cli_identity = { "version" => Kos::VERSION, "source_id" => Kos::BuildIdentity.installed_source_id }
+      require_matching_identity!("OpenCode manifest", manifest, "installed CLI", cli_identity)
+
+      response = request(:get, "/ready", nil)
+      server = parse_identity_response(response)
+      require_matching_identity!("installed CLI", cli_identity, "KOS server", server)
+      unless response.is_a?(Net::HTTPSuccess) && server["status"] == "ready"
+        raise Error.new("not_ready",
+          "KOS server matches this installation but is not ready; run database preparation and seeding, then retry",
+          exit_status: 1)
+      end
+
+      @stdout.puts(JSON.generate(status: "ready", version: cli_identity.fetch("version"),
+        source_id: cli_identity.fetch("source_id"), manifest: manifest_path.to_s))
+      0
+    rescue Kos::OpenCodeInstallation::Invalid => error
+      raise Error.new("installation_error",
+        "#{error.message}; reinstall the CLI and OpenCode integration from one KOS release")
     end
 
     def command
@@ -109,6 +139,26 @@ module Kos
       else
         raise Error.new("usage_error", "unknown command #{[ resource, action ].compact.join(" ").inspect}")
       end
+    end
+
+    def parse_identity_response(response)
+      value = JSON.parse(response.body.to_s)
+      unless value.is_a?(Hash) && value["version"].is_a?(String) &&
+          value["source_id"].is_a?(String) && value["source_id"].match?(Kos::OpenCodeInstallation::SOURCE_ID_PATTERN)
+        raise Error.new("compatibility_error", "KOS server readiness response has no valid release identity", exit_status: 1)
+      end
+
+      value
+    rescue JSON::ParserError
+      raise Error.new("compatibility_error", "KOS server readiness response is not valid JSON", exit_status: 1)
+    end
+
+    def require_matching_identity!(left_name, left, right_name, right)
+      return if %w[version source_id].all? { |field| left[field] == right[field] }
+
+      raise Error.new("compatibility_error",
+        "#{left_name} and #{right_name} are from different KOS releases; reinstall all components from one release and fully restart OpenCode",
+        exit_status: 1)
     end
 
     def project_create
@@ -364,7 +414,7 @@ module Kos
                         put: Net::HTTP::Put }.fetch(method)
       http_request = request_class.new(uri)
       http_request["Accept"] = "application/json"
-      http_request["Authorization"] = "Bearer #{api_token}" unless path == "/up"
+      http_request["Authorization"] = "Bearer #{api_token}" unless %w[/up /ready].include?(path)
       if payload
         http_request["Content-Type"] = "application/json"
         http_request.body = JSON.generate(normalize_payload(payload))

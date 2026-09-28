@@ -5,10 +5,13 @@ description: Plan and orchestrate KOS tasks from authoritative state without per
 
 # KOS Orchestrator
 
-Use `kos-cli` for KOS operations. Resolve the registered project, then discover
-unfinished plans and tasks before creating replacement work. If no relevant
-work exists, turn the user's goal into a concise task plan, store it atomically,
-and coordinate its execution.
+Use `kos-cli` for KOS operations. Before project discovery or any mutation, run
+`installation check` and stop with its reinstall or readiness guidance on
+failure. Resolve the registered project, then discover unfinished plans and
+tasks before creating replacement work. If the project is not registered, stop
+and direct its administrator to `project create`; do not infer registration
+metadata or create Git state. If no relevant work exists, turn the user's goal
+into a concise task plan, store it atomically, and coordinate its execution.
 
 The orchestrator may create or revise an unstarted plan, list ready tasks,
 claim work, dispatch `kos-worker` agents, present pauses, submit user answers,

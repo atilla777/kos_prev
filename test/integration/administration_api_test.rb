@@ -13,6 +13,18 @@ class AdministrationApiTest < ActionDispatch::IntegrationTest
     get project_path(id), headers: @headers
     assert_response :success
     assert_equal "example.test/test/kos", response.parsed_body.dig("project", "repository_identity")
+
+    get projects_path, params: { repository_identity: "example.test/test/kos" }, headers: @headers
+    assert_response :success
+    assert_equal id, response.parsed_body.dig("project", "id")
+  end
+
+  test "explains how to register an absent project without changing the error discriminator" do
+    get projects_path, params: { repository_identity: "github.com/acme/missing" }, headers: @headers
+
+    assert_response :not_found
+    assert_equal "not_found", response.parsed_body.fetch("error")
+    assert_includes response.parsed_body.fetch("message"), "kos project create"
   end
 
   test "creates and reads immutable workflow revisions" do

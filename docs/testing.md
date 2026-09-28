@@ -22,11 +22,13 @@ agent intelligence.
   discovery, API projections, status mapping and selected stable error bodies,
   transaction rollback, bounded request and definition inputs, and persistence.
 - CLI tests execute the packaged client and cover discoverable help, health,
-  claim identity generation, argument and standard-input mapping, output
-  preservation, and exit statuses for every public command family.
+  installation identity/readiness checks, claim identity generation, argument
+  and standard-input mapping, output preservation, and exit statuses for every
+  public command family.
 - Installation tests verify exactly one `/kos` command, one `kos-worker` agent,
-  skills `kos`, `kos-cli`, `kos-worker`, and `okf`, plus abandonment persistence
-  across backup and restart.
+  skills `kos`, `kos-cli`, `kos-worker`, and `okf`; clean and legacy installation,
+  manifest-owned stale cleanup, unmanaged-file preservation, compatibility
+  failure, and abandonment persistence across backup and restart.
 - Agent-contract tests verify the installed inventory, frontmatter, immutable
   worker envelope, and durable role boundaries without treating exact prose as
   executable behavior.
