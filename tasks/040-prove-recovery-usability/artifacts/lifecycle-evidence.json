@@ -1,0 +1,47 @@
+{
+  "process_stop": {
+    "confirmed_exited": true,
+    "before_status_sha256": "3a4fb1f9a4650b53ef40a85d7d2e0cd1139e351bd35890103f6611969dbfd86d",
+    "after_status_sha256": "3a4fb1f9a4650b53ef40a85d7d2e0cd1139e351bd35890103f6611969dbfd86d",
+    "task": {
+      "id": 2,
+      "status": "active",
+      "step": "plan",
+      "version": 1,
+      "claim_sha256": "7ca422e0dc097328843f750013d9393a56d1ee403339a25ed8cc6b801ddb2356"
+    },
+    "plan_version": 3
+  },
+  "release": {
+    "command": "kos task release 2 --claim-id <redacted> --version 1 --step plan",
+    "source_output_sha256": "d66d0ae5d61f94b2fa289a7e9e6a2aad9263fe760da22d5803751bccb572a726",
+    "output": {
+      "task_id": 2,
+      "status": "pending",
+      "step": "plan",
+      "version": 2,
+      "claimed": false
+    },
+    "observed_plan_version": 4
+  },
+  "late_report": {
+    "command": "kos task report 2 --claim-id <released> --version 1 --step plan --outcome planned --result-file <file>",
+    "source_output_sha256": "b177300d3f1c45053f396ff6b992293236a81cf01dd5b690a51769dc5e845699",
+    "output": {
+      "error": "conflict",
+      "message": "task claim, version, or step is stale"
+    },
+    "post_status_sha256": "afdff233d016fd6be7164f2a754fe7d39502b69814229f84ffec78ac52da27d3"
+  },
+  "fresh_session_boundary": {
+    "interrupted_status_sha256": "5b32279208ab41dba121a9f635ed4232e7aca682d8f51f114b68b52fe6590029",
+    "fresh_pre_session_status_sha256": "5b32279208ab41dba121a9f635ed4232e7aca682d8f51f114b68b52fe6590029",
+    "old_process_confirmed_exited": true,
+    "fixture_worktree_clean": true
+  },
+  "final": {
+    "default_status_sha256": "4a4c73b7ce00dab8fdec38c4bc6aff0b7ad8bf5acc27fe20e7c3bebc7c835c7b",
+    "completed_tasks_sha256": "c87ba36b1cd5b038579493c85ad229740e797a35b0cb499d5c210e8e02c4bbe8",
+    "completed_plan_sha256": "e117bef487ee52c1817b3708215a927bcbae2fab061415a07bd8221f1eddacf6"
+  }
+}

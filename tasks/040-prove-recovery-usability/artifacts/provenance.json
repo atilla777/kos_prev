@@ -1,0 +1,15 @@
+{
+  "run_date": "2026-09-28",
+  "candidate_commit": "1981c2efd1e9b904688d0b1af029fa3d03b80287",
+  "candidate_source_id": "sha256:2029a0bfb7915fc2b6adb4f11be01133d6374007744f1b7558c3b14d2df93c2c",
+  "kos_version": "0.1.0",
+  "ruby_version": "3.4.10",
+  "bundler_version": "4.0.20",
+  "opencode_version": "1.18.26",
+  "fixture_repository": "https://github.com/atilla777/kos-recovery-acceptance-040",
+  "fixture_initial": "93c780c1c587bc2ffff3787a05c0c96eb26909d8",
+  "fixture_alpha": "182c725fd2678e777a4606922b38a1700c4cc716",
+  "fixture_remote_main": "107e141a363d17802d648a32b5f7c1d762e2c8a1",
+  "fixture_remote_tree": "eae876866796fc4dbc1db2d3b860fe1081c1c51f",
+  "fixture_diff_sha256": "c48580ee54511424d776d56490542b4df903028dbc5014b862146db679d8db24"
+}

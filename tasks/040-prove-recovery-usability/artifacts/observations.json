@@ -1,0 +1,69 @@
+{
+  "project": {
+    "id": 1,
+    "repository_identity": "github.com/atilla777/kos-recovery-acceptance-040",
+    "resolved_with_remote": "origin"
+  },
+  "planning_only": {
+    "plan_id": 1,
+    "plan_key": "alpha-beta-messages",
+    "plan_version": 0,
+    "workflow_key": "development",
+    "workflow_revision": 3,
+    "tasks": [
+      { "id": 1, "key": "alpha", "status": "pending", "step": "plan", "version": 0, "claimed": false },
+      { "id": 2, "key": "beta", "status": "pending", "step": "plan", "version": 0, "claimed": false }
+    ],
+    "ready_query_after_put": false,
+    "worker_launch_after_put": false,
+    "fixture_head": "93c780c1c587bc2ffff3787a05c0c96eb26909d8",
+    "remote_main": "93c780c1c587bc2ffff3787a05c0c96eb26909d8"
+  },
+  "cancel_and_release": {
+    "task_id": 2,
+    "state_before_process_stop": { "status": "active", "step": "plan", "version": 1, "plan_version": 3 },
+    "state_after_process_stop": { "status": "active", "step": "plan", "version": 1, "plan_version": 3 },
+    "stopped_claim_sha256": "7ca422e0dc097328843f750013d9393a56d1ee403339a25ed8cc6b801ddb2356",
+    "released": { "status": "pending", "step": "plan", "version": 2, "claimed": false, "plan_version": 4 },
+    "late_report_error": "conflict",
+    "late_report_message": "task claim, version, or step is stale",
+    "state_unchanged_after_late_report": true
+  },
+  "fresh_recovery": {
+    "goal_contained_project_id": false,
+    "goal_contained_plan_key": false,
+    "first_recovery_read": "status --remote origin",
+    "same_plan_id": 1,
+    "plan_count": 1,
+    "status_was_read_only": true,
+    "interrupted": [
+      { "task_id": 1, "status": "active", "step": "implement", "version": 3, "claim_sha256": "363d4edad55a5c4e235dcb8b26e929857641d2672ebf77dce6e3d7cc9fa5d710" },
+      { "task_id": 2, "status": "active", "step": "plan", "version": 3, "claim_sha256": "91b1fc5e0c4f9d1179835bd32d60eb0a7b0670e259d5e16db432c76b971dbe9f" }
+    ],
+    "takeovers": [
+      { "task_id": 1, "step": "implement", "version": 4, "claim_sha256": "ffe4a7f40b5615d496d29b81252d32c0661d06255d6e5d3348dc8a484af50b88" },
+      { "task_id": 2, "step": "plan", "version": 4, "claim_sha256": "bc364bcbac78d16acb1bbcdcc43945353f89f8cef3f6ec7dd434ce7f932a53bf" }
+    ]
+  },
+  "workflow_results": [
+    { "task_id": 1, "step": "plan", "outcome": "planned" },
+    { "task_id": 1, "step": "implement", "outcome": "implemented", "commit": "182c725fd2678e777a4606922b38a1700c4cc716" },
+    { "task_id": 1, "step": "review", "outcome": "approved", "checks": "3 runs, 3 assertions, 0 failures" },
+    { "task_id": 1, "step": "publish", "outcome": "published", "observed_remote": "182c725fd2678e777a4606922b38a1700c4cc716" },
+    { "task_id": 2, "step": "plan", "outcome": "planned" },
+    { "task_id": 2, "step": "implement", "outcome": "implemented", "commit": "107e141a363d17802d648a32b5f7c1d762e2c8a1" },
+    { "task_id": 2, "step": "review", "outcome": "approved", "checks": "3 runs, 3 assertions, 0 failures" },
+    { "task_id": 2, "step": "publish", "outcome": "published", "observed_remote": "107e141a363d17802d648a32b5f7c1d762e2c8a1" }
+  ],
+  "final": {
+    "default_status_plan_count": 0,
+    "default_status_task_count": 0,
+    "completed_plan_version": 20,
+    "tasks": [
+      { "task_id": 1, "status": "completed", "step": "publish", "version": 9, "claimed": false },
+      { "task_id": 2, "status": "completed", "step": "publish", "version": 11, "claimed": false }
+    ],
+    "remote_main": "107e141a363d17802d648a32b5f7c1d762e2c8a1",
+    "changed_paths": ["lib/alpha.rb", "lib/beta.rb", "test/alpha_test.rb", "test/beta_test.rb"]
+  }
+}

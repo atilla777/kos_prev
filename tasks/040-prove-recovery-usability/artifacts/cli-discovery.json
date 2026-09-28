@@ -1,0 +1,30 @@
+{
+  "installation": {
+    "status": "ready",
+    "version": "0.1.0",
+    "source_id": "sha256:2029a0bfb7915fc2b6adb4f11be01133d6374007744f1b7558c3b14d2df93c2c",
+    "manifest_matches": true
+  },
+  "workflow_list_before_plan": [
+    { "id": 3, "key": "brief", "revision": 3 },
+    { "id": 1, "key": "development", "revision": 3 },
+    { "id": 2, "key": "fix", "revision": 3 }
+  ],
+  "workflow_schema": {
+    "available": true,
+    "complete_valid_example": true,
+    "maximum_steps": 64,
+    "maximum_outcomes": 256
+  },
+  "workflow_create_help_describes_input": true,
+  "plan_put_help_fields": [
+    "key",
+    "title",
+    "tasks",
+    "description_markdown",
+    "workflow_key",
+    "blocker_keys"
+  ],
+  "source_inspection_used": false,
+  "fallback_workflow_created": false
+}

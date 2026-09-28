@@ -480,10 +480,10 @@ that is already pushed, run the deterministic gates:
 
 ```sh
 bin/check
-ruby tasks/031-prove-installed-orchestration/artifacts/verify_evidence.rb
+ruby tasks/040-prove-recovery-usability/artifacts/verify_evidence.rb
 ```
 
-The task 031 verifier validates retained evidence from its recorded candidate;
+The task 040 verifier validates retained evidence from its recorded candidate;
 it does not claim a new live-model run for the current release. New live-model
 exercises remain optional.
 

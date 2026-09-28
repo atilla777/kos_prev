@@ -62,10 +62,11 @@ Workers may choose such tools and procedures when workflow instructions permit
 them, but KOS tests only its storage and coordination boundary. Passing tests do
 not claim that worker-authored evidence is semantically correct.
 
-The retained task 031 clean-install acceptance record separately demonstrates a
-real installed `/kos` run with parallel worker dispatch, pause and answer,
-fresh-session discovery, takeover, and completion. Its verifier checks the
-recorded evidence; it is not a new live-model run for each release.
+The retained task 040 clean-install acceptance record separately demonstrates
+installed CLI discovery, planning-only behavior, worker interruption, exact
+release, fresh-session status and takeover, reviewed publication, and
+completion. Its verifier checks sanitized command/output events and the retained
+fixture bundle; it is not a new live-model run for each release.
 
 ## Commands
 

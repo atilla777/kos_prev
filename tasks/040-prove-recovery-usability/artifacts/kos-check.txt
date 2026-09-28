@@ -1,0 +1,5 @@
+Inspecting 76 files
+76 files inspected, no offenses detected
+Eager loading: All is good!
+
+119 runs, 1878 assertions, 0 failures, 0 errors, 0 skips

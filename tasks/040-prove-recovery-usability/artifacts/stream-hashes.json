@@ -1,0 +1,8 @@
+{
+  "streams": [
+    { "name": "planning", "sha256": "cd93335dcdbc73d6e0403cc5d2106d8e78a6d0bc399876999d3b1947b4a9b7dd", "lines": 27, "bytes": 36968 },
+    { "name": "execution", "sha256": "fc650d9af94917e577fadead5ab5934d65525c8e0a8565cf46acdd962cc466e9", "lines": 31, "bytes": 31059 },
+    { "name": "interrupted", "sha256": "d9042a5265053425ff04fb061fe09cf08c45be92845999b89f35849469985a45", "lines": 29, "bytes": 29871 },
+    { "name": "recovery", "sha256": "ef9eff23443d83028242fd91ed5b52768a27f702c33de51a3fcaab05262a4e96", "lines": 94, "bytes": 85882 }
+  ]
+}

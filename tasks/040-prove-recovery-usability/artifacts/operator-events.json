@@ -1,0 +1,1062 @@
+{
+  "events": [
+    {
+      "name": "cli-version",
+      "command": "kos --version",
+      "source_output_sha256": "db63d316abc1c5d4401188791d8071807746833a077936925efeeff467845e3e",
+      "output": "kos 0.1.0 source=sha256:2029a0bfb7915fc2b6adb4f11be01133d6374007744f1b7558c3b14d2df93c2c\n"
+    },
+    {
+      "name": "installation-check",
+      "command": "kos installation check",
+      "source_output_sha256": "2b3e6fe3e33c0bdd216cc836e0fff35c2a8f5902da05c8c2ca62c8db30b8e0b8",
+      "output": {
+        "status": "ready",
+        "version": "0.1.0",
+        "source_id": "sha256:2029a0bfb7915fc2b6adb4f11be01133d6374007744f1b7558c3b14d2df93c2c",
+        "manifest": "<RUN_ROOT>/opencode/kos-installation.json"
+      }
+    },
+    {
+      "name": "workflow-list",
+      "command": "kos workflow list",
+      "source_output_sha256": "e7c66c55d32d1038673395ffb0a5a866405729e81fd32f5ce4f46c0fa861449e",
+      "output": {
+        "workflows": [
+          {
+            "id": 3,
+            "key": "brief",
+            "name": "Brief",
+            "revision": 3,
+            "definition_json": {
+              "steps": [
+                {
+                  "id": "brief",
+                  "name": "Brief",
+                  "instruction": "Specify the requested behavior and its acceptance criteria.",
+                  "outcomes": {
+                    "specified": {
+                      "next_step": "review"
+                    },
+                    "needs_human": {
+                      "pause": "needs_human"
+                    },
+                    "blocked": {
+                      "pause": "blocked"
+                    }
+                  }
+                },
+                {
+                  "id": "review",
+                  "name": "Review",
+                  "instruction": "Review the complete specification independently and report actionable findings.",
+                  "outcomes": {
+                    "approved": {
+                      "next_step": "publish"
+                    },
+                    "changes_requested": {
+                      "next_step": "brief"
+                    },
+                    "needs_human": {
+                      "pause": "needs_human"
+                    },
+                    "blocked": {
+                      "pause": "blocked"
+                    }
+                  }
+                },
+                {
+                  "id": "publish",
+                  "name": "Publish",
+                  "instruction": "Publish the approved specification and observe the result.",
+                  "outcomes": {
+                    "published": {
+                      "complete_task": true
+                    },
+                    "changes_requested": {
+                      "next_step": "brief"
+                    },
+                    "needs_human": {
+                      "pause": "needs_human"
+                    },
+                    "blocked": {
+                      "pause": "blocked"
+                    }
+                  }
+                }
+              ]
+            },
+            "created_at": "2026-09-28T15:22:33.955Z"
+          },
+          {
+            "id": 1,
+            "key": "development",
+            "name": "Development",
+            "revision": 3,
+            "definition_json": {
+              "steps": [
+                {
+                  "id": "plan",
+                  "name": "Plan",
+                  "instruction": "Plan the smallest coherent change and its verification.",
+                  "outcomes": {
+                    "planned": {
+                      "next_step": "implement"
+                    },
+                    "needs_human": {
+                      "pause": "needs_human"
+                    },
+                    "blocked": {
+                      "pause": "blocked"
+                    }
+                  }
+                },
+                {
+                  "id": "implement",
+                  "name": "Implement",
+                  "instruction": "Implement the plan, run appropriate checks, and record the result.",
+                  "outcomes": {
+                    "implemented": {
+                      "next_step": "review"
+                    },
+                    "replan": {
+                      "next_step": "plan"
+                    },
+                    "needs_human": {
+                      "pause": "needs_human"
+                    },
+                    "blocked": {
+                      "pause": "blocked"
+                    }
+                  }
+                },
+                {
+                  "id": "review",
+                  "name": "Review",
+                  "instruction": "Review the complete change independently and report actionable findings.",
+                  "outcomes": {
+                    "approved": {
+                      "next_step": "publish"
+                    },
+                    "changes_requested": {
+                      "next_step": "implement"
+                    },
+                    "replan": {
+                      "next_step": "plan"
+                    },
+                    "needs_human": {
+                      "pause": "needs_human"
+                    },
+                    "blocked": {
+                      "pause": "blocked"
+                    }
+                  }
+                },
+                {
+                  "id": "publish",
+                  "name": "Publish",
+                  "instruction": "Publish the approved change and observe the result.",
+                  "outcomes": {
+                    "published": {
+                      "complete_task": true
+                    },
+                    "changes_requested": {
+                      "next_step": "implement"
+                    },
+                    "needs_human": {
+                      "pause": "needs_human"
+                    },
+                    "blocked": {
+                      "pause": "blocked"
+                    }
+                  }
+                }
+              ]
+            },
+            "created_at": "2026-09-28T15:22:33.941Z"
+          },
+          {
+            "id": 2,
+            "key": "fix",
+            "name": "Fix",
+            "revision": 3,
+            "definition_json": {
+              "steps": [
+                {
+                  "id": "diagnose",
+                  "name": "Diagnose",
+                  "instruction": "Reproduce the problem and identify an evidenced root cause.",
+                  "outcomes": {
+                    "diagnosed": {
+                      "next_step": "plan"
+                    },
+                    "needs_human": {
+                      "pause": "needs_human"
+                    },
+                    "blocked": {
+                      "pause": "blocked"
+                    }
+                  }
+                },
+                {
+                  "id": "plan",
+                  "name": "Plan",
+                  "instruction": "Plan the smallest safe fix and regression verification.",
+                  "outcomes": {
+                    "planned": {
+                      "next_step": "implement"
+                    },
+                    "rediagnose": {
+                      "next_step": "diagnose"
+                    },
+                    "needs_human": {
+                      "pause": "needs_human"
+                    },
+                    "blocked": {
+                      "pause": "blocked"
+                    }
+                  }
+                },
+                {
+                  "id": "implement",
+                  "name": "Implement",
+                  "instruction": "Implement the fix, run appropriate checks, and record the result.",
+                  "outcomes": {
+                    "implemented": {
+                      "next_step": "review"
+                    },
+                    "replan": {
+                      "next_step": "plan"
+                    },
+                    "needs_human": {
+                      "pause": "needs_human"
+                    },
+                    "blocked": {
+                      "pause": "blocked"
+                    }
+                  }
+                },
+                {
+                  "id": "review",
+                  "name": "Review",
+                  "instruction": "Review the complete fix independently and report actionable findings.",
+                  "outcomes": {
+                    "approved": {
+                      "next_step": "publish"
+                    },
+                    "changes_requested": {
+                      "next_step": "implement"
+                    },
+                    "replan": {
+                      "next_step": "plan"
+                    },
+                    "needs_human": {
+                      "pause": "needs_human"
+                    },
+                    "blocked": {
+                      "pause": "blocked"
+                    }
+                  }
+                },
+                {
+                  "id": "publish",
+                  "name": "Publish",
+                  "instruction": "Publish the approved fix and observe the result.",
+                  "outcomes": {
+                    "published": {
+                      "complete_task": true
+                    },
+                    "changes_requested": {
+                      "next_step": "implement"
+                    },
+                    "needs_human": {
+                      "pause": "needs_human"
+                    },
+                    "blocked": {
+                      "pause": "blocked"
+                    }
+                  }
+                }
+              ]
+            },
+            "created_at": "2026-09-28T15:22:33.950Z"
+          }
+        ]
+      }
+    },
+    {
+      "name": "workflow-schema",
+      "command": "kos workflow schema",
+      "source_output_sha256": "9a2420773960a101ffbe8140ea9c2f7a6a012e54d22542cf5b9a351000e60ff9",
+      "output": {
+        "schema": {
+          "type": "object",
+          "required_fields": [
+            "steps"
+          ],
+          "additional_fields": false,
+          "steps": {
+            "type": "array",
+            "minimum": 1,
+            "maximum": 64,
+            "item": {
+              "type": "object",
+              "required_fields": [
+                "id",
+                "instruction",
+                "name",
+                "outcomes"
+              ],
+              "additional_fields": false,
+              "fields": {
+                "id": {
+                  "type": "nonblank_utf8_string",
+                  "maximum_bytes": 100
+                },
+                "name": {
+                  "type": "nonblank_utf8_string",
+                  "maximum_bytes": 200
+                },
+                "instruction": {
+                  "type": "nonblank_utf8_string",
+                  "maximum_bytes": 16384
+                },
+                "outcomes": {
+                  "type": "nonempty_object",
+                  "name_type": "nonblank_utf8_string",
+                  "name_maximum_bytes": 100,
+                  "total_maximum": 256,
+                  "value": {
+                    "exactly_one": [
+                      {
+                        "next_step": {
+                          "type": "existing_step_id",
+                          "maximum_bytes": 100
+                        }
+                      },
+                      {
+                        "pause": {
+                          "enum": [
+                            "blocked",
+                            "needs_human"
+                          ]
+                        }
+                      },
+                      {
+                        "complete_task": {
+                          "const": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "rules": [
+            "Step ids are unique.",
+            "The first step is the initial step.",
+            "Every next_step names an existing step.",
+            "Every step reachable from the initial step has a path to complete_task."
+          ]
+        },
+        "example": {
+          "steps": [
+            {
+              "id": "work",
+              "name": "Work",
+              "instruction": "Perform the task description and report the observed result.",
+              "outcomes": {
+                "completed": {
+                  "complete_task": true
+                },
+                "question": {
+                  "pause": "needs_human"
+                },
+                "blocked": {
+                  "pause": "blocked"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "workflow-create-help",
+      "command": "kos workflow create --help",
+      "source_output_sha256": "e10d1ffbe81126810a66817350973b157f7d132f13d38a1fa2b9c838111414d7",
+      "output": "Usage: kos workflow create [options]\n    -h, --help                       Show this help\n        --key KEY                    Required stable workflow key\n        --name NAME                  Required workflow name\n        --definition-file FILE       Required definition_json file, or - for STDIN\n\nInput definition_json is an object containing exactly steps, a non-empty array of at most 64.\nEach step contains exactly id, name, instruction, outcomes.\nid, name, instruction, and outcome names are nonblank valid UTF-8 strings.\nid and outcome names are at most 100 bytes; name is at most\n200 bytes; instruction is at most\n16384 bytes. outcomes is a non-empty object,\nwith at most 256 outcomes across the workflow. Each outcome has exactly\none transition: {\"next_step\":\"STEP_ID\"}, {\"pause\":\"needs_human\"}, {\"pause\":\"blocked\"}, or\n{\"complete_task\":true}. Step ids are unique, next_step targets exist, the first step is initial, and every\nreachable step has a path to complete_task.\nComplete valid example:\n{\n  \"steps\": [\n    {\n      \"id\": \"work\",\n      \"name\": \"Work\",\n      \"instruction\": \"Perform the task description and report the observed result.\",\n      \"outcomes\": {\n        \"completed\": {\n          \"complete_task\": true\n        },\n        \"question\": {\n          \"pause\": \"needs_human\"\n        },\n        \"blocked\": {\n          \"pause\": \"blocked\"\n        }\n      }\n    }\n  ]\n}\nResponse: workflow with id, key, name, revision, definition_json, and created_at.\nExample: kos workflow create --key delivery --name Delivery --definition-file workflow.json\n"
+    },
+    {
+      "name": "plan-put-help",
+      "command": "kos plan put --help",
+      "source_output_sha256": "d8f778c278c15943754a918de53d1c026c8d3c0c517da2d9aa050bb1f78ce925",
+      "output": "Usage: kos plan put [options]\n    -h, --help                       Show this help\n        --project-id ID              Required numeric project ID\n        --definition-file FILE       Required plan JSON file, or - for STDIN\n\nInput object: key, title, tasks. Each task requires exactly key, title, description_markdown,\nworkflow_key, and blocker_keys. Response: task_plan with id, project_id, key, title, status, version, created_at, updated_at; tasks[] with id, key, title, description_markdown, status, current_step, claim_id, version, workflow id/key/revision, and blocker_keys.\nExample: kos plan put --project-id 7 --definition-file plan.json\n"
+    },
+    {
+      "name": "project-create",
+      "command": "kos project create <fixture>",
+      "source_output_sha256": "2afc39134b35270d58c579c744a18b21391630927c07af02e047da4734065813",
+      "output": {
+        "project": {
+          "id": 1,
+          "name": "KOS recovery acceptance 040",
+          "repository_identity": "github.com/atilla777/kos-recovery-acceptance-040",
+          "remote_url": "git@github.com:atilla777/kos-recovery-acceptance-040.git",
+          "default_branch": "main",
+          "created_at": "2026-09-28T15:23:33.769Z",
+          "updated_at": "2026-09-28T15:23:33.769Z"
+        }
+      }
+    },
+    {
+      "name": "project-resolve",
+      "command": "kos project resolve --remote origin",
+      "source_output_sha256": "2afc39134b35270d58c579c744a18b21391630927c07af02e047da4734065813",
+      "output": {
+        "project": {
+          "id": 1,
+          "name": "KOS recovery acceptance 040",
+          "repository_identity": "github.com/atilla777/kos-recovery-acceptance-040",
+          "remote_url": "git@github.com:atilla777/kos-recovery-acceptance-040.git",
+          "default_branch": "main",
+          "created_at": "2026-09-28T15:23:33.769Z",
+          "updated_at": "2026-09-28T15:23:33.769Z"
+        }
+      }
+    },
+    {
+      "name": "status-empty",
+      "command": "kos status --remote origin",
+      "source_output_sha256": "4a4c73b7ce00dab8fdec38c4bc6aff0b7ad8bf5acc27fe20e7c3bebc7c835c7b",
+      "output": {
+        "project": {
+          "id": 1,
+          "name": "KOS recovery acceptance 040",
+          "repository_identity": "github.com/atilla777/kos-recovery-acceptance-040",
+          "remote_url": "git@github.com:atilla777/kos-recovery-acceptance-040.git",
+          "default_branch": "main",
+          "created_at": "2026-09-28T15:23:33.769Z",
+          "updated_at": "2026-09-28T15:23:33.769Z"
+        },
+        "task_plans": [],
+        "tasks": []
+      }
+    },
+    {
+      "name": "status-planned",
+      "command": "kos status --remote origin",
+      "source_output_sha256": "a9ddfbe5cc90eb11e05f180647b05cf642aa5921c5f5b3db82172fbc84220a69",
+      "output": {
+        "project": {
+          "id": 1,
+          "name": "KOS recovery acceptance 040",
+          "repository_identity": "github.com/atilla777/kos-recovery-acceptance-040",
+          "remote_url": "git@github.com:atilla777/kos-recovery-acceptance-040.git",
+          "default_branch": "main",
+          "created_at": "2026-09-28T15:23:33.769Z",
+          "updated_at": "2026-09-28T15:23:33.769Z"
+        },
+        "task_plans": [
+          {
+            "id": 1,
+            "project_id": 1,
+            "key": "alpha-beta-messages",
+            "title": "Add independent Alpha and Beta messages",
+            "status": "active",
+            "version": 0,
+            "created_at": "2026-09-28T15:24:55.818Z",
+            "updated_at": "2026-09-28T15:24:55.818Z"
+          }
+        ],
+        "tasks": [
+          {
+            "id": 1,
+            "task_plan_id": 1,
+            "workflow_id": 1,
+            "key": "alpha",
+            "title": "Add Alpha.message",
+            "status": "pending",
+            "current_step": "plan",
+            "claim_id": null,
+            "version": 0,
+            "pause_kind": null,
+            "pause_message": null,
+            "pause_step": null,
+            "answer": null,
+            "created_at": "2026-09-28T15:24:55.842Z",
+            "updated_at": "2026-09-28T15:24:55.842Z",
+            "workflow_key": "development",
+            "workflow_revision": 3,
+            "blocker_ids": []
+          },
+          {
+            "id": 2,
+            "task_plan_id": 1,
+            "workflow_id": 1,
+            "key": "beta",
+            "title": "Add Beta.message",
+            "status": "pending",
+            "current_step": "plan",
+            "claim_id": null,
+            "version": 0,
+            "pause_kind": null,
+            "pause_message": null,
+            "pause_step": null,
+            "answer": null,
+            "created_at": "2026-09-28T15:24:55.852Z",
+            "updated_at": "2026-09-28T15:24:55.852Z",
+            "workflow_key": "development",
+            "workflow_revision": 3,
+            "blocker_ids": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "status-before-cancel",
+      "command": "kos status --remote origin",
+      "source_output_sha256": "3a4fb1f9a4650b53ef40a85d7d2e0cd1139e351bd35890103f6611969dbfd86d",
+      "output": {
+        "project": {
+          "id": 1,
+          "name": "KOS recovery acceptance 040",
+          "repository_identity": "github.com/atilla777/kos-recovery-acceptance-040",
+          "remote_url": "git@github.com:atilla777/kos-recovery-acceptance-040.git",
+          "default_branch": "main",
+          "created_at": "2026-09-28T15:23:33.769Z",
+          "updated_at": "2026-09-28T15:23:33.769Z"
+        },
+        "task_plans": [
+          {
+            "id": 1,
+            "project_id": 1,
+            "key": "alpha-beta-messages",
+            "title": "Add independent Alpha and Beta messages",
+            "status": "active",
+            "version": 3,
+            "created_at": "2026-09-28T15:24:55.818Z",
+            "updated_at": "2026-09-28T15:27:59.174Z"
+          }
+        ],
+        "tasks": [
+          {
+            "id": 1,
+            "task_plan_id": 1,
+            "workflow_id": 1,
+            "key": "alpha",
+            "title": "Add Alpha.message",
+            "status": "pending",
+            "current_step": "implement",
+            "claim_id": null,
+            "version": 2,
+            "pause_kind": null,
+            "pause_message": null,
+            "pause_step": null,
+            "answer": null,
+            "created_at": "2026-09-28T15:24:55.842Z",
+            "updated_at": "2026-09-28T15:27:59.173Z",
+            "workflow_key": "development",
+            "workflow_revision": 3,
+            "blocker_ids": []
+          },
+          {
+            "id": 2,
+            "task_plan_id": 1,
+            "workflow_id": 1,
+            "key": "beta",
+            "title": "Add Beta.message",
+            "status": "active",
+            "current_step": "plan",
+            "claim_id": "claim-sha256:7ca422e0dc097328843f750013d9393a56d1ee403339a25ed8cc6b801ddb2356",
+            "version": 1,
+            "pause_kind": null,
+            "pause_message": null,
+            "pause_step": null,
+            "answer": null,
+            "created_at": "2026-09-28T15:24:55.852Z",
+            "updated_at": "2026-09-28T15:27:10.671Z",
+            "workflow_key": "development",
+            "workflow_revision": 3,
+            "blocker_ids": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "status-after-cancel",
+      "command": "kos status --remote origin",
+      "source_output_sha256": "3a4fb1f9a4650b53ef40a85d7d2e0cd1139e351bd35890103f6611969dbfd86d",
+      "output": {
+        "project": {
+          "id": 1,
+          "name": "KOS recovery acceptance 040",
+          "repository_identity": "github.com/atilla777/kos-recovery-acceptance-040",
+          "remote_url": "git@github.com:atilla777/kos-recovery-acceptance-040.git",
+          "default_branch": "main",
+          "created_at": "2026-09-28T15:23:33.769Z",
+          "updated_at": "2026-09-28T15:23:33.769Z"
+        },
+        "task_plans": [
+          {
+            "id": 1,
+            "project_id": 1,
+            "key": "alpha-beta-messages",
+            "title": "Add independent Alpha and Beta messages",
+            "status": "active",
+            "version": 3,
+            "created_at": "2026-09-28T15:24:55.818Z",
+            "updated_at": "2026-09-28T15:27:59.174Z"
+          }
+        ],
+        "tasks": [
+          {
+            "id": 1,
+            "task_plan_id": 1,
+            "workflow_id": 1,
+            "key": "alpha",
+            "title": "Add Alpha.message",
+            "status": "pending",
+            "current_step": "implement",
+            "claim_id": null,
+            "version": 2,
+            "pause_kind": null,
+            "pause_message": null,
+            "pause_step": null,
+            "answer": null,
+            "created_at": "2026-09-28T15:24:55.842Z",
+            "updated_at": "2026-09-28T15:27:59.173Z",
+            "workflow_key": "development",
+            "workflow_revision": 3,
+            "blocker_ids": []
+          },
+          {
+            "id": 2,
+            "task_plan_id": 1,
+            "workflow_id": 1,
+            "key": "beta",
+            "title": "Add Beta.message",
+            "status": "active",
+            "current_step": "plan",
+            "claim_id": "claim-sha256:7ca422e0dc097328843f750013d9393a56d1ee403339a25ed8cc6b801ddb2356",
+            "version": 1,
+            "pause_kind": null,
+            "pause_message": null,
+            "pause_step": null,
+            "answer": null,
+            "created_at": "2026-09-28T15:24:55.852Z",
+            "updated_at": "2026-09-28T15:27:10.671Z",
+            "workflow_key": "development",
+            "workflow_revision": 3,
+            "blocker_ids": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "release",
+      "command": "kos task release 2 --claim-id <exact> --version 1 --step plan",
+      "source_output_sha256": "d66d0ae5d61f94b2fa289a7e9e6a2aad9263fe760da22d5803751bccb572a726",
+      "output": {
+        "task": {
+          "id": 2,
+          "task_plan_id": 1,
+          "workflow_id": 1,
+          "key": "beta",
+          "title": "Add Beta.message",
+          "status": "pending",
+          "current_step": "plan",
+          "claim_id": null,
+          "version": 2,
+          "pause_kind": null,
+          "pause_message": null,
+          "pause_step": null,
+          "answer": null,
+          "created_at": "2026-09-28T15:24:55.852Z",
+          "updated_at": "2026-09-28T15:30:22.300Z",
+          "workflow_key": "development",
+          "workflow_revision": 3,
+          "blocker_ids": []
+        }
+      }
+    },
+    {
+      "name": "stale-report",
+      "command": "kos task report 2 --claim-id <released> --version 1 --step plan --outcome planned",
+      "source_output_sha256": "b177300d3f1c45053f396ff6b992293236a81cf01dd5b690a51769dc5e845699",
+      "output": {
+        "error": "conflict",
+        "message": "task claim, version, or step is stale"
+      }
+    },
+    {
+      "name": "status-after-release",
+      "command": "kos status --remote origin",
+      "source_output_sha256": "afdff233d016fd6be7164f2a754fe7d39502b69814229f84ffec78ac52da27d3",
+      "output": {
+        "project": {
+          "id": 1,
+          "name": "KOS recovery acceptance 040",
+          "repository_identity": "github.com/atilla777/kos-recovery-acceptance-040",
+          "remote_url": "git@github.com:atilla777/kos-recovery-acceptance-040.git",
+          "default_branch": "main",
+          "created_at": "2026-09-28T15:23:33.769Z",
+          "updated_at": "2026-09-28T15:23:33.769Z"
+        },
+        "task_plans": [
+          {
+            "id": 1,
+            "project_id": 1,
+            "key": "alpha-beta-messages",
+            "title": "Add independent Alpha and Beta messages",
+            "status": "active",
+            "version": 4,
+            "created_at": "2026-09-28T15:24:55.818Z",
+            "updated_at": "2026-09-28T15:30:22.306Z"
+          }
+        ],
+        "tasks": [
+          {
+            "id": 1,
+            "task_plan_id": 1,
+            "workflow_id": 1,
+            "key": "alpha",
+            "title": "Add Alpha.message",
+            "status": "pending",
+            "current_step": "implement",
+            "claim_id": null,
+            "version": 2,
+            "pause_kind": null,
+            "pause_message": null,
+            "pause_step": null,
+            "answer": null,
+            "created_at": "2026-09-28T15:24:55.842Z",
+            "updated_at": "2026-09-28T15:27:59.173Z",
+            "workflow_key": "development",
+            "workflow_revision": 3,
+            "blocker_ids": []
+          },
+          {
+            "id": 2,
+            "task_plan_id": 1,
+            "workflow_id": 1,
+            "key": "beta",
+            "title": "Add Beta.message",
+            "status": "pending",
+            "current_step": "plan",
+            "claim_id": null,
+            "version": 2,
+            "pause_kind": null,
+            "pause_message": null,
+            "pause_step": null,
+            "answer": null,
+            "created_at": "2026-09-28T15:24:55.852Z",
+            "updated_at": "2026-09-28T15:30:22.300Z",
+            "workflow_key": "development",
+            "workflow_revision": 3,
+            "blocker_ids": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "status-interrupted",
+      "command": "kos status --remote origin",
+      "source_output_sha256": "5b32279208ab41dba121a9f635ed4232e7aca682d8f51f114b68b52fe6590029",
+      "output": {
+        "project": {
+          "id": 1,
+          "name": "KOS recovery acceptance 040",
+          "repository_identity": "github.com/atilla777/kos-recovery-acceptance-040",
+          "remote_url": "git@github.com:atilla777/kos-recovery-acceptance-040.git",
+          "default_branch": "main",
+          "created_at": "2026-09-28T15:23:33.769Z",
+          "updated_at": "2026-09-28T15:23:33.769Z"
+        },
+        "task_plans": [
+          {
+            "id": 1,
+            "project_id": 1,
+            "key": "alpha-beta-messages",
+            "title": "Add independent Alpha and Beta messages",
+            "status": "active",
+            "version": 6,
+            "created_at": "2026-09-28T15:24:55.818Z",
+            "updated_at": "2026-09-28T15:31:33.400Z"
+          }
+        ],
+        "tasks": [
+          {
+            "id": 1,
+            "task_plan_id": 1,
+            "workflow_id": 1,
+            "key": "alpha",
+            "title": "Add Alpha.message",
+            "status": "active",
+            "current_step": "implement",
+            "claim_id": "claim-sha256:363d4edad55a5c4e235dcb8b26e929857641d2672ebf77dce6e3d7cc9fa5d710",
+            "version": 3,
+            "pause_kind": null,
+            "pause_message": null,
+            "pause_step": null,
+            "answer": null,
+            "created_at": "2026-09-28T15:24:55.842Z",
+            "updated_at": "2026-09-28T15:31:33.382Z",
+            "workflow_key": "development",
+            "workflow_revision": 3,
+            "blocker_ids": []
+          },
+          {
+            "id": 2,
+            "task_plan_id": 1,
+            "workflow_id": 1,
+            "key": "beta",
+            "title": "Add Beta.message",
+            "status": "active",
+            "current_step": "plan",
+            "claim_id": "claim-sha256:91b1fc5e0c4f9d1179835bd32d60eb0a7b0670e259d5e16db432c76b971dbe9f",
+            "version": 3,
+            "pause_kind": null,
+            "pause_message": null,
+            "pause_step": null,
+            "answer": null,
+            "created_at": "2026-09-28T15:24:55.852Z",
+            "updated_at": "2026-09-28T15:31:33.399Z",
+            "workflow_key": "development",
+            "workflow_revision": 3,
+            "blocker_ids": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "status-fresh-before",
+      "command": "kos status --remote origin",
+      "source_output_sha256": "5b32279208ab41dba121a9f635ed4232e7aca682d8f51f114b68b52fe6590029",
+      "output": {
+        "project": {
+          "id": 1,
+          "name": "KOS recovery acceptance 040",
+          "repository_identity": "github.com/atilla777/kos-recovery-acceptance-040",
+          "remote_url": "git@github.com:atilla777/kos-recovery-acceptance-040.git",
+          "default_branch": "main",
+          "created_at": "2026-09-28T15:23:33.769Z",
+          "updated_at": "2026-09-28T15:23:33.769Z"
+        },
+        "task_plans": [
+          {
+            "id": 1,
+            "project_id": 1,
+            "key": "alpha-beta-messages",
+            "title": "Add independent Alpha and Beta messages",
+            "status": "active",
+            "version": 6,
+            "created_at": "2026-09-28T15:24:55.818Z",
+            "updated_at": "2026-09-28T15:31:33.400Z"
+          }
+        ],
+        "tasks": [
+          {
+            "id": 1,
+            "task_plan_id": 1,
+            "workflow_id": 1,
+            "key": "alpha",
+            "title": "Add Alpha.message",
+            "status": "active",
+            "current_step": "implement",
+            "claim_id": "claim-sha256:363d4edad55a5c4e235dcb8b26e929857641d2672ebf77dce6e3d7cc9fa5d710",
+            "version": 3,
+            "pause_kind": null,
+            "pause_message": null,
+            "pause_step": null,
+            "answer": null,
+            "created_at": "2026-09-28T15:24:55.842Z",
+            "updated_at": "2026-09-28T15:31:33.382Z",
+            "workflow_key": "development",
+            "workflow_revision": 3,
+            "blocker_ids": []
+          },
+          {
+            "id": 2,
+            "task_plan_id": 1,
+            "workflow_id": 1,
+            "key": "beta",
+            "title": "Add Beta.message",
+            "status": "active",
+            "current_step": "plan",
+            "claim_id": "claim-sha256:91b1fc5e0c4f9d1179835bd32d60eb0a7b0670e259d5e16db432c76b971dbe9f",
+            "version": 3,
+            "pause_kind": null,
+            "pause_message": null,
+            "pause_step": null,
+            "answer": null,
+            "created_at": "2026-09-28T15:24:55.852Z",
+            "updated_at": "2026-09-28T15:31:33.399Z",
+            "workflow_key": "development",
+            "workflow_revision": 3,
+            "blocker_ids": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "status-final",
+      "command": "kos status --remote origin",
+      "source_output_sha256": "4a4c73b7ce00dab8fdec38c4bc6aff0b7ad8bf5acc27fe20e7c3bebc7c835c7b",
+      "output": {
+        "project": {
+          "id": 1,
+          "name": "KOS recovery acceptance 040",
+          "repository_identity": "github.com/atilla777/kos-recovery-acceptance-040",
+          "remote_url": "git@github.com:atilla777/kos-recovery-acceptance-040.git",
+          "default_branch": "main",
+          "created_at": "2026-09-28T15:23:33.769Z",
+          "updated_at": "2026-09-28T15:23:33.769Z"
+        },
+        "task_plans": [],
+        "tasks": []
+      }
+    },
+    {
+      "name": "tasks-final",
+      "command": "kos task list --project-id 1 --include-completed",
+      "source_output_sha256": "c87ba36b1cd5b038579493c85ad229740e797a35b0cb499d5c210e8e02c4bbe8",
+      "output": {
+        "tasks": [
+          {
+            "id": 1,
+            "task_plan_id": 1,
+            "workflow_id": 1,
+            "key": "alpha",
+            "title": "Add Alpha.message",
+            "status": "completed",
+            "current_step": "publish",
+            "claim_id": null,
+            "version": 9,
+            "pause_kind": null,
+            "pause_message": null,
+            "pause_step": null,
+            "answer": null,
+            "created_at": "2026-09-28T15:24:55.842Z",
+            "updated_at": "2026-09-28T15:38:44.684Z",
+            "workflow_key": "development",
+            "workflow_revision": 3,
+            "blocker_ids": []
+          },
+          {
+            "id": 2,
+            "task_plan_id": 1,
+            "workflow_id": 1,
+            "key": "beta",
+            "title": "Add Beta.message",
+            "status": "completed",
+            "current_step": "publish",
+            "claim_id": null,
+            "version": 11,
+            "pause_kind": null,
+            "pause_message": null,
+            "pause_step": null,
+            "answer": null,
+            "created_at": "2026-09-28T15:24:55.852Z",
+            "updated_at": "2026-09-28T15:40:09.046Z",
+            "workflow_key": "development",
+            "workflow_revision": 3,
+            "blocker_ids": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "plans-final",
+      "command": "kos plan list --project-id 1 --include-completed",
+      "source_output_sha256": "e117bef487ee52c1817b3708215a927bcbae2fab061415a07bd8221f1eddacf6",
+      "output": {
+        "task_plans": [
+          {
+            "id": 1,
+            "project_id": 1,
+            "key": "alpha-beta-messages",
+            "title": "Add independent Alpha and Beta messages",
+            "status": "active",
+            "version": 20,
+            "created_at": "2026-09-28T15:24:55.818Z",
+            "updated_at": "2026-09-28T15:40:09.046Z"
+          }
+        ]
+      }
+    },
+    {
+      "name": "task-1-plan",
+      "command": "kos task result 1 --step plan",
+      "source_output_sha256": "d487181bce057976c48924ac21ffcb7c411c2206fdf36ec07cb832dc6c91e044",
+      "output": {
+        "outcome": "planned",
+        "result": "1. Add `lib/alpha.rb` with an `Alpha` module whose `self.message` method returns the exact string `\"alpha\"`. Keep the implementation standalone and minimal.\n2. Add `test/alpha_test.rb`, following the existing Minitest conventions, requiring `lib/alpha.rb` and asserting `assert_equal \"alpha\", Alpha.message`.\n3. Run `bin/check` to execute both the existing fixture test and the new focused Alpha test. Before committing in the later workflow step, confirm only these two task files are changed.\n"
+      }
+    },
+    {
+      "name": "task-1-implement",
+      "command": "kos task result 1 --step implement",
+      "source_output_sha256": "eaa75242d16b8a88d0a754c0a7acd323e1c1a0b769a2486a72e24ea60e32a544",
+      "output": {
+        "outcome": "implemented",
+        "result": "Implemented and committed Alpha.message in commit 182c725 (Add Alpha message).\n\nChanges:\n- Added lib/alpha.rb with Alpha.message returning exactly \"alpha\".\n- Added test/alpha_test.rb with a focused Minitest assertion for the exact return value.\n\nVerification:\n- bin/check: 2 runs, 2 assertions, 0 failures, 0 errors, 0 skips.\n- Working tree is clean; local main is ahead of origin/main by one commit.\n"
+      }
+    },
+    {
+      "name": "task-1-review",
+      "command": "kos task result 1 --step review",
+      "source_output_sha256": "47a35b821d9d20f9034a56e9644dcde022a86745ca5d4dd3d5d80b9f88701b9e",
+      "output": {
+        "outcome": "approved",
+        "result": "Independent review approved commit 182c725 (Add Alpha message).\n\nReviewed the full origin/main...HEAD diff and repository conventions. Alpha.message returns exactly \"alpha\", and the focused Minitest asserts that exact value. No actionable findings.\n\nVerification: git diff --check passed; bin/check passed with 3 runs, 3 assertions, 0 failures, 0 errors, and 0 skips. The working tree was clean and main was ahead of origin/main by exactly the reviewed commit.\n"
+      }
+    },
+    {
+      "name": "task-1-publish",
+      "command": "kos task result 1 --step publish",
+      "source_output_sha256": "0121980692fc206319edfbf059d6ea4958e159f79a4a8f44af876206b48c5a58",
+      "output": {
+        "outcome": "published",
+        "result": "Published the independently approved commit 182c725fd2678e777a4606922b38a1700c4cc716 (Add Alpha message) to the explicitly selected origin remote's main branch.\n\nObserved push result: origin/main advanced from 93c780c1c587bc2ffff3787a05c0c96eb26909d8 to 182c725fd2678e777a4606922b38a1700c4cc716. A subsequent git ls-remote confirmed refs/heads/main resolves to the approved commit. The later local Beta commit was not included in this publication.\n"
+      }
+    },
+    {
+      "name": "task-2-plan",
+      "command": "kos task result 2 --step plan",
+      "source_output_sha256": "72a5990be1f6c04d44adfddb45ddb5814fbf5ab457117ebea673d587a7f9b8cd",
+      "output": {
+        "outcome": "planned",
+        "result": "Plan:\n1. Add `lib/beta.rb` with a top-level `Beta` module exposing `Beta.message`, returning the exact string `\"beta\"`.\n2. Add `test/beta_test.rb` using Minitest, requiring `lib/beta.rb`, and asserting `Beta.message == \"beta\"`.\n3. Run `bin/check` to execute the complete sorted test suite and confirm both the new focused test and existing fixture test pass.\n\nScope is limited to the new implementation and focused test; no existing files need modification.\n"
+      }
+    },
+    {
+      "name": "task-2-implement",
+      "command": "kos task result 2 --step implement",
+      "source_output_sha256": "11196ae4f27926b244b4ba5b1e46abe718a9086d57111f2fda3deee321b437aa",
+      "output": {
+        "outcome": "implemented",
+        "result": "Implemented `Beta.message` in `lib/beta.rb`, returning exactly `beta`, with a focused Minitest in `test/beta_test.rb`.\n\nValidation: `bin/check` passes (3 runs, 3 assertions, 0 failures, 0 errors).\n\nCommit: `107e141 Add Beta message`. The working tree is clean.\n"
+      }
+    },
+    {
+      "name": "task-2-review",
+      "command": "kos task result 2 --step review",
+      "source_output_sha256": "6800c54714868e6421d7c87a1c69afc63400012c37eb7f48d71d09d862146ab8",
+      "output": {
+        "outcome": "approved",
+        "result": "Independent review approved commit 107e141a363d17802d648a32b5f7c1d762e2c8a1 with no actionable findings. The change is limited to `lib/beta.rb` and `test/beta_test.rb`; `Beta.message` returns exactly `\"beta\"`, and the focused Minitest asserts that exact value. `bin/check` passes with 3 runs, 3 assertions, 0 failures, and 0 errors. `git diff --check` passes and the worktree is clean.\n"
+      }
+    },
+    {
+      "name": "task-2-publish",
+      "command": "kos task result 2 --step publish",
+      "source_output_sha256": "1ac9c020aca9aa36bca6a4035dd9e90906715ce99ad4eb37d136b60d95066026",
+      "output": {
+        "outcome": "published",
+        "result": "Published approved commit `107e141a363d17802d648a32b5f7c1d762e2c8a1` to the explicitly selected `origin` remote's `main` branch.\n\nObserved result: `git push origin HEAD:refs/heads/main` advanced remote `main` from `182c725` to `107e141`. A subsequent `git ls-remote --heads origin refs/heads/main` returned the full approved commit SHA, matching local `HEAD`; the worktree remains clean and `main` is synchronized with `origin/main`.\n"
+      }
+    }
+  ]
+}

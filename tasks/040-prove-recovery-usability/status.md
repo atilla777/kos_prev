@@ -1,14 +1,16 @@
 # Status
 
-State: planned
+State: done
 Updated: 2026-09-28
 
 ## Current
 
-Task 031 proved the prior installed orchestration contract, but the reported
-external run exposed discoverability, planning-intent, cancellation, and
-recovery usability gaps that require a new end-to-end observation after their
-focused fixes land.
+The clean installed run proved CLI discovery, planning-only stop, observable
+runtime cancellation, exact release and stale-report rejection, fresh-session
+status and takeover, and completion through independent review and publication.
+The published fixture is
+`https://github.com/atilla777/kos-recovery-acceptance-040`; its observed remote
+`main` is retained in a self-contained bundle.
 
 ## Decisions
 
@@ -16,11 +18,24 @@ focused fixes land.
   dependency.
 - Treat source inspection, guessed workflow keys, fallback workflow creation,
   duplicate plans, and implicit execution as acceptance failures.
+- Retain sanitized tool events plus a complete line manifest so command ordering
+  and event-selection completeness are reviewable without publishing raw claims,
+  sessions, credentials, or full model transcripts.
+- No stable mechanical regression was found, so no product code or automated
+  regression test was required.
+
+## Checks
+
+- `bin/check`
+- `ruby tasks/040-prove-recovery-usability/artifacts/verify_evidence.rb`
+- Independent evidence review: no findings
+- Live remote observation: `origin/main` at
+  `107e141a363d17802d648a32b5f7c1d762e2c8a1`
 
 ## Next
 
-Begin after tasks 036 through 039 are complete.
+None.
 
 ## Blockers
 
-- Depends on tasks 036, 037, 038, and 039.
+- None.

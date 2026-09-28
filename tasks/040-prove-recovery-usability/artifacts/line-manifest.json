@@ -1,0 +1,1049 @@
+{
+  "streams": {
+    "planning": [
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609039202,
+        "raw_line_sha256": "62a78fbfce3036d7b8d28c3c5790421c0e720d763bdabf0dc27a02759b92792f"
+      },
+      {
+        "type": "text",
+        "timestamp_ms": 1790609040083,
+        "raw_line_sha256": "78e30bf2ba47ff0eb3edcc4ab171a0072dfdf51aadb44f9f033c463fc806c7b4"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609040339,
+        "raw_line_sha256": "0951dafbaabd2e0d23bb3160d1d4b6e3cf608a1927be16f9400067243f389407",
+        "tool": "skill",
+        "retained_event": false
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609040377,
+        "raw_line_sha256": "bb0decd14b320561902b1cad37a205b9765639a6b45893975e853a7a9cfa0c02"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609046663,
+        "raw_line_sha256": "c5629ccfee5cdeec14b0efa456c218392630c3be7c411be4c806c4d5ced2bac4"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609048479,
+        "raw_line_sha256": "aaca0a990c1fa8d432535e787ec36ee72310fd1e1dd880f61c3e1863f0ff10f7",
+        "tool": "skill",
+        "retained_event": false
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609048631,
+        "raw_line_sha256": "5f061c219e9af946756c4d48e8a96f700e56bb50fb52ca3327bebc72ad9a8ee7"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609051223,
+        "raw_line_sha256": "ad020dbc45b1cb79c9326867a528eccd1cc1bde6ba02311025e2441e4ece6211"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609053322,
+        "raw_line_sha256": "9ae1a41baeece7f8646d3015070fa03130f84e5ce55274a9a7a99b22fe3213fb",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609053331,
+        "raw_line_sha256": "69b44347b653aad9903ca3f6275f81913b75ccc6d872e10c0b8b24e9e8af3c05"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609056742,
+        "raw_line_sha256": "a570a01b23fe8cb6a3acd7eb0b5bec1cbc92dd44e122cd63a21913b48793860f"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609062477,
+        "raw_line_sha256": "3a535a81de90c114840dd1ab5fb6c0952fb1a2cd3e695560d7f4f8618b715bac",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609062487,
+        "raw_line_sha256": "a726135b4bceeb4ca5969a9b3f876e4c8a8bac40765b72d3d2262a9f53991891"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609064631,
+        "raw_line_sha256": "26d5eb3fc121201996a373d3dae756eb3e4813c474095d92ec6e5ef43c92a6c5"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609066007,
+        "raw_line_sha256": "3aef93557aeac911932da2c9d1e3e61bc8fb8a8c2221a81c11af4b7c96d9f36c",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609066021,
+        "raw_line_sha256": "3c0b6d0621c6d9f0b0e9ff9fea30506162987254e9889f6dd2df34a0959c1d63"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609069295,
+        "raw_line_sha256": "946cf3fbd1295e55254ae44187127771f2f44ced401fcd7d2e8bf595f8a4310f"
+      },
+      {
+        "type": "text",
+        "timestamp_ms": 1790609073346,
+        "raw_line_sha256": "cc7cd5c2ec86d915c862ff71e35aa2553dafbbf413e6ccc92bdcd672fae4166b"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609073439,
+        "raw_line_sha256": "2f488043a63c67a312c246ad42552e746cc33370367624e4046451e40c901009",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609073451,
+        "raw_line_sha256": "9d9222af11407ca51eda693f76b677f938b51a49bf57a99b34e2baca44fd4339",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609073467,
+        "raw_line_sha256": "16764c9590450f1776223d309a5da931cb5ea104445089db486db6055fcd3c56"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609078894,
+        "raw_line_sha256": "8e26caf47ba5e39bd38099f9ddb0e382b3d355b182ee9b50b839ca67ea7cb3ca"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609095898,
+        "raw_line_sha256": "5b80f5fe82b60cb1732f5b781c818923c701d576c7eb2f0af9be9b974fbde6f2",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609095913,
+        "raw_line_sha256": "80bf5d963200e1744a8a28869f02655bf5b4e715eab82978af0fe35c39c6726f"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609098097,
+        "raw_line_sha256": "92c4b297d628b097a98b811941f56c08b60d35e99c3f3a7fa53bf7dfe8f0be30"
+      },
+      {
+        "type": "text",
+        "timestamp_ms": 1790609100100,
+        "raw_line_sha256": "8e1b7bf4be92d09dfba9ec1267991e6cd548774ba46fbfed27db9cebc1ba0eff"
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609100161,
+        "raw_line_sha256": "bf40b750b50858c98853d91203b8a750ec2275212f9a0d80c2af56f067ccd175"
+      }
+    ],
+    "execution": [
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609174462,
+        "raw_line_sha256": "9c14e546ccc9b7a9df86c86155b121c7db3e5e3218ec56cc12033a4088d8ca23"
+      },
+      {
+        "type": "text",
+        "timestamp_ms": 1790609175496,
+        "raw_line_sha256": "6e6f858b67165c2e3ccb3549242f875f43fa0f62645b43f5bcf9a314099bc34e"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609175719,
+        "raw_line_sha256": "21b708818b54a5aa02a2bba94e68736abcafac86c4e1245c49fd77910ca4e09d",
+        "tool": "skill",
+        "retained_event": false
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609175761,
+        "raw_line_sha256": "efe20c1fefda7617c1e62e168246515b0cef89f709bfc38df5ac420ef5117903"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609177750,
+        "raw_line_sha256": "3e9160344216802bee6780e0d516906fc9eed64dc7e8ed1a27194d5a5ecb9f76"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609178570,
+        "raw_line_sha256": "8a91c4fdc7998a8c8bcea2393059a02447c479ea2b94106ecbcd5b2b04deb2b4",
+        "tool": "skill",
+        "retained_event": false
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609178640,
+        "raw_line_sha256": "2ecad1b57c9bea59ef9c567168fe069256f283cdc0b36d29d0925b12a33582e8"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609200467,
+        "raw_line_sha256": "8684b63403950b2ebea0b7d428f40b96fa5eaa19d15341118f615014e5602e64"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609202333,
+        "raw_line_sha256": "50ec3124391591c7ed7ba1ca55983cb319ca0f33dd5c0f17350e3ee4829beb4f",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609202343,
+        "raw_line_sha256": "b5393119b49890465344cc6dd2ac7f3144ad3cecec5e7ff04850952c776d7963"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609204907,
+        "raw_line_sha256": "515214abe720c74cb1d3da719c79316c6f9b922694448ddc73f659eb09c9d01f"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609206136,
+        "raw_line_sha256": "8b4346891e7a7470508530ade9a1adc3751d5581fb7bd5d478051883c02a59df",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609206254,
+        "raw_line_sha256": "3e09608e5881243578de0df1eccc49bfa816b34c31816127b4f01e019fac2e3a"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609210642,
+        "raw_line_sha256": "b5f72eecce1d3aec7bbb9c5e1d50dda4214595b702864ed146577e3ca9537f24"
+      },
+      {
+        "type": "text",
+        "timestamp_ms": 1790609213305,
+        "raw_line_sha256": "18aa8247209ef66a25310d32868aa1219b98749fcae5533470c191f9d3f4c0b5"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609213474,
+        "raw_line_sha256": "3f6f383f23507c94cbd50610bc3ce00962e808aefa10944d13f29a02dc5b1e5c",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609213483,
+        "raw_line_sha256": "8397663f8d3cc143690d8ed6fcaa11b2d3db78ba3f561b898e12473f982c20db"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609215613,
+        "raw_line_sha256": "55762eca31b85bc6f47218ab4bcc511574f8da388f039aa60804031b6adcf062"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609218103,
+        "raw_line_sha256": "c57215fae7fa007b165ae0251f4a06aff0dea8fb5f3cb27624780b2a46d12153",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609218195,
+        "raw_line_sha256": "91e445d391e58cc77c0aa2ebe31cd974fb2b9aa9bfa29d95d80a6a80082a0fda",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609218226,
+        "raw_line_sha256": "f97ff3db7531f35e605d18053829d8a286714a88e53e4bcd7f6deec56622b68e"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609220214,
+        "raw_line_sha256": "36322ec437dc87a93b3beef00522344ff5386b01c5a04793349ca5db5fa67d66"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609224063,
+        "raw_line_sha256": "e9022cdad829f8eed661783b48e7ed3fa345bb9a0c580ece635559ab5635e4ca",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609224070,
+        "raw_line_sha256": "29b1ffb7f4829b729996c9b853c07d0799c6315bfe4db6cb8008a6fa817865f1",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609224079,
+        "raw_line_sha256": "0eac2c145149fdbce67643866d045f98862f5885c0af6dfc710a15a5aecb0fc3"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609227259,
+        "raw_line_sha256": "ffc896e27ae81c163ba0f5128dbb7d7aaa845b70dd60e15e42c55328f5f815db"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609230671,
+        "raw_line_sha256": "a54f367608478852d64ab880dae6c3b576a73dea92ff3af4626f958999efafe9",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609230686,
+        "raw_line_sha256": "2eeea22107344b9c4581cac391f3de62744af132585b8f776b11f0894e6405a1",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609230702,
+        "raw_line_sha256": "8417bdfa547d1514468024076c44d4b4c5cb1c4f5d658f14e5c4bb9ca27f37d6"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609232737,
+        "raw_line_sha256": "4a6d22c6ffdc9679e97650403556145a47bfcbf5168ce2447a8e7560ed196af8"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609283269,
+        "raw_line_sha256": "a164b1e294f42bc97232b4f9c74334602e21ae508700afea02797b2ac88e5b48",
+        "tool": "task",
+        "retained_event": true
+      }
+    ],
+    "interrupted": [
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609460211,
+        "raw_line_sha256": "0121ab87821480d39294a1762565a030d3d6a543efc8234e321494eb98efbb16"
+      },
+      {
+        "type": "text",
+        "timestamp_ms": 1790609460919,
+        "raw_line_sha256": "92b0d4742ccf5973b13550b7d03dcbb7b8bf18b96040e25c5bf055cd4a07c3ac"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609461197,
+        "raw_line_sha256": "5653450d4d854a5f774eca64c563f1d00d5cb92ac2ff539a0a99dc0f9188cb67",
+        "tool": "skill",
+        "retained_event": false
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609461256,
+        "raw_line_sha256": "681259a17d0a90cb01e110e79a90338b6db1d8db2fbdc030223d43b77a5457ce"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609463526,
+        "raw_line_sha256": "7ef73a42ed076810decfb433a007bee5aeb9b51cb275b0e9ca5903dfd22ff426"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609465128,
+        "raw_line_sha256": "a008557410a943f897c85b159b296487d4a6eaf14132ab3c1ee958cba6d18fce",
+        "tool": "skill",
+        "retained_event": false
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609465157,
+        "raw_line_sha256": "c4b9beb0b3dd2403411e8c2f27e67637492684b02408fadc944e1f1fda9e527b"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609467208,
+        "raw_line_sha256": "9d1caa0fcd65844379db3c09ea790e58180f42285217eb9452f8676117960920"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609468699,
+        "raw_line_sha256": "8a9d00c3f7794a69469073147a40e98cba300ef244f4c40e2dbac6579ff808a8",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609468708,
+        "raw_line_sha256": "52bde31fe1bed21b0865135cb700a61aeb6d5991b1f8b84cc85bd8c8a7f91ced"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609470730,
+        "raw_line_sha256": "79e23e822ce8ca13b70621ef640656ea90c27bff2868a2d4611a2adfa98718f5"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609472121,
+        "raw_line_sha256": "fb9b1743cf4c479e7afdb2d7caba5d52df8d9a5e5176e9044df69a038bd5617b",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609472133,
+        "raw_line_sha256": "85b6f3bc2a9b1c3bb9441c4bcc9af48243eacdaf284d52ca515c591f85a340e1"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609476927,
+        "raw_line_sha256": "008d845b20e65c9322edd1b1d9ed5fc2a3c950fa5f3cdc35b0e5dd1c37f0d22f"
+      },
+      {
+        "type": "text",
+        "timestamp_ms": 1790609477984,
+        "raw_line_sha256": "4c3300ec9fb8b207d2f5de7f343b2d233107209ca0b1829dc5efaaa7ffbb3762"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609478972,
+        "raw_line_sha256": "6f116c10dbcdd9238ff9a2672300475ff3fc7abbc5261d6db2b49f60aa41e12c",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609478981,
+        "raw_line_sha256": "3de1a2df94d334e288c0301b1b250d2af6f29a0c7e220ee2f82c622024adabf3"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609481222,
+        "raw_line_sha256": "00ca3bcdd3f545ad28cbe9b0595ca685dce992bca1d9df8cb13254fd64c455ea"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609483667,
+        "raw_line_sha256": "aefe9baa427a0769f3944d5b2841747ac468b7e81a548878d622e5cfaa7a230a",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609483690,
+        "raw_line_sha256": "93c112dbf31771e415eda0974c3edadfde834c8d063ed483e20aaae05a9d22f6",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609483699,
+        "raw_line_sha256": "585f0c77c0aaa0f49841b0f14cbdd15e44c2a133d2bbc03b7f2b3becef2cd55a"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609485853,
+        "raw_line_sha256": "41b420f2c3cd55d35ce0e44c298acd39c39cbe193fa7618d26a9fd3c339a9e46"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609487336,
+        "raw_line_sha256": "1f2b0df9cfa1bc156619d2dda750d3da287af6391a8fcf782606d6121d717069",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609487391,
+        "raw_line_sha256": "a13815ca76251d6c69660588f5fe942cb4c9dfe6a88dae0137c5df4c85aaba05"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609489974,
+        "raw_line_sha256": "5fb593d433de517760d0b5205302c0dac2f2573fd0b5d7090b55b0bce956723d"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609493394,
+        "raw_line_sha256": "1c5e43cefd5301ba52d4d75d29a5d829afaf642b44b30f91bcb60f54e436184f",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609493414,
+        "raw_line_sha256": "ecfe81e02b21988d827bf80f8ff6d08d18def516bd4b1dd94527a3926529b727",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609493422,
+        "raw_line_sha256": "35a1f5b4c849cd962c16e9e9b3ddf7bf4b3da0f6986315598b00d8966a5e9671"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609495561,
+        "raw_line_sha256": "eee455caf474d316c03fa7d1391dd1e44915f0107d8e35aafdaab6dd598e82c1"
+      }
+    ],
+    "recovery": [
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609542235,
+        "raw_line_sha256": "1597b07112e8358b88e40746aba6d010b65e8b86537b7ca99bf6670e55991be9"
+      },
+      {
+        "type": "text",
+        "timestamp_ms": 1790609543242,
+        "raw_line_sha256": "ec0400de78f7f2effa4e6b852c1026f98e8138a2100ad007f04337abbdd2ebf2"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609543806,
+        "raw_line_sha256": "14050d158c271eb3863edc1a249ab3a194e53e0d14f2341e110c45b2d2224fa2",
+        "tool": "skill",
+        "retained_event": false
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609544769,
+        "raw_line_sha256": "1fa858f38403612123c651455c9dbf469fa065a0afd68b4dcc764ad129e0dd9e"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609546824,
+        "raw_line_sha256": "f95b4765b846e6994f2f9a8235aa58fe59ca912b0703fd5f8e8b115700909879"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609548224,
+        "raw_line_sha256": "516da454e5c70861caa7676e10915f3f9b2a0759510e84e6837f6456aec11a64",
+        "tool": "skill",
+        "retained_event": false
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609548233,
+        "raw_line_sha256": "04760ac8c6e6e93ea531c70be121f2faf6fed1fbbd2a8db0a4025110ee1b2d0d"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609550583,
+        "raw_line_sha256": "4e3f4da29a2733445a59ea96d59bdd4f5c0ccc9875439fcdc3fc47b8ebd30355"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609552565,
+        "raw_line_sha256": "fd45dc42022425f8e010c132cc4568e092584069da3e491a627cd79a815eb954",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609552574,
+        "raw_line_sha256": "f10f6028b0adcff3ae313d3b1ef07171de375b5f5c0be60b51fec10c01b040d2"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609555104,
+        "raw_line_sha256": "ba9e062fb65cad2492cb88b5f1bb9ee633199dccbf73d464110fcff2e0f10bb5"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609556423,
+        "raw_line_sha256": "ad44a5e98dd3c7e55c1e8f85a0bd71a7731115f82ab7099b6b315c662db8c0c3",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609556432,
+        "raw_line_sha256": "30817e33aaa2dd00de88365a8172dbbb70a7540ab1a1c583f875572d3924546d"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609563836,
+        "raw_line_sha256": "7cacad030c382346bb0b5ab5a1ae6cb3f7529a11c82980ccac6667604af5a2c5"
+      },
+      {
+        "type": "text",
+        "timestamp_ms": 1790609584136,
+        "raw_line_sha256": "6a8fac1ddf98f8560966a6314c06f2b5c510546b8660df1e80af9bb2efb7ed07"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609584771,
+        "raw_line_sha256": "b93cae72e1d26b7153819a2008eb900d6c7640f575698dd8240973971d02651d",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609585547,
+        "raw_line_sha256": "03cb1d908ed19cf14bfbf9bb1ea3df0dd71bad4882c33a06321a700ff0f1ce05",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609585873,
+        "raw_line_sha256": "787237643aa38b265105992e6619dc13820b3c98c55b240eeb63ac10d1ea286d",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609585888,
+        "raw_line_sha256": "ef9e42e60e9efc9c22c2d78f91f3a3ec09df669ddfdc4ac9e60d506deeb77ea4"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609588590,
+        "raw_line_sha256": "91a92d7d4d860606f0c490be8b46252de7960196d58c20fe144ec5b20c4ed455"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609591904,
+        "raw_line_sha256": "0f071e138c402ed21639c122bbfa59e00a4c497cde31edbff56d08fa82dd4888",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609592074,
+        "raw_line_sha256": "00bbe501e020e462776b7bdb3d227246249d7dedbd162decb3e742bae981cfe8",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609592106,
+        "raw_line_sha256": "8f0dc96a2c92e6f55560dcc8364c3bb12645b2ed2001b460054fb5de64804039"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609595265,
+        "raw_line_sha256": "2b0bb7e551c985a13530a643aefda39cf5338627cd51a2c33d828afa82a73250"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609656789,
+        "raw_line_sha256": "54723859fe1f72be12771d0bef03c1546d1bc47c33987a00ef49b394aef475e6",
+        "tool": "task",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609703027,
+        "raw_line_sha256": "ed59aa4267aaaad812e10de9fd8ee88fcf36a3cabdaa94d4b58a32b930dfe158",
+        "tool": "task",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609703042,
+        "raw_line_sha256": "9b4a154323b2b82df2793c44b337583a99e965256c177e1e0db9f3040867f8c0"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609705302,
+        "raw_line_sha256": "b6f8908dbeaeea4bf0c476c577be3aa89f6bb765ae75dc7d69ad51d539aa3874"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609706682,
+        "raw_line_sha256": "81f0dc9881f784a995a3f4c2512cdba52b1dafb1609cf45fae1e7f2809bc6b34",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609706978,
+        "raw_line_sha256": "1861d9ced3700152a59bc0a52c8159190c759d92937a7f54aef784f04f49bc0d"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609710848,
+        "raw_line_sha256": "d5949f0bd88fe1b00eb94176816f26607931db78ba98eee709c53adca675d679"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609712309,
+        "raw_line_sha256": "7dab5e629147f9ee67edfc57b0abe1855f858c787b9958c769eb6edc2fe3900f",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609712438,
+        "raw_line_sha256": "384a7b906142f1f910d5ffdf7e5488b2cb1ee63175463a7fc407ee065a78c454"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609716611,
+        "raw_line_sha256": "d1bfcafb03037e3f0df93cf6a432519d3e29ff2963ec2e2fc786d0454cd7fff6"
+      },
+      {
+        "type": "text",
+        "timestamp_ms": 1790609720231,
+        "raw_line_sha256": "f0f491f3eb4c58bd904e15936a38abf10edda0856fc1d354f51c36ba10b40ac2"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609720400,
+        "raw_line_sha256": "0d1da23d2121af27911cdb3130151ff6bdd07fa4032d7eadccad693cf6e72c1a",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609720508,
+        "raw_line_sha256": "c6e6d35c101484673294d3f3c8e2b07c9e11b1873bb5f80cb7f796b61b2c9855",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609720840,
+        "raw_line_sha256": "9ad919d4b8e93727bd0ce56fc9c5c70293e0b6447a0e47d11342e2d18304d19e"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609726135,
+        "raw_line_sha256": "8080d91430b655ab8fdc189769ec6dab937d4c4e912a7e301c79d7160c6e5647"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609726307,
+        "raw_line_sha256": "40a796ee6055a97f52e46cb229e9ca5a5554d30d157eef842766bcc552cd8891",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609726329,
+        "raw_line_sha256": "420cce2ec6d2596e9201ed4e03c2b0614ed230b3333983397068bf8cff7d6d59",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609726529,
+        "raw_line_sha256": "635df295feae2b4e28299a66f3faf27493d16ba67d9d63879857c067e7bb168d"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609730718,
+        "raw_line_sha256": "a4dcf4d31dea8fbf880a9ebb8340758322029b9242b85392d55b949f2013d435"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609732283,
+        "raw_line_sha256": "e392eb9147580b8fcf080b376adf6e0d811094fe37c8d37baf60a7c17ea47ed3",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609732336,
+        "raw_line_sha256": "e6f87ce024240330fb32f8201f572a86d2df7d2ae81dcbe36abc8e9de6789bd4"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609735247,
+        "raw_line_sha256": "a9abf227658f72389d7f3689ac9f29f1d322169b80329b08f25f7040290f63c6"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609738710,
+        "raw_line_sha256": "f71bd703ba4340ef521016f9ff8ce6e6be15426f5d722f7d82857c0d3f58936f",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609738723,
+        "raw_line_sha256": "79a670838b1c28e2134ccafa07147a1275931e27eba7c60df7791a28fde6ac4b",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609738780,
+        "raw_line_sha256": "ba5a6f0426092077d8c3a3ae2b619830ee95d7046ce202aa2a4d576c5be66fd6"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609741333,
+        "raw_line_sha256": "43d0848393b88047376d2d58176cc5350659bc3f55c62ac85d15aaf7e1efbfe2"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609803394,
+        "raw_line_sha256": "06bc80f15ba1916305b877f6335e45746e9c646c1dda532b2bff193d9ee7e03c",
+        "tool": "task",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609830209,
+        "raw_line_sha256": "975101b323c67b37ac71545d54350688b0c01aaddc954289e7f7394fcef5e0a6",
+        "tool": "task",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609830228,
+        "raw_line_sha256": "5a18b7d305e8e5c9aa3cf40238f6bfc6376d55d2414bbcfbbd17c2985fd98876"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609834358,
+        "raw_line_sha256": "ca20a67150a5b0426b8908a54550d3dba8e8b1145a5b6c7ec5fb24c2cba41f09"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609836725,
+        "raw_line_sha256": "5b206aa501519bedd6a16c88916700fa6308db2825c4eaae192bdb41dc675809",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609836788,
+        "raw_line_sha256": "4b97d83c7c7bcd9340ca850ace804a33f34bde2aef33fd2e16981b2cc07b0724"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609839255,
+        "raw_line_sha256": "eacafc740e3a1f1461ffa15b7385e77662f6564a68a4b83b1409e3ec1511bdd0"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609840801,
+        "raw_line_sha256": "fc5b28b41cf9ff07c0b20069f721adf02589a6bfc2a00d164988e66f26ed0b32",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609840839,
+        "raw_line_sha256": "5d59bb4b9836a17479811a766b54b6b050bfe9ce4e6d9c954169ac1cf0bddda8"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609843599,
+        "raw_line_sha256": "bc88e4f77057e7f6a39401425f5c67f6d01cc02718c91fa22b6ad8f98a2658ef"
+      },
+      {
+        "type": "text",
+        "timestamp_ms": 1790609846376,
+        "raw_line_sha256": "dd01564c41875d4ee5c6aa111ae7a8e144ddd38b53ffea249d4f44c64dc7f1c3"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609846515,
+        "raw_line_sha256": "f8e8f3b074ffd63cad73a4cab2aa7a349a0e65d57fa88903785f5b1a1ab3818f",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609846530,
+        "raw_line_sha256": "fa8489538fe1bb2e9ce83e93606fce84c1a560ae91cd9fb32567a22651fb3a58",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609846554,
+        "raw_line_sha256": "82c68a4bf62e4648efc861e1906cb32f1126784aab412e0034b63f9f385db97d"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609852983,
+        "raw_line_sha256": "33aa6591240ab52e9c7e0db021407c3ae698faca48b84cd863272c32ce8ee09e"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609853193,
+        "raw_line_sha256": "3853bc432a48da6951f8a9a1315c5f1c11b743d6a3b5a3578f8d998e2ac5f4de",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609853197,
+        "raw_line_sha256": "4340ada92235775f19820636abaa5819ee493b0ac8097752d2461c62c66bea4d",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609853255,
+        "raw_line_sha256": "22be8eb48140445bf04775d634ab4c60b421b07dc58c1e3c6a83ed5687752b9b"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609859226,
+        "raw_line_sha256": "aae83066a7d1686f386e4a67934552b330a9ac91014cd08e8195914dd572a13f"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609916572,
+        "raw_line_sha256": "ead560581b83d04ff268deecee2c62f3204fd7bab207337fe68e3eef407cfd37",
+        "tool": "task",
+        "retained_event": true
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609928266,
+        "raw_line_sha256": "33fb42787e5c6a820e46716b6168a25f7c4eef4a78390fa977323f07e4f00946",
+        "tool": "task",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609928281,
+        "raw_line_sha256": "c1d2e1c02d70d9bf39a91ee13f74e30bbdc63ed5d542e80ee5c06b616b76a066"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609930793,
+        "raw_line_sha256": "9569a7ff84837ba4f41e021d586dc5527ddf9cb72b4260439fc7f448566b8313"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609932212,
+        "raw_line_sha256": "2e62acec0b251c1fbd84322583a115f694f078a6ed51ca24115c6783b4549cf2",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609932220,
+        "raw_line_sha256": "375ef781d7e3ae60f25b1f2d03b1e6254f0f339b1cbd02bf710f934fc371721a"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609934266,
+        "raw_line_sha256": "5560f493e2d1606a79e85997115b9b3a3dc6276de7ab09ffea2160e9c848cb04"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609935811,
+        "raw_line_sha256": "633ea4fe876f66663976cde4e449752e155e89a12b80bf8bdb71384701fce419",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609935850,
+        "raw_line_sha256": "25fae7142f8d4ebffd64650b9dbfc73c4337f20e71d78c058549699236cc7ca7"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609938692,
+        "raw_line_sha256": "b350f9ff3ace900f986450053fdf8e6460cf618e8bb41161bf04cf7ab6bc63d1"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609939580,
+        "raw_line_sha256": "ec7dfbd114dc867731421a5dfdc7fe9825891f583b4869e82bcf75ed764a40e8",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609939587,
+        "raw_line_sha256": "d9a927b591982daa0919151651805df764bc45439256b5fec01c6486600e9080"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609943273,
+        "raw_line_sha256": "a82f3415f26dddefbf3ee7b03e095d0c6c707fe4bc6ae400106404d36acbcb38"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790609945252,
+        "raw_line_sha256": "1bf380341b233a59ded15a8e79cd581a2a5bb27ff43a2004c7d566137e84fca9",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790609945265,
+        "raw_line_sha256": "17f18c0a935a74036da2d581ef1692ef52abdcf7bc526d9bfcf7541b390bf67d"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790609947711,
+        "raw_line_sha256": "5d107e788b9f88cf6a94d4cf30548c789edadcd1f4b33110b6bc062122f41bf5"
+      },
+      {
+        "type": "text",
+        "timestamp_ms": 1790609948307,
+        "raw_line_sha256": "e695e596003bbd8e3dc28891a9a676c15ba8e474ef967111565fe81d9d2072aa"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790610012883,
+        "raw_line_sha256": "1e79e4f01c530ec9326ade5f9bffd0060f2fd49282f4532f59fef0b7ce589ea3",
+        "tool": "task",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790610012898,
+        "raw_line_sha256": "65baa722d57a4086f38a788ac5a18dd22eb2211a80a8883fa8e991011b46f921"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790610015707,
+        "raw_line_sha256": "f78be0c4f95e0bd9b92c968f9b2fc0c44464f0a193f5315a06d3407bfd99ea13"
+      },
+      {
+        "type": "tool_use",
+        "timestamp_ms": 1790610016998,
+        "raw_line_sha256": "a808fd29867fe0bb9785bd5ee57998ba55007169f9a6fe8a8233235ebab72830",
+        "tool": "bash",
+        "retained_event": true
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790610017025,
+        "raw_line_sha256": "b748ab64bf4aed8c5fdaa102aa2b9a02554d055ad94ee66d370dd9f4861d4700"
+      },
+      {
+        "type": "step_start",
+        "timestamp_ms": 1790610020412,
+        "raw_line_sha256": "f7c0cca7c156c5b5a07ab19359ee39e7ced78bd0de143e3041b334531c9a235f"
+      },
+      {
+        "type": "text",
+        "timestamp_ms": 1790610022331,
+        "raw_line_sha256": "cf218758b69777f71281744f2afd8b1f676b653c6a23a538d7c9bf89a188215f"
+      },
+      {
+        "type": "step_finish",
+        "timestamp_ms": 1790610022363,
+        "raw_line_sha256": "35ad1a556b9cc95eb7eb724bbb5147aabfb8cf9065797131b5609217eab41aaf"
+      }
+    ]
+  }
+}

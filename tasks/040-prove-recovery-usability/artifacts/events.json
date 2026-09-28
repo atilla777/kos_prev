@@ -1,0 +1,1346 @@
+{
+  "events": [
+    {
+      "stream": "planning",
+      "timestamp_ms": 1790609053322,
+      "raw_line_sha256": "9ae1a41baeece7f8646d3015070fa03130f84e5ce55274a9a7a99b22fe3213fb",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" installation check",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"status\":\"ready\",\"version\":\"0.1.0\",\"source_id\":\"sha256:2029a0bfb7915fc2b6adb4f11be01133d6374007744f1b7558c3b14d2df93c2c\",\"manifest\":\"<RUN_ROOT>/opencode/kos-installation.json\"}\n",
+          "title": "\"$KOS_CLI_PATH\" installation check",
+          "time": {
+            "start": 1790609053156,
+            "end": 1790609053321
+          }
+        }
+      }
+    },
+    {
+      "stream": "planning",
+      "timestamp_ms": 1790609062477,
+      "raw_line_sha256": "3a535a81de90c114840dd1ab5fb6c0952fb1a2cd3e695560d7f4f8618b715bac",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" status --remote origin",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"project\":{\"id\":1,\"name\":\"KOS recovery acceptance 040\",\"repository_identity\":\"github.com/atilla777/kos-recovery-acceptance-040\",\"remote_url\":\"git@github.com:atilla777/kos-recovery-acceptance-040.git\",\"default_branch\":\"main\",\"created_at\":\"2026-09-28T15:23:33.769Z\",\"updated_at\":\"2026-09-28T15:23:33.769Z\"},\"task_plans\":[],\"tasks\":[]}",
+          "title": "\"$KOS_CLI_PATH\" status --remote origin",
+          "time": {
+            "start": 1790609062361,
+            "end": 1790609062475
+          }
+        }
+      }
+    },
+    {
+      "stream": "planning",
+      "timestamp_ms": 1790609066007,
+      "raw_line_sha256": "3aef93557aeac911932da2c9d1e3e61bc8fb8a8c2221a81c11af4b7c96d9f36c",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" workflow list",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"workflows\":[{\"id\":3,\"key\":\"brief\",\"name\":\"Brief\",\"revision\":3,\"definition_json\":{\"steps\":[{\"id\":\"brief\",\"name\":\"Brief\",\"instruction\":\"Specify the requested behavior and its acceptance criteria.\",\"outcomes\":{\"specified\":{\"next_step\":\"review\"},\"needs_human\":{\"pause\":\"needs_human\"},\"blocked\":{\"pause\":\"blocked\"}}},{\"id\":\"review\",\"name\":\"Review\",\"instruction\":\"Review the complete specification independently and report actionable findings.\",\"outcomes\":{\"approved\":{\"next_step\":\"publish\"},\"changes_requested\":{\"next_step\":\"brief\"},\"needs_human\":{\"pause\":\"needs_human\"},\"blocked\":{\"pause\":\"blocked\"}}},{\"id\":\"publish\",\"name\":\"Publish\",\"instruction\":\"Publish the approved specification and observe the result.\",\"outcomes\":{\"published\":{\"complete_task\":true},\"changes_requested\":{\"next_step\":\"brief\"},\"needs_human\":{\"pause\":\"needs_human\"},\"blocked\":{\"pause\":\"blocked\"}}}]},\"created_at\":\"2026-09-28T15:22:33.955Z\"},{\"id\":1,\"key\":\"development\",\"name\":\"Development\",\"revision\":3,\"definition_json\":{\"steps\":[{\"id\":\"plan\",\"name\":\"Plan\",\"instruction\":\"Plan the smallest coherent change and its verification.\",\"outcomes\":{\"planned\":{\"next_step\":\"implement\"},\"needs_human\":{\"pause\":\"needs_human\"},\"blocked\":{\"pause\":\"blocked\"}}},{\"id\":\"implement\",\"name\":\"Implement\",\"instruction\":\"Implement the plan, run appropriate checks, and record the result.\",\"outcomes\":{\"implemented\":{\"next_step\":\"review\"},\"replan\":{\"next_step\":\"plan\"},\"needs_human\":{\"pause\":\"needs_human\"},\"blocked\":{\"pause\":\"blocked\"}}},{\"id\":\"review\",\"name\":\"Review\",\"instruction\":\"Review the complete change independently and report actionable findings.\",\"outcomes\":{\"approved\":{\"next_step\":\"publish\"},\"changes_requested\":{\"next_step\":\"implement\"},\"replan\":{\"next_step\":\"plan\"},\"needs_human\":{\"pause\":\"needs_human\"},\"blocked\":{\"pause\":\"blocked\"}}},{\"id\":\"publish\",\"name\":\"Publish\",\"instruction\":\"Publish the approved change and observe the result.\",\"outcomes\":{\"published\":{\"complete_task\":true},\"changes_requested\":{\"next_step\":\"implement\"},\"needs_human\":{\"pause\":\"needs_human\"},\"blocked\":{\"pause\":\"blocked\"}}}]},\"created_at\":\"2026-09-28T15:22:33.941Z\"},{\"id\":2,\"key\":\"fix\",\"name\":\"Fix\",\"revision\":3,\"definition_json\":{\"steps\":[{\"id\":\"diagnose\",\"name\":\"Diagnose\",\"instruction\":\"Reproduce the problem and identify an evidenced root cause.\",\"outcomes\":{\"diagnosed\":{\"next_step\":\"plan\"},\"needs_human\":{\"pause\":\"needs_human\"},\"blocked\":{\"pause\":\"blocked\"}}},{\"id\":\"plan\",\"name\":\"Plan\",\"instruction\":\"Plan the smallest safe fix and regression verification.\",\"outcomes\":{\"planned\":{\"next_step\":\"implement\"},\"rediagnose\":{\"next_step\":\"diagnose\"},\"needs_human\":{\"pause\":\"needs_human\"},\"blocked\":{\"pause\":\"blocked\"}}},{\"id\":\"implement\",\"name\":\"Implement\",\"instruction\":\"Implement the fix, run appropriate checks, and record the result.\",\"outcomes\":{\"implemented\":{\"next_step\":\"review\"},\"replan\":{\"next_step\":\"plan\"},\"needs_human\":{\"pause\":\"needs_human\"},\"blocked\":{\"pause\":\"blocked\"}}},{\"id\":\"review\",\"name\":\"Review\",\"instruction\":\"Review the complete fix independently and report actionable findings.\",\"outcomes\":{\"approved\":{\"next_step\":\"publish\"},\"changes_requested\":{\"next_step\":\"implement\"},\"replan\":{\"next_step\":\"plan\"},\"needs_human\":{\"pause\":\"needs_human\"},\"blocked\":{\"pause\":\"blocked\"}}},{\"id\":\"publish\",\"name\":\"Publish\",\"instruction\":\"Publish the approved fix and observe the result.\",\"outcomes\":{\"published\":{\"complete_task\":true},\"changes_requested\":{\"next_step\":\"implement\"},\"needs_human\":{\"pause\":\"needs_human\"},\"blocked\":{\"pause\":\"blocked\"}}}]},\"created_at\":\"2026-09-28T15:22:33.950Z\"}]}",
+          "title": "\"$KOS_CLI_PATH\" workflow list",
+          "time": {
+            "start": 1790609065896,
+            "end": 1790609066006
+          }
+        }
+      }
+    },
+    {
+      "stream": "planning",
+      "timestamp_ms": 1790609073439,
+      "raw_line_sha256": "2f488043a63c67a312c246ad42552e746cc33370367624e4046451e40c901009",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" plan put --help",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "Usage: kos plan put [options]\n    -h, --help                       Show this help\n        --project-id ID              Required numeric project ID\n        --definition-file FILE       Required plan JSON file, or - for STDIN\n\nInput object: key, title, tasks. Each task requires exactly key, title, description_markdown,\nworkflow_key, and blocker_keys. Response: task_plan with id, project_id, key, title, status, version, created_at, updated_at; tasks[] with id, key, title, description_markdown, status, current_step, claim_id, version, workflow id/key/revision, and blocker_keys.\nExample: kos plan put --project-id 7 --definition-file plan.json\n",
+          "title": "\"$KOS_CLI_PATH\" plan put --help",
+          "time": {
+            "start": 1790609073335,
+            "end": 1790609073438
+          }
+        }
+      }
+    },
+    {
+      "stream": "planning",
+      "timestamp_ms": 1790609073451,
+      "raw_line_sha256": "9d9222af11407ca51eda693f76b677f938b51a49bf57a99b34e2baca44fd4339",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" plan show --help",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "Usage: kos plan show [options]\n    -h, --help                       Show this help\n        --project-id ID              Required numeric project ID\n        --key KEY                    Required task plan key\n\nResponse: task_plan with id, project_id, key, title, status, version, created_at, updated_at; tasks[] with id, key, title, description_markdown, status, current_step, claim_id, version, workflow id/key/revision, and blocker_keys.\nExample: kos plan show --project-id 7 --key release\n",
+          "title": "\"$KOS_CLI_PATH\" plan show --help",
+          "time": {
+            "start": 1790609073342,
+            "end": 1790609073448
+          }
+        }
+      }
+    },
+    {
+      "stream": "planning",
+      "timestamp_ms": 1790609095898,
+      "raw_line_sha256": "5b80f5fe82b60cb1732f5b781c818923c701d576c7eb2f0af9be9b974fbde6f2",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" plan put --project-id 1 --definition-file - <<< '{\"key\":\"alpha-beta-messages\",\"title\":\"Add independent Alpha and Beta messages\",\"tasks\":[{\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"description_markdown\":\"Add `lib/alpha.rb` defining `Alpha.message` to return exactly `alpha`. Add a focused Minitest covering that exact return value. Run `bin/check` successfully, commit the task as one coherent change, obtain independent review through the development workflow, and publish the reviewed commit to the explicitly selected `origin` remote.\",\"workflow_key\":\"development\",\"blocker_keys\":[]},{\"key\":\"beta\",\"title\":\"Add Beta.message\",\"description_markdown\":\"Add `lib/beta.rb` defining `Beta.message` to return exactly `beta`. Add a focused Minitest covering that exact return value. Run `bin/check` successfully, commit the task as one coherent change, obtain independent review through the development workflow, and publish the reviewed commit to the explicitly selected `origin` remote.\",\"workflow_key\":\"development\",\"blocker_keys\":[]}]}'",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"task_plan\":{\"id\":1,\"project_id\":1,\"key\":\"alpha-beta-messages\",\"title\":\"Add independent Alpha and Beta messages\",\"status\":\"active\",\"version\":0,\"created_at\":\"2026-09-28T15:24:55.818Z\",\"updated_at\":\"2026-09-28T15:24:55.818Z\"},\"tasks\":[{\"id\":1,\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"description_markdown\":\"Add `lib/alpha.rb` defining `Alpha.message` to return exactly `alpha`. Add a focused Minitest covering that exact return value. Run `bin/check` successfully, commit the task as one coherent change, obtain independent review through the development workflow, and publish the reviewed commit to the explicitly selected `origin` remote.\",\"status\":\"pending\",\"current_step\":\"plan\",\"claim_id\":null,\"version\":0,\"workflow\":{\"id\":1,\"key\":\"development\",\"revision\":3},\"blocker_keys\":[]},{\"id\":2,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"description_markdown\":\"Add `lib/beta.rb` defining `Beta.message` to return exactly `beta`. Add a focused Minitest covering that exact return value. Run `bin/check` successfully, commit the task as one coherent change, obtain independent review through the development workflow, and publish the reviewed commit to the explicitly selected `origin` remote.\",\"status\":\"pending\",\"current_step\":\"plan\",\"claim_id\":null,\"version\":0,\"workflow\":{\"id\":1,\"key\":\"development\",\"revision\":3},\"blocker_keys\":[]}]}",
+          "title": "\"$KOS_CLI_PATH\" plan put --project-id 1 --definition-file - <<< '{\"key\":\"alpha-beta-messages\",\"title\":\"Add independent Alpha and Beta messages\",\"tasks\":[{\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"description_markdown\":\"Add `lib/alpha.rb` defining `Alpha.message` to return exactly `alpha`. Add a focused Minitest covering that exact return value. Run `bin/check` successfully, commit the task as one coherent change, obtain independent review through the development workflow, and publish the reviewed commit to the explicitly selected `origin` remote.\",\"workflow_key\":\"development\",\"blocker_keys\":[]},{\"key\":\"beta\",\"title\":\"Add Beta.message\",\"description_markdown\":\"Add `lib/beta.rb` defining `Beta.message` to return exactly `beta`. Add a focused Minitest covering that exact return value. Run `bin/check` successfully, commit the task as one coherent change, obtain independent review through the development workflow, and publish the reviewed commit to the explicitly selected `origin` remote.\",\"workflow_key\":\"development\",\"blocker_keys\":[]}]}'",
+          "time": {
+            "start": 1790609095699,
+            "end": 1790609095895
+          }
+        }
+      }
+    },
+    {
+      "stream": "execution",
+      "timestamp_ms": 1790609202333,
+      "raw_line_sha256": "50ec3124391591c7ed7ba1ca55983cb319ca0f33dd5c0f17350e3ee4829beb4f",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" installation check",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"status\":\"ready\",\"version\":\"0.1.0\",\"source_id\":\"sha256:2029a0bfb7915fc2b6adb4f11be01133d6374007744f1b7558c3b14d2df93c2c\",\"manifest\":\"<RUN_ROOT>/opencode/kos-installation.json\"}\n",
+          "title": "\"$KOS_CLI_PATH\" installation check",
+          "time": {
+            "start": 1790609202188,
+            "end": 1790609202331
+          }
+        }
+      }
+    },
+    {
+      "stream": "execution",
+      "timestamp_ms": 1790609206136,
+      "raw_line_sha256": "8b4346891e7a7470508530ade9a1adc3751d5581fb7bd5d478051883c02a59df",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" status --remote origin",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"project\":{\"id\":1,\"name\":\"KOS recovery acceptance 040\",\"repository_identity\":\"github.com/atilla777/kos-recovery-acceptance-040\",\"remote_url\":\"git@github.com:atilla777/kos-recovery-acceptance-040.git\",\"default_branch\":\"main\",\"created_at\":\"2026-09-28T15:23:33.769Z\",\"updated_at\":\"2026-09-28T15:23:33.769Z\"},\"task_plans\":[{\"id\":1,\"project_id\":1,\"key\":\"alpha-beta-messages\",\"title\":\"Add independent Alpha and Beta messages\",\"status\":\"active\",\"version\":0,\"created_at\":\"2026-09-28T15:24:55.818Z\",\"updated_at\":\"2026-09-28T15:24:55.818Z\"}],\"tasks\":[{\"id\":1,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"status\":\"pending\",\"current_step\":\"plan\",\"claim_id\":null,\"version\":0,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.842Z\",\"updated_at\":\"2026-09-28T15:24:55.842Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]},{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"pending\",\"current_step\":\"plan\",\"claim_id\":null,\"version\":0,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:24:55.852Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}]}",
+          "title": "\"$KOS_CLI_PATH\" status --remote origin",
+          "time": {
+            "start": 1790609206029,
+            "end": 1790609206135
+          }
+        }
+      }
+    },
+    {
+      "stream": "execution",
+      "timestamp_ms": 1790609213474,
+      "raw_line_sha256": "3f6f383f23507c94cbd50610bc3ce00962e808aefa10944d13f29a02dc5b1e5c",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task ready --project-id 1",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"tasks\":[{\"id\":1,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"status\":\"pending\",\"current_step\":\"plan\",\"claim_id\":null,\"version\":0,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.842Z\",\"updated_at\":\"2026-09-28T15:24:55.842Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]},{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"pending\",\"current_step\":\"plan\",\"claim_id\":null,\"version\":0,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:24:55.852Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}]}",
+          "title": "\"$KOS_CLI_PATH\" task ready --project-id 1",
+          "time": {
+            "start": 1790609213354,
+            "end": 1790609213473
+          }
+        }
+      }
+    },
+    {
+      "stream": "execution",
+      "timestamp_ms": 1790609218103,
+      "raw_line_sha256": "c57215fae7fa007b165ae0251f4a06aff0dea8fb5f3cb27624780b2a46d12153",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" claim-id",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "claim-sha256:d685cf91d30e86f19867e7fcfcbc9de8d278aa83d1ab3a9f1ea27ab57aaf09f5\n",
+          "title": "\"$KOS_CLI_PATH\" claim-id",
+          "time": {
+            "start": 1790609217997,
+            "end": 1790609218093
+          }
+        }
+      }
+    },
+    {
+      "stream": "execution",
+      "timestamp_ms": 1790609218195,
+      "raw_line_sha256": "91e445d391e58cc77c0aa2ebe31cd974fb2b9aa9bfa29d95d80a6a80082a0fda",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" claim-id",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "claim-sha256:7ca422e0dc097328843f750013d9393a56d1ee403339a25ed8cc6b801ddb2356\n",
+          "title": "\"$KOS_CLI_PATH\" claim-id",
+          "time": {
+            "start": 1790609218101,
+            "end": 1790609218194
+          }
+        }
+      }
+    },
+    {
+      "stream": "execution",
+      "timestamp_ms": 1790609224063,
+      "raw_line_sha256": "e9022cdad829f8eed661783b48e7ed3fa345bb9a0c580ece635559ab5635e4ca",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task claim 1 --claim-id claim-sha256:d685cf91d30e86f19867e7fcfcbc9de8d278aa83d1ab3a9f1ea27ab57aaf09f5",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"error\":\"usage_error\",\"message\":\"missing required options: --version\"}\n",
+          "title": "\"$KOS_CLI_PATH\" task claim 1 --claim-id claim-sha256:d685cf91d30e86f19867e7fcfcbc9de8d278aa83d1ab3a9f1ea27ab57aaf09f5",
+          "time": {
+            "start": 1790609223960,
+            "end": 1790609224061
+          }
+        }
+      }
+    },
+    {
+      "stream": "execution",
+      "timestamp_ms": 1790609224070,
+      "raw_line_sha256": "29b1ffb7f4829b729996c9b853c07d0799c6315bfe4db6cb8008a6fa817865f1",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task claim 2 --claim-id claim-sha256:7ca422e0dc097328843f750013d9393a56d1ee403339a25ed8cc6b801ddb2356",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"error\":\"usage_error\",\"message\":\"missing required options: --version\"}\n",
+          "title": "\"$KOS_CLI_PATH\" task claim 2 --claim-id claim-sha256:7ca422e0dc097328843f750013d9393a56d1ee403339a25ed8cc6b801ddb2356",
+          "time": {
+            "start": 1790609223974,
+            "end": 1790609224068
+          }
+        }
+      }
+    },
+    {
+      "stream": "execution",
+      "timestamp_ms": 1790609230671,
+      "raw_line_sha256": "a54f367608478852d64ab880dae6c3b576a73dea92ff3af4626f958999efafe9",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task claim 1 --claim-id claim-sha256:d685cf91d30e86f19867e7fcfcbc9de8d278aa83d1ab3a9f1ea27ab57aaf09f5 --version 0",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"task\":{\"id\":1,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"status\":\"active\",\"current_step\":\"plan\",\"claim_id\":\"claim-sha256:d685cf91d30e86f19867e7fcfcbc9de8d278aa83d1ab3a9f1ea27ab57aaf09f5\",\"version\":1,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.842Z\",\"updated_at\":\"2026-09-28T15:27:10.656Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}}",
+          "title": "\"$KOS_CLI_PATH\" task claim 1 --claim-id claim-sha256:d685cf91d30e86f19867e7fcfcbc9de8d278aa83d1ab3a9f1ea27ab57aaf09f5 --version 0",
+          "time": {
+            "start": 1790609230541,
+            "end": 1790609230670
+          }
+        }
+      }
+    },
+    {
+      "stream": "execution",
+      "timestamp_ms": 1790609230686,
+      "raw_line_sha256": "2eeea22107344b9c4581cac391f3de62744af132585b8f776b11f0894e6405a1",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task claim 2 --claim-id claim-sha256:7ca422e0dc097328843f750013d9393a56d1ee403339a25ed8cc6b801ddb2356 --version 0",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"task\":{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"active\",\"current_step\":\"plan\",\"claim_id\":\"claim-sha256:7ca422e0dc097328843f750013d9393a56d1ee403339a25ed8cc6b801ddb2356\",\"version\":1,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:27:10.671Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}}",
+          "title": "\"$KOS_CLI_PATH\" task claim 2 --claim-id claim-sha256:7ca422e0dc097328843f750013d9393a56d1ee403339a25ed8cc6b801ddb2356 --version 0",
+          "time": {
+            "start": 1790609230554,
+            "end": 1790609230683
+          }
+        }
+      }
+    },
+    {
+      "stream": "execution",
+      "timestamp_ms": 1790609283269,
+      "raw_line_sha256": "a164b1e294f42bc97232b4f9c74334602e21ae508700afea02797b2ac88e5b48",
+      "event": {
+        "type": "tool",
+        "tool": "task",
+        "state": {
+          "status": "completed",
+          "input": {
+            "description": "Execute Alpha plan step",
+            "prompt": "{\"task_id\":1,\"claim_id\":\"claim-sha256:d685cf91d30e86f19867e7fcfcbc9de8d278aa83d1ab3a9f1ea27ab57aaf09f5\",\"version\":1,\"step\":\"plan\"}",
+            "subagent_type": "kos-worker",
+            "command": "/kos"
+          },
+          "output": "<task id=\"<session>\" state=\"completed\">\n<task_result>\nOutcome: `planned`\n\nSubmitted the minimal implementation and verification plan for task 1. The task advanced to `implement`.\n</task_result>\n</task>",
+          "title": "Execute Alpha plan step",
+          "time": {
+            "start": 1790609237639,
+            "end": 1790609283264
+          }
+        }
+      }
+    },
+    {
+      "stream": "interrupted",
+      "timestamp_ms": 1790609468699,
+      "raw_line_sha256": "8a9d00c3f7794a69469073147a40e98cba300ef244f4c40e2dbac6579ff808a8",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" installation check",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"status\":\"ready\",\"version\":\"0.1.0\",\"source_id\":\"sha256:2029a0bfb7915fc2b6adb4f11be01133d6374007744f1b7558c3b14d2df93c2c\",\"manifest\":\"<RUN_ROOT>/opencode/kos-installation.json\"}\n",
+          "title": "\"$KOS_CLI_PATH\" installation check",
+          "time": {
+            "start": 1790609468556,
+            "end": 1790609468698
+          }
+        }
+      }
+    },
+    {
+      "stream": "interrupted",
+      "timestamp_ms": 1790609472121,
+      "raw_line_sha256": "fb9b1743cf4c479e7afdb2d7caba5d52df8d9a5e5176e9044df69a038bd5617b",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" status --remote origin",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"project\":{\"id\":1,\"name\":\"KOS recovery acceptance 040\",\"repository_identity\":\"github.com/atilla777/kos-recovery-acceptance-040\",\"remote_url\":\"git@github.com:atilla777/kos-recovery-acceptance-040.git\",\"default_branch\":\"main\",\"created_at\":\"2026-09-28T15:23:33.769Z\",\"updated_at\":\"2026-09-28T15:23:33.769Z\"},\"task_plans\":[{\"id\":1,\"project_id\":1,\"key\":\"alpha-beta-messages\",\"title\":\"Add independent Alpha and Beta messages\",\"status\":\"active\",\"version\":4,\"created_at\":\"2026-09-28T15:24:55.818Z\",\"updated_at\":\"2026-09-28T15:30:22.306Z\"}],\"tasks\":[{\"id\":1,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"status\":\"pending\",\"current_step\":\"implement\",\"claim_id\":null,\"version\":2,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.842Z\",\"updated_at\":\"2026-09-28T15:27:59.173Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]},{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"pending\",\"current_step\":\"plan\",\"claim_id\":null,\"version\":2,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:30:22.300Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}]}",
+          "title": "\"$KOS_CLI_PATH\" status --remote origin",
+          "time": {
+            "start": 1790609472015,
+            "end": 1790609472119
+          }
+        }
+      }
+    },
+    {
+      "stream": "interrupted",
+      "timestamp_ms": 1790609478972,
+      "raw_line_sha256": "6f116c10dbcdd9238ff9a2672300475ff3fc7abbc5261d6db2b49f60aa41e12c",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task ready --project-id 1",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"tasks\":[{\"id\":1,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"status\":\"pending\",\"current_step\":\"implement\",\"claim_id\":null,\"version\":2,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.842Z\",\"updated_at\":\"2026-09-28T15:27:59.173Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]},{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"pending\",\"current_step\":\"plan\",\"claim_id\":null,\"version\":2,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:30:22.300Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}]}",
+          "title": "\"$KOS_CLI_PATH\" task ready --project-id 1",
+          "time": {
+            "start": 1790609478865,
+            "end": 1790609478971
+          }
+        }
+      }
+    },
+    {
+      "stream": "interrupted",
+      "timestamp_ms": 1790609483667,
+      "raw_line_sha256": "aefe9baa427a0769f3944d5b2841747ac468b7e81a548878d622e5cfaa7a230a",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" claim-id",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "claim-sha256:363d4edad55a5c4e235dcb8b26e929857641d2672ebf77dce6e3d7cc9fa5d710\n",
+          "title": "\"$KOS_CLI_PATH\" claim-id",
+          "time": {
+            "start": 1790609483572,
+            "end": 1790609483666
+          }
+        }
+      }
+    },
+    {
+      "stream": "interrupted",
+      "timestamp_ms": 1790609483690,
+      "raw_line_sha256": "93c112dbf31771e415eda0974c3edadfde834c8d063ed483e20aaae05a9d22f6",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" claim-id",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "claim-sha256:91b1fc5e0c4f9d1179835bd32d60eb0a7b0670e259d5e16db432c76b971dbe9f\n",
+          "title": "\"$KOS_CLI_PATH\" claim-id",
+          "time": {
+            "start": 1790609483589,
+            "end": 1790609483689
+          }
+        }
+      }
+    },
+    {
+      "stream": "interrupted",
+      "timestamp_ms": 1790609487336,
+      "raw_line_sha256": "1f2b0df9cfa1bc156619d2dda750d3da287af6391a8fcf782606d6121d717069",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task claim --help",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "Usage: kos task claim ID [options]\n    -h, --help                       Show this help\n        --claim-id CLAIM             Required worker claim ID from claim-id\n        --version VERSION            Required observed task version\n\nID: required numeric task ID returned by task list, task ready, or plan show.\nResponse: task with id, task_plan_id, workflow_id, workflow_key, workflow_revision, key, title, status, current_step, claim_id, version, pause_kind, pause_message, pause_step, answer, created_at, updated_at, and blocker_ids.\nExample: kos task claim 9 --claim-id CLAIM --version 0\n",
+          "title": "\"$KOS_CLI_PATH\" task claim --help",
+          "time": {
+            "start": 1790609487238,
+            "end": 1790609487335
+          }
+        }
+      }
+    },
+    {
+      "stream": "interrupted",
+      "timestamp_ms": 1790609493394,
+      "raw_line_sha256": "1c5e43cefd5301ba52d4d75d29a5d829afaf642b44b30f91bcb60f54e436184f",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task claim 1 --claim-id claim-sha256:363d4edad55a5c4e235dcb8b26e929857641d2672ebf77dce6e3d7cc9fa5d710 --version 2",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"task\":{\"id\":1,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"status\":\"active\",\"current_step\":\"implement\",\"claim_id\":\"claim-sha256:363d4edad55a5c4e235dcb8b26e929857641d2672ebf77dce6e3d7cc9fa5d710\",\"version\":3,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.842Z\",\"updated_at\":\"2026-09-28T15:31:33.382Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}}",
+          "title": "\"$KOS_CLI_PATH\" task claim 1 --claim-id claim-sha256:363d4edad55a5c4e235dcb8b26e929857641d2672ebf77dce6e3d7cc9fa5d710 --version 2",
+          "time": {
+            "start": 1790609493277,
+            "end": 1790609493393
+          }
+        }
+      }
+    },
+    {
+      "stream": "interrupted",
+      "timestamp_ms": 1790609493414,
+      "raw_line_sha256": "ecfe81e02b21988d827bf80f8ff6d08d18def516bd4b1dd94527a3926529b727",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task claim 2 --claim-id claim-sha256:91b1fc5e0c4f9d1179835bd32d60eb0a7b0670e259d5e16db432c76b971dbe9f --version 2",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"task\":{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"active\",\"current_step\":\"plan\",\"claim_id\":\"claim-sha256:91b1fc5e0c4f9d1179835bd32d60eb0a7b0670e259d5e16db432c76b971dbe9f\",\"version\":3,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:31:33.399Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}}",
+          "title": "\"$KOS_CLI_PATH\" task claim 2 --claim-id claim-sha256:91b1fc5e0c4f9d1179835bd32d60eb0a7b0670e259d5e16db432c76b971dbe9f --version 2",
+          "time": {
+            "start": 1790609493294,
+            "end": 1790609493409
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609552565,
+      "raw_line_sha256": "fd45dc42022425f8e010c132cc4568e092584069da3e491a627cd79a815eb954",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" installation check",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"status\":\"ready\",\"version\":\"0.1.0\",\"source_id\":\"sha256:2029a0bfb7915fc2b6adb4f11be01133d6374007744f1b7558c3b14d2df93c2c\",\"manifest\":\"<RUN_ROOT>/opencode/kos-installation.json\"}\n",
+          "title": "\"$KOS_CLI_PATH\" installation check",
+          "time": {
+            "start": 1790609552414,
+            "end": 1790609552564
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609556423,
+      "raw_line_sha256": "ad44a5e98dd3c7e55c1e8f85a0bd71a7731115f82ab7099b6b315c662db8c0c3",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" status --remote origin",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"project\":{\"id\":1,\"name\":\"KOS recovery acceptance 040\",\"repository_identity\":\"github.com/atilla777/kos-recovery-acceptance-040\",\"remote_url\":\"git@github.com:atilla777/kos-recovery-acceptance-040.git\",\"default_branch\":\"main\",\"created_at\":\"2026-09-28T15:23:33.769Z\",\"updated_at\":\"2026-09-28T15:23:33.769Z\"},\"task_plans\":[{\"id\":1,\"project_id\":1,\"key\":\"alpha-beta-messages\",\"title\":\"Add independent Alpha and Beta messages\",\"status\":\"active\",\"version\":6,\"created_at\":\"2026-09-28T15:24:55.818Z\",\"updated_at\":\"2026-09-28T15:31:33.400Z\"}],\"tasks\":[{\"id\":1,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"status\":\"active\",\"current_step\":\"implement\",\"claim_id\":\"claim-sha256:363d4edad55a5c4e235dcb8b26e929857641d2672ebf77dce6e3d7cc9fa5d710\",\"version\":3,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.842Z\",\"updated_at\":\"2026-09-28T15:31:33.382Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]},{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"active\",\"current_step\":\"plan\",\"claim_id\":\"claim-sha256:91b1fc5e0c4f9d1179835bd32d60eb0a7b0670e259d5e16db432c76b971dbe9f\",\"version\":3,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:31:33.399Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}]}",
+          "title": "\"$KOS_CLI_PATH\" status --remote origin",
+          "time": {
+            "start": 1790609556318,
+            "end": 1790609556421
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609584771,
+      "raw_line_sha256": "b93cae72e1d26b7153819a2008eb900d6c7640f575698dd8240973971d02651d",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" claim-id",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "claim-sha256:ffe4a7f40b5615d496d29b81252d32c0661d06255d6e5d3348dc8a484af50b88\n",
+          "title": "\"$KOS_CLI_PATH\" claim-id",
+          "time": {
+            "start": 1790609584673,
+            "end": 1790609584770
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609585547,
+      "raw_line_sha256": "03cb1d908ed19cf14bfbf9bb1ea3df0dd71bad4882c33a06321a700ff0f1ce05",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" claim-id",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "claim-sha256:bc364bcbac78d16acb1bbcdcc43945353f89f8cef3f6ec7dd434ce7f932a53bf\n",
+          "title": "\"$KOS_CLI_PATH\" claim-id",
+          "time": {
+            "start": 1790609585451,
+            "end": 1790609585546
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609585873,
+      "raw_line_sha256": "787237643aa38b265105992e6619dc13820b3c98c55b240eeb63ac10d1ea286d",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task takeover --help",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "Usage: kos task takeover ID [options]\n    -h, --help                       Show this help\n        --claim-id CLAIM             Required worker claim ID from claim-id\n        --version VERSION            Required observed task version\n        --step STEP                  Required observed current step\n\nID: required numeric task ID returned by task list, task ready, or plan show.\nResponse: task with id, task_plan_id, workflow_id, workflow_key, workflow_revision, key, title, status, current_step, claim_id, version, pause_kind, pause_message, pause_step, answer, created_at, updated_at, and blocker_ids.\nExample: kos task takeover 9 --claim-id NEW --version 2 --step work\n",
+          "title": "\"$KOS_CLI_PATH\" task takeover --help",
+          "time": {
+            "start": 1790609585772,
+            "end": 1790609585870
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609591904,
+      "raw_line_sha256": "0f071e138c402ed21639c122bbfa59e00a4c497cde31edbff56d08fa82dd4888",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task takeover 1 --claim-id claim-sha256:ffe4a7f40b5615d496d29b81252d32c0661d06255d6e5d3348dc8a484af50b88 --version 3 --step implement",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"task\":{\"id\":1,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"status\":\"active\",\"current_step\":\"implement\",\"claim_id\":\"claim-sha256:ffe4a7f40b5615d496d29b81252d32c0661d06255d6e5d3348dc8a484af50b88\",\"version\":4,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.842Z\",\"updated_at\":\"2026-09-28T15:33:11.897Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}}",
+          "title": "\"$KOS_CLI_PATH\" task takeover 1 --claim-id claim-sha256:ffe4a7f40b5615d496d29b81252d32c0661d06255d6e5d3348dc8a484af50b88 --version 3 --step implement",
+          "time": {
+            "start": 1790609591800,
+            "end": 1790609591903
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609592074,
+      "raw_line_sha256": "00bbe501e020e462776b7bdb3d227246249d7dedbd162decb3e742bae981cfe8",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task takeover 2 --claim-id claim-sha256:bc364bcbac78d16acb1bbcdcc43945353f89f8cef3f6ec7dd434ce7f932a53bf --version 3 --step plan",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"task\":{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"active\",\"current_step\":\"plan\",\"claim_id\":\"claim-sha256:bc364bcbac78d16acb1bbcdcc43945353f89f8cef3f6ec7dd434ce7f932a53bf\",\"version\":4,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:33:12.067Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}}",
+          "title": "\"$KOS_CLI_PATH\" task takeover 2 --claim-id claim-sha256:bc364bcbac78d16acb1bbcdcc43945353f89f8cef3f6ec7dd434ce7f932a53bf --version 3 --step plan",
+          "time": {
+            "start": 1790609591973,
+            "end": 1790609592073
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609656789,
+      "raw_line_sha256": "54723859fe1f72be12771d0bef03c1546d1bc47c33987a00ef49b394aef475e6",
+      "event": {
+        "type": "tool",
+        "tool": "task",
+        "state": {
+          "status": "completed",
+          "input": {
+            "description": "Resume Beta planning",
+            "subagent_type": "kos-worker",
+            "prompt": "{\"task_id\":2,\"claim_id\":\"claim-sha256:bc364bcbac78d16acb1bbcdcc43945353f89f8cef3f6ec7dd434ce7f932a53bf\",\"version\":4,\"step\":\"plan\"}",
+            "command": "/kos"
+          },
+          "output": "<task id=\"<session>\" state=\"completed\">\n<task_result>\nPlan step completed and reported as `planned`. Task advanced to `implement` (version 5).\n</task_result>\n</task>",
+          "title": "Resume Beta planning",
+          "time": {
+            "start": 1790609599060,
+            "end": 1790609656786
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609703027,
+      "raw_line_sha256": "ed59aa4267aaaad812e10de9fd8ee88fcf36a3cabdaa94d4b58a32b930dfe158",
+      "event": {
+        "type": "tool",
+        "tool": "task",
+        "state": {
+          "status": "completed",
+          "input": {
+            "description": "Resume Alpha implementation",
+            "subagent_type": "kos-worker",
+            "prompt": "{\"task_id\":1,\"claim_id\":\"claim-sha256:ffe4a7f40b5615d496d29b81252d32c0661d06255d6e5d3348dc8a484af50b88\",\"version\":4,\"step\":\"implement\"}",
+            "command": "/kos"
+          },
+          "output": "<task id=\"<session>\" state=\"completed\">\n<task_result>\nImplemented and reported the `implement` step.\n\n- Added `Alpha.message`, returning `\"alpha\"`.\n- Added focused Minitest coverage.\n- `bin/check`: 2 runs, 2 assertions, 0 failures.\n- Commit: `182c725 Add Alpha message`\n- Task advanced to `review`.\n</task_result>\n</task>",
+          "title": "Resume Alpha implementation",
+          "time": {
+            "start": 1790609598853,
+            "end": 1790609703022
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609706682,
+      "raw_line_sha256": "81f0dc9881f784a995a3f4c2512cdba52b1dafb1609cf45fae1e7f2809bc6b34",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" status --remote origin",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"project\":{\"id\":1,\"name\":\"KOS recovery acceptance 040\",\"repository_identity\":\"github.com/atilla777/kos-recovery-acceptance-040\",\"remote_url\":\"git@github.com:atilla777/kos-recovery-acceptance-040.git\",\"default_branch\":\"main\",\"created_at\":\"2026-09-28T15:23:33.769Z\",\"updated_at\":\"2026-09-28T15:23:33.769Z\"},\"task_plans\":[{\"id\":1,\"project_id\":1,\"key\":\"alpha-beta-messages\",\"title\":\"Add independent Alpha and Beta messages\",\"status\":\"active\",\"version\":10,\"created_at\":\"2026-09-28T15:24:55.818Z\",\"updated_at\":\"2026-09-28T15:34:58.502Z\"}],\"tasks\":[{\"id\":1,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"status\":\"pending\",\"current_step\":\"review\",\"claim_id\":null,\"version\":5,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.842Z\",\"updated_at\":\"2026-09-28T15:34:58.502Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]},{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"pending\",\"current_step\":\"implement\",\"claim_id\":null,\"version\":5,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:34:13.032Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}]}",
+          "title": "\"$KOS_CLI_PATH\" status --remote origin",
+          "time": {
+            "start": 1790609706580,
+            "end": 1790609706681
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609712309,
+      "raw_line_sha256": "7dab5e629147f9ee67edfc57b0abe1855f858c787b9958c769eb6edc2fe3900f",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task ready --project-id 1",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"tasks\":[{\"id\":1,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"status\":\"pending\",\"current_step\":\"review\",\"claim_id\":null,\"version\":5,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.842Z\",\"updated_at\":\"2026-09-28T15:34:58.502Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]},{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"pending\",\"current_step\":\"implement\",\"claim_id\":null,\"version\":5,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:34:13.032Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}]}",
+          "title": "\"$KOS_CLI_PATH\" task ready --project-id 1",
+          "time": {
+            "start": 1790609712204,
+            "end": 1790609712308
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609720400,
+      "raw_line_sha256": "0d1da23d2121af27911cdb3130151ff6bdd07fa4032d7eadccad693cf6e72c1a",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" claim-id",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "claim-sha256:f5176081f98985aa8fba8d4bc16aae2233263404d53cd3177be659bfc70c4995\n",
+          "title": "\"$KOS_CLI_PATH\" claim-id",
+          "time": {
+            "start": 1790609720303,
+            "end": 1790609720399
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609720508,
+      "raw_line_sha256": "c6e6d35c101484673294d3f3c8e2b07c9e11b1873bb5f80cb7f796b61b2c9855",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" claim-id",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "claim-sha256:5457f0b52b01b722b262b639a34ffac58ff4d6932266682772ebb2a0fa3c4e2c\n",
+          "title": "\"$KOS_CLI_PATH\" claim-id",
+          "time": {
+            "start": 1790609720413,
+            "end": 1790609720507
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609726307,
+      "raw_line_sha256": "40a796ee6055a97f52e46cb229e9ca5a5554d30d157eef842766bcc552cd8891",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task claim 1 --claim-id claim-sha256:f5176081f98985aa8fba8d4bc16aae2233263404d53cd3177be659bfc70c4995 --version 5 --step review",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"error\":\"usage_error\",\"message\":\"invalid option: --step\"}\n",
+          "title": "\"$KOS_CLI_PATH\" task claim 1 --claim-id claim-sha256:f5176081f98985aa8fba8d4bc16aae2233263404d53cd3177be659bfc70c4995 --version 5 --step review",
+          "time": {
+            "start": 1790609726210,
+            "end": 1790609726306
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609726329,
+      "raw_line_sha256": "420cce2ec6d2596e9201ed4e03c2b0614ed230b3333983397068bf8cff7d6d59",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task claim 2 --claim-id claim-sha256:5457f0b52b01b722b262b639a34ffac58ff4d6932266682772ebb2a0fa3c4e2c --version 5 --step implement",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"error\":\"usage_error\",\"message\":\"invalid option: --step\"}\n",
+          "title": "\"$KOS_CLI_PATH\" task claim 2 --claim-id claim-sha256:5457f0b52b01b722b262b639a34ffac58ff4d6932266682772ebb2a0fa3c4e2c --version 5 --step implement",
+          "time": {
+            "start": 1790609726224,
+            "end": 1790609726328
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609732283,
+      "raw_line_sha256": "e392eb9147580b8fcf080b376adf6e0d811094fe37c8d37baf60a7c17ea47ed3",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task claim --help",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "Usage: kos task claim ID [options]\n    -h, --help                       Show this help\n        --claim-id CLAIM             Required worker claim ID from claim-id\n        --version VERSION            Required observed task version\n\nID: required numeric task ID returned by task list, task ready, or plan show.\nResponse: task with id, task_plan_id, workflow_id, workflow_key, workflow_revision, key, title, status, current_step, claim_id, version, pause_kind, pause_message, pause_step, answer, created_at, updated_at, and blocker_ids.\nExample: kos task claim 9 --claim-id CLAIM --version 0\n",
+          "title": "\"$KOS_CLI_PATH\" task claim --help",
+          "time": {
+            "start": 1790609732186,
+            "end": 1790609732282
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609738710,
+      "raw_line_sha256": "f71bd703ba4340ef521016f9ff8ce6e6be15426f5d722f7d82857c0d3f58936f",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task claim 1 --claim-id claim-sha256:f5176081f98985aa8fba8d4bc16aae2233263404d53cd3177be659bfc70c4995 --version 5",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"task\":{\"id\":1,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"status\":\"active\",\"current_step\":\"review\",\"claim_id\":\"claim-sha256:f5176081f98985aa8fba8d4bc16aae2233263404d53cd3177be659bfc70c4995\",\"version\":6,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.842Z\",\"updated_at\":\"2026-09-28T15:35:38.699Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}}",
+          "title": "\"$KOS_CLI_PATH\" task claim 1 --claim-id claim-sha256:f5176081f98985aa8fba8d4bc16aae2233263404d53cd3177be659bfc70c4995 --version 5",
+          "time": {
+            "start": 1790609738599,
+            "end": 1790609738709
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609738723,
+      "raw_line_sha256": "79a670838b1c28e2134ccafa07147a1275931e27eba7c60df7791a28fde6ac4b",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task claim 2 --claim-id claim-sha256:5457f0b52b01b722b262b639a34ffac58ff4d6932266682772ebb2a0fa3c4e2c --version 5",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"task\":{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"active\",\"current_step\":\"implement\",\"claim_id\":\"claim-sha256:5457f0b52b01b722b262b639a34ffac58ff4d6932266682772ebb2a0fa3c4e2c\",\"version\":6,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:35:38.716Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}}",
+          "title": "\"$KOS_CLI_PATH\" task claim 2 --claim-id claim-sha256:5457f0b52b01b722b262b639a34ffac58ff4d6932266682772ebb2a0fa3c4e2c --version 5",
+          "time": {
+            "start": 1790609738615,
+            "end": 1790609738722
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609803394,
+      "raw_line_sha256": "06bc80f15ba1916305b877f6335e45746e9c646c1dda532b2bff193d9ee7e03c",
+      "event": {
+        "type": "tool",
+        "tool": "task",
+        "state": {
+          "status": "completed",
+          "input": {
+            "description": "Review Alpha changes",
+            "subagent_type": "kos-worker",
+            "prompt": "{\"task_id\":1,\"claim_id\":\"claim-sha256:f5176081f98985aa8fba8d4bc16aae2233263404d53cd3177be659bfc70c4995\",\"version\":6,\"step\":\"review\"}",
+            "command": "/kos"
+          },
+          "output": "<task id=\"<session>\" state=\"completed\">\n<task_result>\nReview approved for commit `182c725`.\n\nNo actionable findings. `git diff --check` and `bin/check` passed with 3 tests and 0 failures.\n</task_result>\n</task>",
+          "title": "Review Alpha changes",
+          "time": {
+            "start": 1790609744731,
+            "end": 1790609803390
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609830209,
+      "raw_line_sha256": "975101b323c67b37ac71545d54350688b0c01aaddc954289e7f7394fcef5e0a6",
+      "event": {
+        "type": "tool",
+        "tool": "task",
+        "state": {
+          "status": "completed",
+          "input": {
+            "description": "Implement Beta message",
+            "subagent_type": "kos-worker",
+            "prompt": "{\"task_id\":2,\"claim_id\":\"claim-sha256:5457f0b52b01b722b262b639a34ffac58ff4d6932266682772ebb2a0fa3c4e2c\",\"version\":6,\"step\":\"implement\"}",
+            "command": "/kos"
+          },
+          "output": "<task id=\"<session>\" state=\"completed\">\n<task_result>\nImplemented and reported outcome `implemented`.\n\n- Added `Beta.message` returning `\"beta\"`\n- Added focused Minitest\n- `bin/check`: 3 runs, 3 assertions, 0 failures\n- Commit: `107e141 Add Beta message`\n- Task advanced to `review` at version 7\n</task_result>\n</task>",
+          "title": "Implement Beta message",
+          "time": {
+            "start": 1790609744759,
+            "end": 1790609830204
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609836725,
+      "raw_line_sha256": "5b206aa501519bedd6a16c88916700fa6308db2825c4eaae192bdb41dc675809",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" status --remote origin",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"project\":{\"id\":1,\"name\":\"KOS recovery acceptance 040\",\"repository_identity\":\"github.com/atilla777/kos-recovery-acceptance-040\",\"remote_url\":\"git@github.com:atilla777/kos-recovery-acceptance-040.git\",\"default_branch\":\"main\",\"created_at\":\"2026-09-28T15:23:33.769Z\",\"updated_at\":\"2026-09-28T15:23:33.769Z\"},\"task_plans\":[{\"id\":1,\"project_id\":1,\"key\":\"alpha-beta-messages\",\"title\":\"Add independent Alpha and Beta messages\",\"status\":\"active\",\"version\":14,\"created_at\":\"2026-09-28T15:24:55.818Z\",\"updated_at\":\"2026-09-28T15:37:04.215Z\"}],\"tasks\":[{\"id\":1,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"status\":\"pending\",\"current_step\":\"publish\",\"claim_id\":null,\"version\":7,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.842Z\",\"updated_at\":\"2026-09-28T15:36:40.029Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]},{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"pending\",\"current_step\":\"review\",\"claim_id\":null,\"version\":7,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:37:04.214Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}]}",
+          "title": "\"$KOS_CLI_PATH\" status --remote origin",
+          "time": {
+            "start": 1790609836617,
+            "end": 1790609836724
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609840801,
+      "raw_line_sha256": "fc5b28b41cf9ff07c0b20069f721adf02589a6bfc2a00d164988e66f26ed0b32",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task ready --project-id 1",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"tasks\":[{\"id\":1,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"status\":\"pending\",\"current_step\":\"publish\",\"claim_id\":null,\"version\":7,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.842Z\",\"updated_at\":\"2026-09-28T15:36:40.029Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]},{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"pending\",\"current_step\":\"review\",\"claim_id\":null,\"version\":7,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:37:04.214Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}]}",
+          "title": "\"$KOS_CLI_PATH\" task ready --project-id 1",
+          "time": {
+            "start": 1790609840702,
+            "end": 1790609840800
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609846515,
+      "raw_line_sha256": "f8e8f3b074ffd63cad73a4cab2aa7a349a0e65d57fa88903785f5b1a1ab3818f",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" claim-id",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "claim-sha256:43a33410911209034ca35fb134936f2736534a187c3c827fd68bb0d27153945e\n",
+          "title": "\"$KOS_CLI_PATH\" claim-id",
+          "time": {
+            "start": 1790609846409,
+            "end": 1790609846513
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609846530,
+      "raw_line_sha256": "fa8489538fe1bb2e9ce83e93606fce84c1a560ae91cd9fb32567a22651fb3a58",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" claim-id",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "claim-sha256:59193f71270732940d30cadc2beea15c2fcbad39ee3da8906b48f25358141d41\n",
+          "title": "\"$KOS_CLI_PATH\" claim-id",
+          "time": {
+            "start": 1790609846425,
+            "end": 1790609846528
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609853193,
+      "raw_line_sha256": "3853bc432a48da6951f8a9a1315c5f1c11b743d6a3b5a3578f8d998e2ac5f4de",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task claim 2 --claim-id claim-sha256:59193f71270732940d30cadc2beea15c2fcbad39ee3da8906b48f25358141d41 --version 7",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"task\":{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"active\",\"current_step\":\"review\",\"claim_id\":\"claim-sha256:59193f71270732940d30cadc2beea15c2fcbad39ee3da8906b48f25358141d41\",\"version\":8,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:37:33.186Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}}",
+          "title": "\"$KOS_CLI_PATH\" task claim 2 --claim-id claim-sha256:59193f71270732940d30cadc2beea15c2fcbad39ee3da8906b48f25358141d41 --version 7",
+          "time": {
+            "start": 1790609853091,
+            "end": 1790609853192
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609853197,
+      "raw_line_sha256": "4340ada92235775f19820636abaa5819ee493b0ac8097752d2461c62c66bea4d",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task claim 1 --claim-id claim-sha256:43a33410911209034ca35fb134936f2736534a187c3c827fd68bb0d27153945e --version 7",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"task\":{\"id\":1,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"alpha\",\"title\":\"Add Alpha.message\",\"status\":\"active\",\"current_step\":\"publish\",\"claim_id\":\"claim-sha256:43a33410911209034ca35fb134936f2736534a187c3c827fd68bb0d27153945e\",\"version\":8,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.842Z\",\"updated_at\":\"2026-09-28T15:37:33.191Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}}",
+          "title": "\"$KOS_CLI_PATH\" task claim 1 --claim-id claim-sha256:43a33410911209034ca35fb134936f2736534a187c3c827fd68bb0d27153945e --version 7",
+          "time": {
+            "start": 1790609853082,
+            "end": 1790609853196
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609916572,
+      "raw_line_sha256": "ead560581b83d04ff268deecee2c62f3204fd7bab207337fe68e3eef407cfd37",
+      "event": {
+        "type": "tool",
+        "tool": "task",
+        "state": {
+          "status": "completed",
+          "input": {
+            "description": "Review Beta changes",
+            "subagent_type": "kos-worker",
+            "prompt": "{\"task_id\":2,\"claim_id\":\"claim-sha256:59193f71270732940d30cadc2beea15c2fcbad39ee3da8906b48f25358141d41\",\"version\":8,\"step\":\"review\"}",
+            "command": "/kos"
+          },
+          "output": "<task id=\"<session>\" state=\"completed\">\n<task_result>\nReview approved with no actionable findings. `bin/check` passed (3 runs, 3 assertions), diff checks passed, and the worktree is clean.\n</task_result>\n</task>",
+          "title": "Review Beta changes",
+          "time": {
+            "start": 1790609859714,
+            "end": 1790609916568
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609928266,
+      "raw_line_sha256": "33fb42787e5c6a820e46716b6168a25f7c4eef4a78390fa977323f07e4f00946",
+      "event": {
+        "type": "tool",
+        "tool": "task",
+        "state": {
+          "status": "completed",
+          "input": {
+            "description": "Publish Alpha changes",
+            "subagent_type": "kos-worker",
+            "prompt": "{\"task_id\":1,\"claim_id\":\"claim-sha256:43a33410911209034ca35fb134936f2736534a187c3c827fd68bb0d27153945e\",\"version\":8,\"step\":\"publish\"}",
+            "command": "/kos"
+          },
+          "output": "<task id=\"<session>\" state=\"completed\">\n<task_result>\nPublished approved commit `182c725` to `origin/main` and reported the `published` outcome. Remote verification confirmed the commit.\n</task_result>\n</task>",
+          "title": "Publish Alpha changes",
+          "time": {
+            "start": 1790609859324,
+            "end": 1790609928261
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609932212,
+      "raw_line_sha256": "2e62acec0b251c1fbd84322583a115f694f078a6ed51ca24115c6783b4549cf2",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" status --remote origin",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"project\":{\"id\":1,\"name\":\"KOS recovery acceptance 040\",\"repository_identity\":\"github.com/atilla777/kos-recovery-acceptance-040\",\"remote_url\":\"git@github.com:atilla777/kos-recovery-acceptance-040.git\",\"default_branch\":\"main\",\"created_at\":\"2026-09-28T15:23:33.769Z\",\"updated_at\":\"2026-09-28T15:23:33.769Z\"},\"task_plans\":[{\"id\":1,\"project_id\":1,\"key\":\"alpha-beta-messages\",\"title\":\"Add independent Alpha and Beta messages\",\"status\":\"active\",\"version\":18,\"created_at\":\"2026-09-28T15:24:55.818Z\",\"updated_at\":\"2026-09-28T15:38:44.684Z\"}],\"tasks\":[{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"pending\",\"current_step\":\"publish\",\"claim_id\":null,\"version\":9,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:38:33.447Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}]}",
+          "title": "\"$KOS_CLI_PATH\" status --remote origin",
+          "time": {
+            "start": 1790609932112,
+            "end": 1790609932211
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609935811,
+      "raw_line_sha256": "633ea4fe876f66663976cde4e449752e155e89a12b80bf8bdb71384701fce419",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task ready --project-id 1",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"tasks\":[{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"pending\",\"current_step\":\"publish\",\"claim_id\":null,\"version\":9,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:38:33.447Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}]}",
+          "title": "\"$KOS_CLI_PATH\" task ready --project-id 1",
+          "time": {
+            "start": 1790609935713,
+            "end": 1790609935810
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609939580,
+      "raw_line_sha256": "ec7dfbd114dc867731421a5dfdc7fe9825891f583b4869e82bcf75ed764a40e8",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" claim-id",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "claim-sha256:c5ccf792757317ccfff2a150e7499d154635e79b5820a8ce2aa2eafe55ed2136\n",
+          "title": "\"$KOS_CLI_PATH\" claim-id",
+          "time": {
+            "start": 1790609939486,
+            "end": 1790609939579
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790609945252,
+      "raw_line_sha256": "1bf380341b233a59ded15a8e79cd581a2a5bb27ff43a2004c7d566137e84fca9",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" task claim 2 --claim-id claim-sha256:c5ccf792757317ccfff2a150e7499d154635e79b5820a8ce2aa2eafe55ed2136 --version 9",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"task\":{\"id\":2,\"task_plan_id\":1,\"workflow_id\":1,\"key\":\"beta\",\"title\":\"Add Beta.message\",\"status\":\"active\",\"current_step\":\"publish\",\"claim_id\":\"claim-sha256:c5ccf792757317ccfff2a150e7499d154635e79b5820a8ce2aa2eafe55ed2136\",\"version\":10,\"pause_kind\":null,\"pause_message\":null,\"pause_step\":null,\"answer\":null,\"created_at\":\"2026-09-28T15:24:55.852Z\",\"updated_at\":\"2026-09-28T15:39:05.246Z\",\"workflow_key\":\"development\",\"workflow_revision\":3,\"blocker_ids\":[]}}",
+          "title": "\"$KOS_CLI_PATH\" task claim 2 --claim-id claim-sha256:c5ccf792757317ccfff2a150e7499d154635e79b5820a8ce2aa2eafe55ed2136 --version 9",
+          "time": {
+            "start": 1790609945150,
+            "end": 1790609945251
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790610012883,
+      "raw_line_sha256": "1e79e4f01c530ec9326ade5f9bffd0060f2fd49282f4532f59fef0b7ce589ea3",
+      "event": {
+        "type": "tool",
+        "tool": "task",
+        "state": {
+          "status": "completed",
+          "input": {
+            "description": "Publish Beta changes",
+            "subagent_type": "kos-worker",
+            "prompt": "{\"task_id\":2,\"claim_id\":\"claim-sha256:c5ccf792757317ccfff2a150e7499d154635e79b5820a8ce2aa2eafe55ed2136\",\"version\":10,\"step\":\"publish\"}",
+            "command": "/kos"
+          },
+          "output": "<task id=\"<session>\" state=\"completed\">\n<task_result>\nPublished approved commit `107e141a363d17802d648a32b5f7c1d762e2c8a1` to `origin/main`. Remote verification succeeded, and KOS task 2 is complete.\n</task_result>\n</task>",
+          "title": "Publish Beta changes",
+          "time": {
+            "start": 1790609949754,
+            "end": 1790610012875
+          }
+        }
+      }
+    },
+    {
+      "stream": "recovery",
+      "timestamp_ms": 1790610016998,
+      "raw_line_sha256": "a808fd29867fe0bb9785bd5ee57998ba55007169f9a6fe8a8233235ebab72830",
+      "event": {
+        "type": "tool",
+        "tool": "bash",
+        "state": {
+          "status": "completed",
+          "input": {
+            "command": "\"$KOS_CLI_PATH\" status --remote origin",
+            "workdir": "<RUN_ROOT>/fixture",
+            "timeout": 120000
+          },
+          "output": "{\"project\":{\"id\":1,\"name\":\"KOS recovery acceptance 040\",\"repository_identity\":\"github.com/atilla777/kos-recovery-acceptance-040\",\"remote_url\":\"git@github.com:atilla777/kos-recovery-acceptance-040.git\",\"default_branch\":\"main\",\"created_at\":\"2026-09-28T15:23:33.769Z\",\"updated_at\":\"2026-09-28T15:23:33.769Z\"},\"task_plans\":[],\"tasks\":[]}",
+          "title": "\"$KOS_CLI_PATH\" status --remote origin",
+          "time": {
+            "start": 1790610016898,
+            "end": 1790610016997
+          }
+        }
+      }
+    }
+  ]
+}
