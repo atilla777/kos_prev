@@ -41,8 +41,10 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 - A worker can pause with one question or a concrete obstruction. The answer or
   resolution is stored with the task before the same step continues.
 - After a worker or orchestrator interruption, a later orchestrator discovers
-  the project's unfinished plans and tasks, reads their KOS state, and
+  the project's non-completed plans and tasks, reads their KOS state, and
   explicitly takes over unfinished work when appropriate.
+- With explicit user intent, the orchestrator can atomically abandon an
+  erroneous or obsolete started plan without erasing completed work.
 - Built-in development, fix, and brief workflows may be supplied as convenient
   defaults, while custom workflows use the same generic state semantics.
 
@@ -79,6 +81,12 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   lease clock, heartbeat, or automatic redispatch algorithm.
 - Creating or replacing a not-yet-started task plan stores its tasks and
   dependencies atomically so workers never observe a partial plan.
+- Each plan has an optimistic version advanced by every task lifecycle change.
+  Abandoning a started plan requires the observed plan version and atomically
+  marks every unfinished task abandoned, clears its claim, and advances its
+  task version while preserving completed tasks and all accepted results.
+- Abandoned plans and tasks are terminal and inspectable. They are never ready
+  or claimable, and an abandoned blocker does not satisfy a dependency.
 - Incomplete blockers keep a dependent task unavailable. A task becomes ready
   when all of its blockers are complete.
 - An accepted report stores the worker's result and applies its workflow
@@ -94,13 +102,16 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   postconditions over exhaustive negative rules or exact command sequences.
 - KOS state, not a worker's conversational response, is authoritative progress
   for the orchestrator.
-- Project-scoped discovery returns every unfinished plan and task needed for
-  recovery. Completed state remains available through deliberate inspection.
+- Project-scoped discovery returns every non-completed plan and task needed for
+  recovery, including terminal abandoned state. Completed state remains
+  available through deliberate inspection.
 
 # Errors
 
 - Invalid workflow definitions, unknown transitions, stale reports, conflicting
   claims, and dependency cycles fail without a partial state change.
+- Stale or concurrent plan abandonment fails without partially abandoning the
+  plan; claim, report, answer, takeover, and abandonment have one winner.
 - A scheduler that finds no ready task reports that fact without creating
   speculative work.
 - A worker that cannot make a material product decision pauses with one precise
@@ -114,6 +125,8 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 
 - If a stale worker finishes after explicit takeover, its report is rejected by
   the changed claim or task version.
+- If a stale worker finishes after plan abandonment, its report is rejected by
+  the abandoned status and advanced task version.
 - If an orchestrator stops after dispatch, another orchestrator can discover
   the active task from the registered project and explicitly take it over after
   deciding the prior worker has stopped.
@@ -137,9 +150,11 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   can atomically report one allowed result and transition.
 - Pause, answer, completion, and the latest accepted step results survive a
   process restart.
+- Plan abandonment survives restart, preserves completed results, and remains
+  distinguishable from successful completion during discovery.
 - Given a registered project identity, a fresh orchestrator can discover every
-  unfinished plan and task, including active claim fences and durable pause and
-  answer state.
+  non-completed plan and task, including abandoned state, active claim fences,
+  and durable pause and answer state.
 - Built-in and custom workflows execute through the same server transition
   rules without task-type-specific Git, check, review, or publication gates.
 - Skills remain short enough to communicate capabilities, commands, role
@@ -157,6 +172,8 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 - The MVP does not require leases, heartbeat, automatic stale-worker detection,
   automatic retry, parallel steps within one task, multi-host coordination,
   multi-tenant authorization, high availability, or a web UI.
+- KOS does not abandon work automatically based on age or worker health and does
+  not compensate or roll back external effects of abandoned work.
 - The MVP does not require cryptographic Git-range evidence, server-enforced
   check results, model-output evaluation, full attempt history, or release
   attestation through live-model runs.

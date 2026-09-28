@@ -16,8 +16,9 @@ at most one current worker.
 
 - A plan stores all of its tasks and dependencies atomically. It may be replaced
   only before any task in it starts.
-- A task is ready when it is unfinished, unclaimed, and all blockers are
-  complete.
+- A started plan may be abandoned with explicit intent and its observed plan
+  version. All unfinished tasks become terminal while completed results remain.
+- A task is ready when it is pending and all blockers are complete.
 - A claim has an unpredictable `claim_id`, belongs to one worker dispatch, and
   does not expire. There are no leases, heartbeats, or clock-based recovery.
 - Every task has an optimistic `version`. Claim, takeover, answer, and report
@@ -76,14 +77,15 @@ kos health
 kos claim-id
 kos project create|show|update
 kos workflow create
-kos plan put|list|show
+kos plan put|list|show|abandon
 kos task list|ready|show|context|result|claim|takeover|report|answer
 ```
 
 `claim-id` creates a local unpredictable identity for one worker dispatch.
 `project`, `workflow`, and `plan` commands administer durable definitions.
-`plan list` and `task list` discover unfinished project state after interruption;
-`--include-completed` adds completed state for deliberate inspection. `task
+`plan list` and `task list` discover non-completed project state after
+interruption, including terminal abandoned records; `--include-completed` adds
+successful history for deliberate inspection. `task
 ready` supports orchestrator scheduling; `show` observes lifecycle state;
 `context` gives one worker its task, project, current instruction, outcomes,
 pause/answer, and result index; `result` returns one latest accepted step result.
@@ -105,6 +107,7 @@ PATCH /projects/:id
 POST /workflows
 PUT  /projects/:project_id/plan
 GET  /projects/:project_id/plan?key=KEY
+POST /projects/:project_id/plan/abandon
 GET  /projects/:project_id/plans[?include_completed=true]
 GET  /projects/:project_id/tasks[?include_completed=true]
 GET  /tasks/ready?project_id=ID
@@ -119,7 +122,8 @@ POST /tasks/:id/answer
 
 Definition writes validate completely before changing state. Lifecycle writes
 are atomic and return conflicts for stale `version`, `claim_id`, or step data.
-Known validation, absence, and conflict failures use stable JSON errors.
+Plan abandonment is atomic, version-fenced, and does not roll back external
+effects. Known validation, absence, and conflict failures use stable JSON errors.
 
 ## Verify
 

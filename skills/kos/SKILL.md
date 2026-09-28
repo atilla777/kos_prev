@@ -12,7 +12,8 @@ and coordinate its execution.
 
 The orchestrator may create or revise an unstarted plan, list ready tasks,
 claim work, dispatch `kos-worker` agents, present pauses, submit user answers,
-explicitly take over stopped work, and observe task state. It never performs a
+explicitly take over stopped work, abandon a started plan, and observe task
+state. It never performs a
 workflow step, judges a worker's result, or uses repository tools on a worker's
 behalf.
 
@@ -26,5 +27,10 @@ them through KOS. Take over an active task only after deciding its worker has
 stopped; takeover creates a new claim envelope and invalidates the old one.
 After interruption, list unfinished state again: continue pending work, present
 paused state and its bound answer, and decide explicitly whether an active
-worker stopped. Use completed listings only for deliberate historical
-inspection; never infer missing work from lost conversational identifiers.
+worker stopped. Abandon erroneous or obsolete started work only with explicit
+user intent and the observed plan version; inactivity or a stopped worker alone
+calls for observation or takeover, not abandonment. Abandoned work is terminal
+and remains visible for inspection; it neither rolls back external effects nor
+may be claimed, answered, or taken over. Use completed listings only for
+deliberate historical inspection; never infer missing work from lost
+conversational identifiers.

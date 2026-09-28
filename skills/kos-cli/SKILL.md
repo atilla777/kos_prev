@@ -11,11 +11,13 @@ the token or bypass the CLI with HTTP, Rails, or database access.
 
 Use `--help` and per-command help for the installed interface. The commands are
 `health`, `claim-id`, `project create/show/update`, `workflow create`, `plan
-put/list/show`, and `task list/ready/show/context/result/claim/takeover/report/answer`.
-List commands return unfinished state by default; use `--include-completed` for
-deliberate historical inspection. Pass each value as a separate argument. Send
-plans, workflow definitions, results, and answers with the documented file
-options; use `-` for standard input when convenient.
+put/list/show/abandon`, and `task list/ready/show/context/result/claim/takeover/report/answer`.
+`plan abandon` is fenced by the observed plan version. List commands return
+non-completed state, including terminal abandoned records; use
+`--include-completed` for successful history.
+Pass each value as a separate argument. Send plans, workflow definitions,
+results, and answers with the
+documented file options; use `-` for standard input when convenient.
 
 Exit `0` is an HTTP success, `1` is an HTTP failure with the unchanged server
 body on stdout, `2` is a usage/configuration/input error on stderr, and `3` is a

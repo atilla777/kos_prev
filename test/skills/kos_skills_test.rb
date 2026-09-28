@@ -43,6 +43,9 @@ class KosSkillsTest < ActiveSupport::TestCase
     assert_includes source, "discover\nunfinished plans and tasks"
     assert_includes source, "before creating replacement work"
     assert_includes source, "Take over an active task only after deciding its worker has\nstopped"
+    assert_includes source, "only with explicit\nuser intent and the observed plan version"
+    assert_includes source, "Abandoned work is terminal"
+    assert_includes source, "neither rolls back external effects"
     refute_match(/git status|git push|retry|lease|review algorithm/i, source)
   end
 
@@ -67,7 +70,7 @@ class KosSkillsTest < ActiveSupport::TestCase
     source = File.read(Rails.root.join("skills/kos-cli/SKILL.md"))
 
     %w[KOS_CLI_PATH KOS_API_URL KOS_API_TOKEN health claim-id].each { |value| assert_includes source, value }
-    [ "project create/show/update", "workflow create", "plan\nput/list/show",
+    [ "project create/show/update", "workflow create", "plan\nput/list/show/abandon",
       "task list/ready/show/context/result/claim/takeover/report/answer" ].each do |surface|
       assert_includes source, surface
     end

@@ -41,8 +41,11 @@ bin/rails server
 
 Use `project create`, `workflow create`, and `plan put` to create the durable
 state needed by `/kos`. Use `project show`, `plan list`, and `task list` to
-recover unfinished state after a restart; use `plan show` for one detailed plan.
-The list commands exclude completed state unless `--include-completed` is given.
+recover non-completed state after a restart; use `plan show` for one detailed plan.
+The list commands include terminal abandoned state but exclude completed state
+unless `--include-completed` is given. Use `plan abandon` only with explicit
+intent to retire erroneous or obsolete started work, passing the current plan
+version from `plan show` or `plan list`. It does not undo external effects.
 Consult per-command help for exact file and standard-input options.
 
 For a minimal first run, save this one-step workflow as `workflow.json`:
@@ -116,12 +119,12 @@ The installer manages exactly:
 - skills `kos`, `kos-cli`, `kos-worker`, and `okf`.
 
 Restart OpenCode after installation or any managed-file change. The `/kos`
-agent coordinates only: it discovers unfinished state before creating work,
+agent coordinates only: it discovers non-completed state before creating work,
 stores plans, finds and claims ready work, dispatches workers, presents pauses,
-performs explicit takeover, and observes state. Each `kos-worker` performs and
-reports one current step. The managed command and agent inherit the model and
-provider selected by OpenCode; configure and authenticate a provider before the
-first run.
+performs explicit takeover, abandons started plans only with explicit user
+intent, and observes state. Each `kos-worker` performs and reports one current
+step. The managed command and agent inherit the model and provider selected by
+OpenCode; configure and authenticate a provider before the first run.
 
 ## Production
 

@@ -8,36 +8,39 @@ agent intelligence.
 - Workflow tests cover immutable revisions, structural validation, generic
   outcomes, backward transitions, pauses, and completion without name-based
   built-in behavior.
-- Plan tests cover atomic creation and replacement, replacement rejection after
-  work starts, missing references, dependency cycles, and readiness only after
-  every blocker completes.
+- Plan tests cover atomic creation, replacement and abandonment, replacement
+  rejection after work starts, missing references, dependency cycles, and
+  readiness only after every blocker completes.
 - Lifecycle tests cover non-expiring claims, optimistic versions, conflicting
   claims, explicit takeover, stale claim/version/step rejection, one worker per
-  task, and parallel claims for independent tasks.
+  task, terminal abandoned work, and parallel claims for independent tasks.
 - Result tests cover atomic result-plus-transition acceptance, replacement of a
   repeated step's latest result, no partial write on failure, and focused result
   retrieval.
 - Pause tests cover durable question or obstruction storage, claim release,
   exact answer binding, readiness for a new claim, clearing after an accepted
   report, and process restart.
-- Request tests cover authentication, project-scoped unfinished-state
+- Request tests cover authentication, project-scoped non-completed-state
   discovery, API projections, stable validation and conflict errors,
   transaction rollback, and persistence.
 - CLI tests execute the packaged client and cover discoverable help, health,
   claim identity generation, argument and standard-input mapping, output
   preservation, and exit statuses for every public command family.
 - Installation tests verify exactly one `/kos` command, one `kos-worker` agent,
-  and skills `kos`, `kos-cli`, `kos-worker`, and `okf`.
+  skills `kos`, `kos-cli`, `kos-worker`, and `okf`, plus abandonment persistence
+  across backup and restart.
 - Agent-contract tests verify orchestrator-only coordination, one worker per
   step, worker-owned reporting, and concurrent dispatch of independent tasks
-  without implementing a second scheduler in the test suite.
+  plus explicit user intent for abandonment without implementing a second
+  scheduler in the test suite.
 - Persistence tests use isolated SQLite databases and restart the application
   across claims, accepted reports, pauses, answers, and fresh-session discovery.
 
 Tests must not use a developer's database, credentials, OpenCode configuration,
 or repository state. Concurrency tests assert both the winning write and the
-unchanged invariant after rejected writes. No test depends on wall-clock claim
-expiry because claims do not expire.
+unchanged invariant after rejected writes, including abandonment races with
+claim, report, answer, and takeover. No test depends on wall-clock claim expiry
+because claims do not expire.
 
 ## Exclusions
 

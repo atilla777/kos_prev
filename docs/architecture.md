@@ -3,8 +3,8 @@
 ## Boundaries
 
 - Rails and SQLite own authoritative projects, immutable workflow revisions,
-  atomic plans, dependencies, task state, claims, versions, pauses, answers,
-  latest accepted results, and generic transitions.
+  atomic plans, plan status and versions, dependencies, task state, claims,
+  versions, pauses, answers, latest accepted results, and generic transitions.
 - The packaged CLI is a thin authenticated HTTP client. `claim-id` is its only
   local state-producing operation.
 - The `/kos` main agent is an orchestrator. It plans, finds ready tasks, claims
@@ -33,6 +33,12 @@ one transaction creates or replaces it. Replacement is rejected after any task
 starts. Dependencies are acyclic, and readiness is derived from completion of
 all blockers rather than maintained by an agent-side graph algorithm.
 
+A started plan can be abandoned only through its observed aggregate version.
+Every task lifecycle mutation advances that version. Abandonment atomically
+marks all unfinished tasks terminal, clears claims, and advances their versions
+while preserving completed tasks and all inspection state. It does not undo
+repository, Git, or other external effects.
+
 Each task has an optimistic integer `version` and at most one active `claim_id`.
 Claim, takeover, answer, and report use compare-and-change transactions. Claims
 are non-expiring. Explicit takeover with the observed version installs a new
@@ -59,14 +65,14 @@ health
 claim-id
 project create|show|update
 workflow create
-plan put|list|show
+plan put|list|show|abandon
 task list|ready|show|context|result|claim|takeover|report|answer
 ```
 
 The JSON API mirrors these operations with `GET /up`, project resources,
-immutable workflow creation, project-scoped plan storage, ready-task discovery,
-project-scoped unfinished-state discovery, task reads, and task
-claim/takeover/report/answer mutations. The CLI validates local arguments and
+immutable workflow creation, project-scoped plan storage and abandonment,
+ready-task discovery, project-scoped non-completed-state discovery, task reads,
+and task claim/takeover/report/answer mutations. The CLI validates local arguments and
 input, sends one request, preserves server output, and does not duplicate
 workflow or recovery policy. Per-command help is the syntax authority.
 
@@ -80,6 +86,10 @@ version; report additionally requires the current `claim_id` and step. Stable
 validation and conflict errors let agents reread authoritative state without
 requiring an encoded retry algorithm.
 
+Plan abandonment uses the observed plan version. It shares one transactional
+plan fence with claim, report, answer, and takeover, so concurrent operations
+have one winner and cannot expose partially abandoned state.
+
 ## Agent Integration
 
 The managed OpenCode inventory is one `/kos` command, one `kos-worker` agent,
@@ -89,6 +99,10 @@ The orchestrator may claim several independent ready tasks and dispatch one
 worker per task concurrently. It passes only the identity needed for the worker
 to obtain authoritative context. It does not inspect results to reproduce a
 workflow step, execute a `main` step, or advance state on a worker's behalf.
+
+Only explicit user intent authorizes the orchestrator to abandon a started
+plan. A stopped worker alone calls for observation or takeover; workers never
+abandon plans.
 
 The worker chooses its tools and detailed procedure from the workflow
 instruction and repository context. It reports with the immutable claim
@@ -110,6 +124,10 @@ and pause state; it does not infer readiness, staleness, or takeover policy. A
 delayed worker's report fails because takeover changed both claim identity and
 task version. An ambiguous mutation is resolved by reading current state before
 another write.
+
+Successful abandonment similarly invalidates every unfinished worker. Terminal
+abandoned records remain in default non-completed discovery but are never ready
+or eligible for lifecycle mutations.
 
 There are no leases, heartbeat, clocks, owner sessions, automatic stale-worker
 detection, request creation keys, local protocol files, or pending-report

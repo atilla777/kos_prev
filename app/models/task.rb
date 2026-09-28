@@ -1,5 +1,5 @@
 class Task < ApplicationRecord
-  STATUSES = %w[pending active needs_human blocked completed].freeze
+  STATUSES = %w[pending active needs_human blocked completed abandoned].freeze
 
   belongs_to :task_plan
   belongs_to :workflow

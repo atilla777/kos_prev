@@ -1,22 +1,26 @@
 # Status
 
-State: planned
+State: done
 Updated: 2026-09-28
 
 ## Current
 
-Started plans cannot be replaced, and the lifecycle has no cancelled or
-abandoned terminal state. Erroneous workflows and obsolete claims can therefore
-remain live indefinitely.
+Plan-level abandonment is implemented with an aggregate optimistic version.
+It atomically preserves completed tasks and results while terminally fencing
+every unfinished task.
 
 ## Next
 
-Start after task 031 and finalize the minimal atomic plan-abandonment contract.
+None.
 
 ## Blockers
 
-Depends on task 031.
+None.
 
 ## Checks
 
-Not started.
+- `bin/rails db:migrate:down VERSION=20260928000001` passed.
+- `bin/rails db:migrate:up VERSION=20260928000001` passed.
+- `bin/check` passed: 88 tests, 1229 assertions.
+- Independent review completed; safe migration rollback and documentation
+  findings were corrected before the final check.

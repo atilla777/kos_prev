@@ -23,6 +23,12 @@ class TaskPlansController < ApplicationController
     render json: serialize(project.task_plans.find_by!(key: required_string(:key)))
   end
 
+  def abandon
+    project = Project.find(params[:project_id])
+    plan = project.task_plans.find_by!(key: required_string(:key))
+    render json: serialize(TaskLifecycle.new.abandon_plan!(task_plan: plan, version: required_integer(:version)))
+  end
+
   private
 
   def serialize(plan)
@@ -39,6 +45,6 @@ class TaskPlansController < ApplicationController
   end
 
   def serialize_header(plan)
-    plan.as_json(only: %i[id project_id key title created_at updated_at])
+    plan.as_json(only: %i[id project_id key title status version created_at updated_at])
   end
 end

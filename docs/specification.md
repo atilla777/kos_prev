@@ -18,7 +18,8 @@ coordinate writes; they are not identities for authorization.
 - The user supplies a goal and answers material questions.
 - The main orchestrator creates or updates a plan, selects ready tasks, claims
   them, dispatches workers, presents pauses, explicitly takes over stopped work,
-  and observes authoritative state.
+  abandons erroneous or obsolete started plans with explicit user intent, and
+  observes authoritative state.
 - A worker performs exactly one current workflow step. It chooses the reasoning,
   tools, checks, repository operations, and evidence appropriate to that step,
   reports one allowed outcome, and stops.
@@ -36,6 +37,7 @@ KOS stores:
 - projects identified by registered repository identity;
 - immutable workflow revisions;
 - project-scoped task plans containing task definitions and dependencies;
+- each plan's `active` or `abandoned` status and optimistic `version`;
 - each task's selected workflow revision, current step, status, and optimistic
   `version`;
 - one optional non-expiring active `claim_id`;
@@ -62,10 +64,18 @@ revision.
 all task definitions and blocker relationships. No reader can observe a partial
 plan. A plan may be replaced only while none of its tasks has started.
 
+With explicit user intent, `plan abandon` retires one started plan using its
+observed version. In one transaction it marks every unfinished task
+`abandoned`, clears active claims, advances affected task versions, and marks
+the plan abandoned. Completed tasks, accepted results, workflow history, and
+pause/answer evidence remain available for inspection. Abandonment is terminal
+and does not compensate external effects.
+
 Dependencies must refer to tasks in the plan and must be acyclic. A pending task
 is ready only when every blocker is complete. Paused, active, or otherwise
-incomplete blockers do not satisfy readiness. Failure or pause in one branch
-does not prevent unrelated ready tasks from being claimed.
+incomplete blockers do not satisfy readiness. Abandoned tasks are never ready
+and do not satisfy dependencies. Failure or pause in one branch does not prevent
+unrelated ready tasks from being claimed.
 
 ## Claims And Versions
 
@@ -83,6 +93,11 @@ Every lifecycle mutation supplies the observed task `version`. Worker reports
 also supply the active `claim_id` and current step. A stale version, claim, or
 step changes nothing. Consequently, two workers cannot both report the same task
 version, and a worker superseded by takeover cannot change task state.
+
+Every successful claim, takeover, answer, or report also advances the plan
+version. Abandonment competes through that aggregate fence, so it and a
+concurrent task mutation have one winner; successful abandonment invalidates
+all claims and task versions for unfinished work.
 
 ## Context, Results, And Reporting
 
@@ -124,9 +139,10 @@ administration and inspection.
 | `claim-id` | local | Create one dispatch claim identity |
 | `project create`, `project show`, `project update` | `POST /projects`, `GET /projects`, `PATCH /projects/:id` | Register, inspect, and update project metadata |
 | `workflow create` | `POST /workflows` | Create one immutable keyed revision |
-| `plan list` | `GET /projects/:project_id/plans` | List unfinished plans, or all plans when explicitly requested |
+| `plan list` | `GET /projects/:project_id/plans` | List non-completed plans, including abandoned state, or all plans when explicitly requested |
 | `plan put`, `plan show` | `PUT /projects/:project_id/plan`, `GET /projects/:project_id/plan?key=KEY` | Atomically replace an unstarted plan and inspect it by key |
-| `task list` | `GET /projects/:project_id/tasks` | List unfinished task lifecycle state, or all tasks when explicitly requested |
+| `plan abandon` | `POST /projects/:project_id/plan/abandon` | Version-fence and atomically retire one started plan |
+| `task list` | `GET /projects/:project_id/tasks` | List non-completed task state, including abandoned state, or all tasks when explicitly requested |
 | `task ready` | `GET /tasks/ready?project_id=ID` | List dependency-ready tasks |
 | `task show` | `GET /tasks/:id` | Observe lifecycle and fencing state |
 | `task context` | `GET /tasks/:id/context` | Read one worker's complete current-step context |
@@ -144,14 +160,14 @@ claims, and stale writes produce no partial state change.
 ## Recovery And Upgrade
 
 Authoritative recovery starts by resolving the registered project and listing
-its unfinished plans and tasks. These project-scoped reads include pending,
-active, needs-human, and blocked tasks; active entries expose their claim fence,
-and paused entries expose their persisted question or obstruction and bound
-answer. Completed state is excluded by default but can be requested for
-deliberate inspection. `plan list` returns plan identity and timestamps. `task
-list` returns task and plan identity, workflow identity, key, title, status,
-current step, claim, version, pause and answer fields, timestamps, and blocker
-IDs; per-command help names the exact fields.
+its non-completed plans and tasks. These project-scoped reads include pending,
+active, needs-human, blocked, and terminal abandoned state; active entries
+expose their claim fence, and paused or abandoned entries retain persisted pause
+and answer evidence. Completed state is excluded by default but can be requested
+for deliberate inspection. Plan listings return identity, status, version, and
+timestamps. Task listings return task and plan identity, workflow identity,
+key, title, status, current step, claim, version, pause and answer fields,
+timestamps, and blocker IDs; per-command help names the exact fields.
 
 After an ambiguous mutation, clients inspect the listing, `task show`,
 `context`, or `result` before deciding whether another mutation is safe. KOS
@@ -171,4 +187,5 @@ task, request-bound commands, task types, main-agent step execution, server-side
 required-check gates, Git/review/publication validation, brief graphs,
 deterministic scheduler or Git algorithms, live-model release gates,
 multi-tenant authorization, high availability, multi-host coordination, and a
-web UI.
+web UI. KOS also excludes automatic age- or health-based abandonment and
+compensation of external effects.

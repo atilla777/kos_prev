@@ -15,7 +15,7 @@ class CliTest < ActiveSupport::TestCase
     assert_match(/^\s*claim-id\s*$/, output)
     assert_match(/^\s*project create \| show \| update\s*$/, output)
     assert_match(/^\s*workflow create\s*$/, output)
-    assert_match(/^\s*plan put \| list \| show\s*$/, output)
+    assert_match(/^\s*plan put \| list \| show \| abandon\s*$/, output)
     assert_match(/^\s*task list \| ready \| show \| context \| result \| claim \| takeover \| report \| answer\s*$/, output)
     %w[session-id task-type create-or-get resume lease artifact report-attempt materialize children graph].each do |removed|
       refute_match(/\b#{Regexp.escape(removed)}\b/, output)
@@ -26,6 +26,7 @@ class CliTest < ActiveSupport::TestCase
       %w[plan put] => %w[--project-id --definition-file],
       %w[plan list] => %w[--project-id --include-completed],
       %w[plan show] => %w[--project-id --key],
+      %w[plan abandon] => %w[--project-id --key --version],
       %w[task list] => %w[--project-id --include-completed],
       %w[task ready] => %w[--project-id],
       %w[task result] => %w[--step],
@@ -42,7 +43,7 @@ class CliTest < ActiveSupport::TestCase
     end
 
     plan_list_help, = run_cli("plan", "list", "--help", environment: {})
-    assert_includes plan_list_help, "task_plans fields: id, project_id, key, title"
+    assert_includes plan_list_help, "task_plans fields: id, project_id, key, title, status, version"
     plan_put_help, = run_cli("plan", "put", "--help", environment: {})
     %w[description_markdown workflow_key blocker_keys].each do |field|
       assert_includes plan_put_help, field
@@ -111,6 +112,8 @@ class CliTest < ActiveSupport::TestCase
             [ [ "plan", "list", "--project-id", "7" ], "GET", "/projects/7/plans", nil ],
             [ [ "plan", "list", "--project-id", "7", "--include-completed" ],
               "GET", "/projects/7/plans?include_completed=true", nil ],
+            [ [ "plan", "abandon", "--project-id", "7", "--key", "goal", "--version", "4" ],
+              "POST", "/projects/7/plan/abandon", { "key" => "goal", "version" => 4 } ],
             [ [ "task", "list", "--project-id", "7" ], "GET", "/projects/7/tasks", nil ],
             [ [ "task", "list", "--project-id", "7", "--include-completed" ],
               "GET", "/projects/7/tasks?include_completed=true", nil ],

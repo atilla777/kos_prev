@@ -9,21 +9,22 @@ class TaskLifecycle
 
   def ready(project:, task_plan: nil)
     incomplete = TaskDependency.where(blocker_id: Task.where.not(status: "completed")).select(:task_id)
-    scope = Task.joins(:task_plan).where(task_plans: { project_id: project.id }, status: "pending").where.not(id: incomplete)
+    scope = Task.joins(:task_plan).where(task_plans: { project_id: project.id, status: "active" },
+      status: "pending").where.not(id: incomplete)
     scope = scope.where(task_plan:) if task_plan
     scope.order(:created_at, :id)
   end
 
   def claim!(task_id:, claim_id:, version:)
     validate_claim_id!(claim_id)
-    task = Task.find(task_id)
-
     Task.transaction do
+      task = lock_active_plan_for_task!(task_id)
       updated = ready(project: task.task_plan.project).where(id: task.id, version:).update_all(
         status: "active", claim_id:, version: Arel.sql("version + 1"), updated_at: Time.current
       )
       raise Conflict, "task is stale or not ready" unless updated == 1
 
+      advance_plan!(task.task_plan_id)
       task.reload
     end
   end
@@ -40,6 +41,7 @@ class TaskLifecycle
     validate_result!(result)
 
     Task.transaction do
+      task = lock_active_plan_for_task!(task_id)
       fence = Task.where(id: task_id, status: "active", claim_id:, version:, current_step: step)
       raise Conflict, "task claim, version, or step is stale" unless fence.update_all("updated_at = updated_at") == 1
 
@@ -56,6 +58,7 @@ class TaskLifecycle
       updated = fence.update_all(changes)
       raise Conflict, "task claim, version, or step is stale" unless updated == 1
 
+      advance_plan!(task.task_plan_id)
       task.reload
     end
   end
@@ -68,16 +71,51 @@ class TaskLifecycle
       }, message: "task pause, version, or step is stale")
   end
 
+  def abandon_plan!(task_plan:, version:)
+    TaskPlan.transaction do
+      fence = TaskPlan.where(id: task_plan.id, status: "active", version:)
+      raise Conflict, "task plan is stale or already abandoned" unless fence.update_all("updated_at = updated_at") == 1
+
+      unfinished = task_plan.tasks.where.not(status: "completed")
+      started = unfinished.exists? && (unfinished.where.not(status: "pending").exists? ||
+        unfinished.where.not(version: 0).exists? || unfinished.where.not(claim_id: nil).exists? ||
+        task_plan.tasks.any? { |task| task.accepted_results.present? })
+      raise Conflict, "task plan can be abandoned only after work has started" unless started
+
+      unfinished.update_all(status: "abandoned", claim_id: nil, version: Arel.sql("version + 1"), updated_at: Time.current)
+      updated = fence.update_all(status: "abandoned", version: Arel.sql("version + 1"), updated_at: Time.current)
+      raise Conflict, "task plan is stale or already abandoned" unless updated == 1
+
+      task_plan.reload
+    end
+  end
+
   private
 
   def update_fenced!(task_id:, scope:, changes:, message:)
     Task.transaction do
-      Task.find(task_id)
+      task = lock_active_plan_for_task!(task_id)
       updated = scope.where(id: task_id).update_all(changes)
       raise Conflict, message unless updated == 1
 
+      advance_plan!(task.task_plan_id)
       Task.find(task_id)
     end
+  end
+
+  def lock_active_plan_for_task!(task_id)
+    task = Task.includes(task_plan: :project).find(task_id)
+    updated = TaskPlan.where(id: task.task_plan_id, status: "active").update_all("updated_at = updated_at")
+    raise Conflict, "task plan is abandoned" unless updated == 1
+
+    task
+  end
+
+  def advance_plan!(task_plan_id)
+    updated = TaskPlan.where(id: task_plan_id, status: "active").update_all(
+      version: Arel.sql("version + 1"), updated_at: Time.current
+    )
+    raise Conflict, "task plan is abandoned" unless updated == 1
   end
 
   def transition_changes(action, step:, message:)

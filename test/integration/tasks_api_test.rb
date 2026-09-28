@@ -94,6 +94,37 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     assert_equal [ "pending", "A", 4 ], response.parsed_body.fetch("task").values_at("status", "answer", "version")
   end
 
+  test "abandons a started plan through an exact plan fence" do
+    plan = create_task_plan(project: @project, key: "obsolete")
+    completed = create_task(task_plan: plan, workflow: @workflow, key: "completed")
+    completed.update!(status: "completed", accepted_results: {
+      "work" => { "outcome" => "done", "result" => "kept" }
+    })
+    active = create_task(task_plan: plan, workflow: @workflow, key: "active")
+    active.update!(status: "active", claim_id: "worker", version: 2)
+
+    post abandon_project_plan_path(@project), params: { key: plan.key, version: 0 }, headers: @headers, as: :json
+    assert_response :success
+    assert_equal [ "abandoned", 1 ], response.parsed_body.fetch("task_plan").values_at("status", "version")
+    assert_equal [ "completed", "abandoned" ], response.parsed_body.fetch("tasks").pluck("status")
+    assert_nil response.parsed_body.fetch("tasks").last.fetch("claim_id")
+
+    post report_task_path(active), params: {
+      claim_id: "worker", version: 2, step: "work", outcome: "done", result: "stale"
+    }, headers: @headers, as: :json
+    assert_response :conflict
+    post abandon_project_plan_path(@project), params: { key: plan.key, version: 0 }, headers: @headers, as: :json
+    assert_response :conflict
+
+    post abandon_project_plan_path(@project), params: { key: plan.key }, headers: @headers, as: :json
+    assert_response :bad_request
+
+    get tasks_ready_path, params: { project_id: @project.id }, headers: @headers
+    assert_empty response.parsed_body.fetch("tasks")
+    get result_task_path(completed), params: { step: "work" }, headers: @headers
+    assert_equal "kept", response.parsed_body.fetch("result")
+  end
+
   test "discovers project plans and unfinished task lifecycle state" do
     plan = create_task_plan(project: @project, key: "current")
     pending = create_task(task_plan: plan, workflow: @workflow, key: "pending")
@@ -146,6 +177,7 @@ class TasksApiTest < ActionDispatch::IntegrationTest
       -> { put project_plan_path(1), params: {}, as: :json },
       -> { get project_plan_path(1) },
       -> { get project_plans_path(1) },
+      -> { post abandon_project_plan_path(1), params: {}, as: :json },
       -> { get project_tasks_path(1) },
       -> { get tasks_ready_path },
       -> { get task_path(1) },

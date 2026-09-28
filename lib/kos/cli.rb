@@ -65,7 +65,7 @@ module Kos
           claim-id
           project create | show | update
           workflow create
-          plan put | list | show
+          plan put | list | show | abandon
           task list | ready | show | context | result | claim | takeover | report | answer
 
         Options:
@@ -96,6 +96,7 @@ module Kos
       when [ "plan", "put" ] then plan_put
       when [ "plan", "list" ] then plan_list
       when [ "plan", "show" ] then plan_show
+      when [ "plan", "abandon" ] then plan_abandon
       when [ "task", "list" ] then task_list
       when [ "task", "ready" ] then task_ready
       when [ "task", "show" ] then task_show
@@ -166,8 +167,19 @@ module Kos
 
     def plan_list
       project_id, values = project_list_options("kos plan list",
-        "Response task_plans fields: id, project_id, key, title, created_at, updated_at")
+        "Response task_plans fields: id, project_id, key, title, status, version, created_at, updated_at")
       [ :get, query_path("/projects/#{project_id}/plans", values), nil ]
+    end
+
+    def plan_abandon
+      values = parse_options("kos plan abandon", {
+        "--project-id ID" => [ :project_id, Integer, "Project ID" ],
+        "--key KEY" => [ :key, String, "Task plan key" ],
+        "--version VERSION" => [ :version, Integer, "Observed task plan version" ]
+      })
+      require_values!(values, :project_id, :key, :version)
+      project_id = values.delete(:project_id)
+      [ :post, "/projects/#{project_id}/plan/abandon", values ]
     end
 
     def task_list

@@ -12,12 +12,17 @@ class TaskPlanStore
     TaskPlan.transaction do
       plan = TaskPlan.find_or_initialize_by(project:, key:)
       if plan.persisted?
+        unless TaskPlan.where(id: plan.id, status: "active").update_all("updated_at = updated_at") == 1
+          raise TaskLifecycle::Conflict, "abandoned task plan cannot be replaced"
+        end
+        plan.reload
         plan.tasks.update_all("updated_at = updated_at")
         unless plan.tasks.where.not(status: "pending").none? && plan.tasks.where.not(version: 0).none? &&
             plan.tasks.where.not(claim_id: nil).none? && plan.tasks.all? { |task| task.accepted_results.empty? }
           raise TaskLifecycle::Conflict, "task plan can be replaced only while every task is unstarted"
         end
         plan.tasks.destroy_all
+        plan.version += 1
       end
       plan.title = title
       plan.save!

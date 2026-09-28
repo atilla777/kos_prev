@@ -19,6 +19,16 @@ class DomainSchemaTest < ActiveSupport::TestCase
     assert_raises(ActiveRecord::StatementInvalid) { task.update_columns(version: -1) }
   end
 
+  test "defines constrained plan abandonment state" do
+    assert_equal %w[created_at id key project_id status title updated_at version], TaskPlan.column_names.sort
+    assert_equal "active", TaskPlan.columns_hash.fetch("status").default
+    assert_equal 0, TaskPlan.columns_hash.fetch("version").default
+
+    plan = create_task_plan
+    assert_raises(ActiveRecord::StatementInvalid) { plan.update_columns(status: "cancelled") }
+    assert_raises(ActiveRecord::StatementInvalid) { plan.update_columns(version: -1) }
+  end
+
   test "enforces plan-local task keys and workflow revisions" do
     workflow = create_workflow(key: "delivery", revision: 1)
     plan = create_task_plan

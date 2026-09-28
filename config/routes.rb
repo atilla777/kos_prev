@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   get "projects/:project_id/plans", to: "task_plans#index", as: :project_plans
   put "projects/:project_id/plan", to: "task_plans#update", as: :project_plan
   get "projects/:project_id/plan", to: "task_plans#show"
+  post "projects/:project_id/plan/abandon", to: "task_plans#abandon", as: :abandon_project_plan
   get "projects/:project_id/tasks", to: "tasks#index", as: :project_tasks
 
   get "tasks/ready", to: "tasks#ready"

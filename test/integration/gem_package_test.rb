@@ -47,7 +47,7 @@ class GemPackageTest < ActiveSupport::TestCase
       {
         "project" => %w[create show update],
         "workflow" => %w[create],
-        "plan" => %w[put list show],
+        "plan" => %w[put list show abandon],
         "task" => %w[list ready show context result claim takeover report answer]
       }.each do |resource, actions|
         inventory = output.lines.grep(/^\s*#{Regexp.escape(resource)}\s+/).join
@@ -57,6 +57,7 @@ class GemPackageTest < ActiveSupport::TestCase
 
       {
         %w[task context] => [],
+        %w[plan abandon] => %w[--project-id --key --version],
         %w[task result] => %w[--step],
         %w[task report] => %w[--claim-id --version --result-file]
       }.each do |command, options|
@@ -191,6 +192,14 @@ class GemPackageTest < ActiveSupport::TestCase
         end
       end
 
+      current_plan = run_installed_json(cli, authenticated, root, "plan", "show", "--project-id",
+        project.fetch("id").to_s, "--key", "smoke").fetch("task_plan")
+      abandoned_plan = run_installed_json(cli, authenticated, root, "plan", "abandon", "--project-id",
+        project.fetch("id").to_s, "--key", "smoke", "--version", current_plan.fetch("version").to_s)
+      assert_equal "abandoned", abandoned_plan.dig("task_plan", "status")
+      assert_equal [ "completed", "abandoned", "abandoned", "abandoned" ],
+        abandoned_plan.fetch("tasks").pluck("status")
+
       stop_server(system)
       backup = root.join("production-backup.sqlite3")
       _output, error, status = Open3.capture3("sqlite3", database.to_s, ".backup '#{backup}'")
@@ -217,14 +226,15 @@ class GemPackageTest < ActiveSupport::TestCase
       discovered_plans = run_installed_json(cli, restored_environment, root, "plan", "list", "--project-id",
         restored.fetch("id").to_s).fetch("task_plans")
       assert_equal [ "smoke" ], discovered_plans.pluck("key")
+      assert_equal "abandoned", discovered_plans.first.fetch("status")
       discovered_tasks = run_installed_json(cli, restored_environment, root, "task", "list", "--project-id",
         restored.fetch("id").to_s).fetch("tasks")
       assert_equal %w[paused active blocked], discovered_tasks.pluck("key")
-      assert_equal [ "pending", "plan", "Choose a direction", "# Result\n" ],
+      assert_equal [ "abandoned", "plan", "Choose a direction", "# Result\n" ],
         discovered_tasks.first.values_at("status", "pause_step", "pause_message", "answer")
-      assert_equal [ "active", "smoke-active", 1 ],
+      assert_equal [ "abandoned", nil, 2 ],
         discovered_tasks.second.values_at("status", "claim_id", "version")
-      assert_equal [ "blocked", "blocked", "plan", "Dependency unavailable", nil ],
+      assert_equal [ "abandoned", "blocked", "plan", "Dependency unavailable", nil ],
         discovered_tasks.last.values_at("status", "pause_kind", "pause_step", "pause_message", "answer")
       all_tasks = run_installed_json(cli, restored_environment, root, "task", "list", "--project-id",
         restored.fetch("id").to_s, "--include-completed").fetch("tasks")
@@ -235,13 +245,15 @@ class GemPackageTest < ActiveSupport::TestCase
       assert_equal %w[plan implement review publish], restored_context.fetch("results").map { |entry| entry.fetch("step") }
       restored_pause = run_installed_json(cli, restored_environment, root, "task", "context",
         paused_task.fetch("id").to_s)
-      assert_equal [ "pending", "plan", "# Result\n" ],
+      assert_equal [ "abandoned", "plan", "# Result\n" ],
         [ restored_pause.dig("task", "status"), restored_pause.dig("pause", "step"),
           restored_pause.dig("pause", "answer") ]
       restored_active = run_installed_json(cli, restored_environment, root, "task", "context",
         active_task.fetch("id").to_s)
-      assert_equal [ "active", "smoke-active", 1 ],
+      assert_equal [ "abandoned", nil, 2 ],
         restored_active.fetch("task").values_at("status", "claim_id", "version")
+      assert_empty run_installed_json(cli, restored_environment, root, "task", "ready", "--project-id",
+        restored.fetch("id").to_s).fetch("tasks")
     ensure
       stop_server(system) if system
     end

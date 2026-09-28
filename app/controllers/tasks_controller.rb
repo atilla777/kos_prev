@@ -24,7 +24,7 @@ class TasksController < ApplicationController
     step = task.workflow.step_for(task.current_step)
     render json: {
       task: serialize_task(task).merge("description_markdown" => task.description_markdown),
-      task_plan: task.task_plan.as_json(only: %i[id project_id key title]),
+      task_plan: task.task_plan.as_json(only: %i[id project_id key title status version]),
       project: task.task_plan.project.as_json(only: %i[id name repository_identity remote_url default_branch]),
       workflow: task.workflow.as_json(only: %i[id key revision]),
       step: step.slice("id", "name", "instruction", "outcomes").merge(
