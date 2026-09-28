@@ -7,6 +7,7 @@ require "uri"
 require "kos/api_token"
 require "kos/build_identity"
 require "kos/open_code_installation"
+require "kos/workflow_definition"
 require_relative "version"
 
 module Kos
@@ -67,7 +68,7 @@ module Kos
           claim-id
           installation check
           project create | show | update
-          workflow create
+          workflow create | list | show | schema
           plan put | list | show | abandon
           task list | ready | show | context | result | claim | takeover | report | answer
 
@@ -122,6 +123,9 @@ module Kos
       when [ "project", "create" ] then project_create
       when [ "project", "show" ] then project_show
       when [ "project", "update" ] then project_update
+      when [ "workflow", "list" ] then workflow_list
+      when [ "workflow", "show" ] then workflow_show
+      when [ "workflow", "schema" ] then workflow_schema
       when [ "workflow", "create" ] then workflow_create
       when [ "plan", "put" ] then plan_put
       when [ "plan", "list" ] then plan_list
@@ -161,34 +165,73 @@ module Kos
         exit_status: 1)
     end
 
-    def project_create
-      values = parse_options("kos project create", project_options)
+  def project_create
+      values = parse_options("kos project create", project_options(required: true), footer: <<~HELP)
+        Response: project with #{project_response_fields}.
+        Example: kos project create --name Widget --remote-url git@github.com:acme/widget.git --default-branch main
+      HELP
       require_values!(values, :name, :remote_url, :default_branch)
       [ :post, "/projects", values ]
     end
 
     def project_show
       values = parse_options("kos project show", {
-        "--repository-identity IDENTITY" => [ :repository_identity, String, "Canonical host/namespace/repository" ]
-      })
+        "--repository-identity IDENTITY" => [ :repository_identity, String,
+          "Required canonical host/namespace/repository" ]
+      }, footer: <<~HELP)
+        Response: project with #{project_response_fields}.
+        Example: kos project show --repository-identity github.com/acme/widget
+      HELP
       require_values!(values, :repository_identity)
       [ :get, query_path("/projects", values), nil ]
     end
 
     def project_update
       id = shift_id!("project")
-      values = parse_options("kos project update ID", project_options)
+      values = parse_options("kos project update ID", project_options, footer: <<~HELP)
+        ID: required numeric project ID returned by project create or project show.
+        Provide at least one project field. Response: project with #{project_response_fields}.
+        Example: kos project update 7 --name "Renamed widget"
+      HELP
       raise Error.new("usage_error", "provide at least one project field") if values.empty?
 
       [ :patch, "/projects/#{id}", values ]
     end
 
+    def workflow_list
+      values = parse_options("kos workflow list", {
+        "--key KEY" => [ :key, String, "Optional exact workflow key filter" ]
+      }, footer: <<~HELP)
+        Response: workflows[] with id, key, name, revision, definition_json, and created_at.
+        Example: kos workflow list --key development
+      HELP
+      [ :get, query_path("/workflows", values), nil ]
+    end
+
+    def workflow_show
+      id = shift_id!("workflow")
+      parse_options("kos workflow show ID", {}, footer: <<~HELP)
+        ID: required numeric immutable workflow revision ID returned by workflow list; it is not a key or revision number.
+        Response: workflow with id, key, name, revision, definition_json, and created_at.
+        Example: kos workflow show 12
+      HELP
+      [ :get, "/workflows/#{id}", nil ]
+    end
+
+    def workflow_schema
+      parse_options("kos workflow schema", {}, footer: <<~HELP)
+        Response: schema contains the authoritative definition contract; example is one valid complete definition_json.
+        Example: kos workflow schema
+      HELP
+      [ :get, "/workflows/schema", nil ]
+    end
+
     def workflow_create
       values = parse_options("kos workflow create", {
-        "--key KEY" => [ :key, String, "Stable workflow key" ],
-        "--name NAME" => [ :name, String, "Workflow name" ],
-        "--definition-file FILE" => [ :definition_file, String, "Workflow JSON file, or - for STDIN" ]
-      })
+        "--key KEY" => [ :key, String, "Required stable workflow key" ],
+        "--name NAME" => [ :name, String, "Required workflow name" ],
+        "--definition-file FILE" => [ :definition_file, String, "Required definition_json file, or - for STDIN" ]
+      }, footer: workflow_definition_help)
       require_values!(values, :key, :name, :definition_file)
       values[:definition_json] = read_json_object(values.delete(:definition_file))
       [ :post, "/workflows", values ]
@@ -196,10 +239,13 @@ module Kos
 
     def plan_put
       values = parse_options("kos plan put", {
-        "--project-id ID" => [ :project_id, Integer, "Project ID" ],
-        "--definition-file FILE" => [ :definition_file, String, "Plan JSON file, or - for STDIN" ]
-      }, footer: "Plan JSON fields: key, title, tasks. Each task requires exactly: " \
-        "key, title, description_markdown, workflow_key, blocker_keys.")
+        "--project-id ID" => [ :project_id, Integer, "Required numeric project ID" ],
+        "--definition-file FILE" => [ :definition_file, String, "Required plan JSON file, or - for STDIN" ]
+      }, footer: <<~HELP)
+        Input object: key, title, tasks. Each task requires exactly key, title, description_markdown,
+        workflow_key, and blocker_keys. Response: #{plan_response_fields}.
+        Example: kos plan put --project-id 7 --definition-file plan.json
+      HELP
       require_values!(values, :project_id, :definition_file)
       project_id = values.delete(:project_id)
       [ :put, "/projects/#{project_id}/plan", read_json_object(values.delete(:definition_file)) ]
@@ -207,9 +253,12 @@ module Kos
 
     def plan_show
       values = parse_options("kos plan show", {
-        "--project-id ID" => [ :project_id, Integer, "Project ID" ],
-        "--key KEY" => [ :key, String, "Task plan key" ]
-      })
+        "--project-id ID" => [ :project_id, Integer, "Required numeric project ID" ],
+        "--key KEY" => [ :key, String, "Required task plan key" ]
+      }, footer: <<~HELP)
+        Response: #{plan_response_fields}.
+        Example: kos plan show --project-id 7 --key release
+      HELP
       require_values!(values, :project_id, :key)
       project_id = values.delete(:project_id)
       [ :get, query_path("/projects/#{project_id}/plan", values), nil ]
@@ -217,16 +266,20 @@ module Kos
 
     def plan_list
       project_id, values = project_list_options("kos plan list",
-        "Response task_plans fields: id, project_id, key, title, status, version, created_at, updated_at")
+        "Response task_plans fields: id, project_id, key, title, status, version, created_at, updated_at.\n" \
+        "Example: kos plan list --project-id 7")
       [ :get, query_path("/projects/#{project_id}/plans", values), nil ]
     end
 
     def plan_abandon
       values = parse_options("kos plan abandon", {
-        "--project-id ID" => [ :project_id, Integer, "Project ID" ],
-        "--key KEY" => [ :key, String, "Task plan key" ],
-        "--version VERSION" => [ :version, Integer, "Observed task plan version" ]
-      })
+        "--project-id ID" => [ :project_id, Integer, "Required numeric project ID" ],
+        "--key KEY" => [ :key, String, "Required task plan key" ],
+        "--version VERSION" => [ :version, Integer, "Required observed task plan version" ]
+      }, footer: <<~HELP)
+        Response: #{plan_response_fields}. Use only with explicit intent.
+        Example: kos plan abandon --project-id 7 --key obsolete --version 4
+      HELP
       require_values!(values, :project_id, :key, :version)
       project_id = values.delete(:project_id)
       [ :post, "/projects/#{project_id}/plan/abandon", values ]
@@ -234,36 +287,45 @@ module Kos
 
     def task_list
       project_id, values = project_list_options("kos task list",
-        "Response tasks fields: id, task_plan_id, workflow_id, key, title, status, current_step, claim_id, " \
-        "version, pause_kind, pause_message, pause_step, answer, created_at, updated_at, blocker_ids")
+        "Response tasks fields: id, task_plan_id, workflow_id, workflow_key, workflow_revision, key, title, " \
+        "status, current_step, claim_id, version, pause_kind, pause_message, pause_step, answer, created_at, " \
+        "updated_at, blocker_ids.\nExample: kos task list --project-id 7")
       [ :get, query_path("/projects/#{project_id}/tasks", values), nil ]
     end
 
     def task_ready
       values = parse_options("kos task ready", {
-        "--project-id ID" => [ :project_id, Integer, "Project ID" ]
-      })
+        "--project-id ID" => [ :project_id, Integer, "Required numeric project ID" ]
+      }, footer: <<~HELP)
+        Response: tasks[] with #{task_response_fields}.
+        Example: kos task ready --project-id 7
+      HELP
       require_values!(values, :project_id)
       [ :get, query_path("/tasks/ready", values), nil ]
     end
 
     def task_show
       id = shift_id!("task")
-      parse_options("kos task show ID", {})
+      parse_options("kos task show ID", {}, footer: task_id_help(
+        "task with #{task_response_fields}", "kos task show 9"))
       [ :get, "/tasks/#{id}", nil ]
     end
 
     def task_context
       id = shift_id!("task")
-      parse_options("kos task context ID", {})
+      parse_options("kos task context ID", {}, footer: task_id_help(
+        "task with #{task_response_fields} and description_markdown; task_plan with id, project_id, key, title, " \
+        "status, version; project with id, name, repository_identity, remote_url, default_branch; workflow with " \
+        "id, key, revision; step with id, name, instruction, outcomes, allowed_outcomes; results[] with step, outcome; " \
+        "pause with kind, step, message, answer", "kos task context 9"))
       [ :get, "/tasks/#{id}/context", nil ]
     end
 
     def task_result
       id = shift_id!("task")
       values = parse_options("kos task result ID", {
-        "--step STEP" => [ :step, String, "Workflow step" ]
-      })
+        "--step STEP" => [ :step, String, "Required executed workflow step ID" ]
+      }, footer: task_id_help("outcome and result for STEP", "kos task result 9 --step review"))
       require_values!(values, :step)
       [ :get, query_path("/tasks/#{id}/result", values), nil ]
     end
@@ -271,8 +333,9 @@ module Kos
     def task_claim
       id = shift_id!("task")
       values = parse_options("kos task claim ID", claim_options.merge(
-        "--version VERSION" => [ :version, Integer, "Observed task version" ]
-      ))
+        "--version VERSION" => [ :version, Integer, "Required observed task version" ]
+      ), footer: task_id_help("task with #{task_response_fields}", \
+        "kos task claim 9 --claim-id CLAIM --version 0"))
       require_values!(values, :claim_id, :version)
       [ :post, "/tasks/#{id}/claim", values ]
     end
@@ -280,9 +343,10 @@ module Kos
     def task_takeover
       id = shift_id!("task")
       values = parse_options("kos task takeover ID", claim_options.merge(
-        "--version VERSION" => [ :version, Integer, "Observed task version" ],
-        "--step STEP" => [ :step, String, "Observed current step" ]
-      ))
+        "--version VERSION" => [ :version, Integer, "Required observed task version" ],
+        "--step STEP" => [ :step, String, "Required observed current step" ]
+      ), footer: task_id_help("task with #{task_response_fields}", \
+        "kos task takeover 9 --claim-id NEW --version 2 --step work"))
       require_values!(values, :claim_id, :version, :step)
       [ :post, "/tasks/#{id}/takeover", values ]
     end
@@ -290,10 +354,12 @@ module Kos
     def task_report
       id = shift_id!("task")
       values = parse_options("kos task report ID", fence_options.merge(
-        "--outcome OUTCOME" => [ :outcome, String, "Reported step outcome" ],
-        "--result-file FILE" => [ :result_file, String, "Step result, or - for STDIN" ],
-        "--message MESSAGE" => [ :message, String, "Question or obstruction for a pause" ]
-      ))
+        "--outcome OUTCOME" => [ :outcome, String, "Required allowed step outcome" ],
+        "--result-file FILE" => [ :result_file, String, "Required step result, or - for STDIN" ],
+        "--message MESSAGE" => [ :message, String, "Required question or obstruction for a pause outcome" ]
+      ), footer: task_id_help("task with #{task_response_fields}", \
+        "kos task report 9 --claim-id CLAIM --version 1 --step work --outcome done --result-file result.md") +
+        "\nOUTCOME must be allowed by task context; --message is required by a pause outcome.")
       require_values!(values, :claim_id, :version, :step, :outcome, :result_file)
       values[:result] = read_file(values.delete(:result_file))
       [ :post, "/tasks/#{id}/report", values ]
@@ -302,42 +368,86 @@ module Kos
     def task_answer
       id = shift_id!("task")
       values = parse_options("kos task answer ID", {
-        "--version VERSION" => [ :version, Integer, "Observed task version" ],
-        "--step STEP" => [ :step, String, "Paused workflow step" ],
-        "--answer-file FILE" => [ :answer_file, String, "Answer, or - for STDIN" ]
-      })
+        "--version VERSION" => [ :version, Integer, "Required observed task version" ],
+        "--step STEP" => [ :step, String, "Required paused workflow step" ],
+        "--answer-file FILE" => [ :answer_file, String, "Required answer, or - for STDIN" ]
+      }, footer: task_id_help("task with #{task_response_fields}", \
+        "kos task answer 9 --version 3 --step work --answer-file answer.md"))
       require_values!(values, :version, :step, :answer_file)
       values[:answer] = read_file(values.delete(:answer_file))
       [ :post, "/tasks/#{id}/answer", values ]
     end
 
-    def project_options
+    def project_options(required: false)
+      prefix = required ? "Required" : "Optional"
       {
-        "--name NAME" => [ :name, String, "Project name" ],
-        "--remote-url URL" => [ :remote_url, String, "Git remote URL" ],
-        "--default-branch BRANCH" => [ :default_branch, String, "Default Git branch" ],
-        "--repository-identity IDENTITY" => [ :repository_identity, String, "Canonical host/namespace/repository" ]
+        "--name NAME" => [ :name, String, "#{prefix} project name" ],
+        "--remote-url URL" => [ :remote_url, String, "#{prefix} Git remote URL" ],
+        "--default-branch BRANCH" => [ :default_branch, String, "#{prefix} default Git branch" ],
+        "--repository-identity IDENTITY" => [ :repository_identity, String,
+          "Optional canonical host/namespace/repository" ]
       }
     end
 
     def claim_options
-      { "--claim-id CLAIM" => [ :claim_id, String, "Worker claim ID" ] }
+      { "--claim-id CLAIM" => [ :claim_id, String, "Required worker claim ID from claim-id" ] }
     end
 
     def fence_options
       claim_options.merge(
-        "--version VERSION" => [ :version, Integer, "Observed task version" ],
-        "--step STEP" => [ :step, String, "Observed current step" ]
+        "--version VERSION" => [ :version, Integer, "Required observed task version" ],
+        "--step STEP" => [ :step, String, "Required observed current step" ]
       )
     end
 
     def project_list_options(usage, response_help)
       values = parse_options(usage, {
-        "--project-id ID" => [ :project_id, Integer, "Project ID" ],
-        "--include-completed" => [ :include_completed, nil, "Include completed state" ]
+        "--project-id ID" => [ :project_id, Integer, "Required numeric project ID" ],
+        "--include-completed" => [ :include_completed, nil, "Optional inclusion of completed state" ]
       }, footer: response_help)
       require_values!(values, :project_id)
       [ values.delete(:project_id), values ]
+    end
+
+    def workflow_definition_help
+      contract = Kos::WorkflowDefinition::CONTRACT
+      steps = contract.fetch("steps")
+      fields = steps.fetch("item").fetch("fields")
+      <<~HELP
+        Input definition_json is an object containing exactly steps, a non-empty array of at most #{steps.fetch("maximum")}.
+        Each step contains exactly id, name, instruction, outcomes.
+        id, name, instruction, and outcome names are nonblank valid UTF-8 strings.
+        id and outcome names are at most #{fields.dig("id", "maximum_bytes")} bytes; name is at most
+        #{fields.dig("name", "maximum_bytes")} bytes; instruction is at most
+        #{fields.dig("instruction", "maximum_bytes")} bytes. outcomes is a non-empty object,
+        with at most #{fields.dig("outcomes", "total_maximum")} outcomes across the workflow. Each outcome has exactly
+        one transition: {"next_step":"STEP_ID"}, {"pause":"needs_human"}, {"pause":"blocked"}, or
+        {"complete_task":true}. Step ids are unique, next_step targets exist, the first step is initial, and every
+        reachable step has a path to complete_task.
+        Complete valid example:
+        #{JSON.pretty_generate(Kos::WorkflowDefinition.example)}
+        Response: workflow with id, key, name, revision, definition_json, and created_at.
+        Example: kos workflow create --key delivery --name Delivery --definition-file workflow.json
+      HELP
+    end
+
+    def task_id_help(response, example)
+      "ID: required numeric task ID returned by task list, task ready, or plan show.\n" \
+        "Response: #{response}.\nExample: #{example}"
+    end
+
+    def task_response_fields
+      "id, task_plan_id, workflow_id, workflow_key, workflow_revision, key, title, status, current_step, " \
+        "claim_id, version, pause_kind, pause_message, pause_step, answer, created_at, updated_at, and blocker_ids"
+    end
+
+    def project_response_fields
+      "id, name, repository_identity, remote_url, default_branch, created_at, and updated_at"
+    end
+
+    def plan_response_fields
+      "task_plan with id, project_id, key, title, status, version, created_at, updated_at; tasks[] with id, key, " \
+        "title, description_markdown, status, current_step, claim_id, version, workflow id/key/revision, and blocker_keys"
     end
 
     def parse_options(usage, definitions, footer: nil)

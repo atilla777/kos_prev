@@ -101,8 +101,13 @@ class ApplicationController < ActionController::API
     render json: { error: "bad_request", message: error.message }, status: :bad_request
   end
 
-  def render_not_found
-    render json: { error: "not_found" }, status: :not_found
+  def not_found!(resource, lookup)
+    description = lookup.map { |key, value| "#{key}=#{value.inspect}" }.join(" and ")
+    raise ActiveRecord::RecordNotFound, "#{resource} not found for #{description}"
+  end
+
+  def render_not_found(error)
+    render json: { error: "not_found", message: error.message }, status: :not_found
   end
 
   def render_validation_failed(error)

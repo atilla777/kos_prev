@@ -47,7 +47,7 @@ class GemPackageTest < ActiveSupport::TestCase
       assert_match(/^\s*health\s*$/, output)
       {
         "project" => %w[create show update],
-        "workflow" => %w[create],
+        "workflow" => %w[create list show schema],
         "plan" => %w[put list show abandon],
         "task" => %w[list ready show context result claim takeover report answer]
       }.each do |resource, actions|
@@ -57,6 +57,10 @@ class GemPackageTest < ActiveSupport::TestCase
       end
 
       {
+        %w[workflow create] => %w[--key --name --definition-file complete_task needs_human],
+        %w[workflow list] => %w[--key],
+        %w[workflow show] => [],
+        %w[workflow schema] => [],
         %w[task context] => [],
         %w[plan abandon] => %w[--project-id --key --version],
         %w[task result] => %w[--step],
@@ -114,6 +118,22 @@ class GemPackageTest < ActiveSupport::TestCase
       refute_includes log, system.fetch(:token)
 
       authenticated = environment.merge("KOS_API_TOKEN" => system.fetch(:token))
+      workflows = run_installed_json(cli, authenticated, root, "workflow", "list").fetch("workflows")
+      development = workflows.find { |workflow| workflow.fetch("key") == "development" }
+      shown_workflow = run_installed_json(cli, authenticated, root, "workflow", "show",
+        development.fetch("id").to_s).fetch("workflow")
+      assert_equal development, shown_workflow
+      workflow_contract = run_installed_json(cli, authenticated, root, "workflow", "schema")
+      assert_equal %w[steps], workflow_contract.dig("schema", "required_fields")
+      assert_not_empty workflow_contract.dig("example", "steps")
+      Tempfile.create([ "custom-workflow", ".json" ], root.to_s) do |workflow_file|
+        workflow_file.write(JSON.generate(workflow_contract.fetch("example")))
+        workflow_file.flush
+        custom = run_installed_json(cli, authenticated, root, "workflow", "create", "--key", "custom-smoke",
+          "--name", "Custom smoke", "--definition-file", workflow_file.path).fetch("workflow")
+        assert_equal [ "custom-smoke", 1 ], custom.values_at("key", "revision")
+      end
+
       project = run_installed_json(cli, authenticated, root, "project", "create", "--name", "Smoke",
         "--remote-url", "https://example.test/test/smoke.git", "--default-branch", "main").fetch("project")
       shown = run_installed_json(cli, authenticated, root, "project", "show", "--repository-identity",

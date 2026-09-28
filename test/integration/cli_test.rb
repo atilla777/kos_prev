@@ -16,7 +16,7 @@ class CliTest < ActiveSupport::TestCase
     assert_match(/^\s*claim-id\s*$/, output)
     assert_match(/^\s*installation check\s*$/, output)
     assert_match(/^\s*project create \| show \| update\s*$/, output)
-    assert_match(/^\s*workflow create\s*$/, output)
+    assert_match(/^\s*workflow create \| list \| show \| schema\s*$/, output)
     assert_match(/^\s*plan put \| list \| show \| abandon\s*$/, output)
     assert_match(/^\s*task list \| ready \| show \| context \| result \| claim \| takeover \| report \| answer\s*$/, output)
     %w[session-id task-type create-or-get resume lease artifact report-attempt materialize children graph].each do |removed|
@@ -25,13 +25,21 @@ class CliTest < ActiveSupport::TestCase
 
     {
       %w[installation check] => %w[--manifest],
+      %w[project create] => %w[--name --remote-url --default-branch],
+      %w[project show] => %w[--repository-identity],
+      %w[project update] => [],
       %w[workflow create] => %w[--key --name --definition-file],
+      %w[workflow list] => %w[--key],
+      %w[workflow show] => [],
+      %w[workflow schema] => [],
       %w[plan put] => %w[--project-id --definition-file],
       %w[plan list] => %w[--project-id --include-completed],
       %w[plan show] => %w[--project-id --key],
       %w[plan abandon] => %w[--project-id --key --version],
       %w[task list] => %w[--project-id --include-completed],
       %w[task ready] => %w[--project-id],
+      %w[task show] => [],
+      %w[task context] => [],
       %w[task result] => %w[--step],
       %w[task claim] => %w[--claim-id --version],
       %w[task takeover] => %w[--claim-id --version --step],
@@ -52,9 +60,28 @@ class CliTest < ActiveSupport::TestCase
       assert_includes plan_put_help, field
     end
     task_list_help, = run_cli("task", "list", "--help", environment: {})
-    %w[claim_id version pause_kind pause_message pause_step answer blocker_ids].each do |field|
+    %w[workflow_id workflow_key workflow_revision claim_id version pause_kind pause_message pause_step answer blocker_ids].each do |field|
       assert_includes task_list_help, field
     end
+    workflow_help, = run_cli("workflow", "create", "--help", environment: {})
+    [ "containing exactly steps", "id, name, instruction, outcomes", "nonblank valid UTF-8", "next_step", "needs_human", "blocked",
+      "complete_task", "Complete valid example", "Perform the task description" ].each do |detail|
+      assert_includes workflow_help, detail
+    end
+    task_show_help, = run_cli("task", "show", "--help", environment: {})
+    %w[workflow_id workflow_key workflow_revision current_step claim_id blocker_ids].each do |field|
+      assert_includes task_show_help, field
+    end
+    project_help, = run_cli("project", "create", "--help", environment: {})
+    %w[repository_identity created_at updated_at].each { |field| assert_includes project_help, field }
+    plan_help, = run_cli("plan", "show", "--help", environment: {})
+    %w[task_plan description_markdown current_step blocker_keys].each { |field| assert_includes plan_help, field }
+    context_help, = run_cli("task", "context", "--help", environment: {})
+    %w[task_plan project workflow instruction allowed_outcomes results pause].each do |field|
+      assert_includes context_help, field
+    end
+    assert Workflow.new(key: "help-example", name: "Help example", revision: 1,
+      definition_json: Kos::WorkflowDefinition.example).valid?
   end
 
   test "generates fresh claim ids without API configuration" do
@@ -166,6 +193,10 @@ class CliTest < ActiveSupport::TestCase
             [ [ "workflow", "create", "--key", "delivery", "--name", "Delivery", "--definition-file",
               definition.path ], "POST", "/workflows", { "key" => "delivery", "name" => "Delivery",
                 "definition_json" => { "steps" => [ { "id" => "work" } ] } } ],
+            [ [ "workflow", "list" ], "GET", "/workflows", nil ],
+            [ [ "workflow", "list", "--key", "delivery" ], "GET", "/workflows?key=delivery", nil ],
+            [ [ "workflow", "show", "12" ], "GET", "/workflows/12", nil ],
+            [ [ "workflow", "schema" ], "GET", "/workflows/schema", nil ],
             [ [ "plan", "put", "--project-id", "7", "--definition-file", plan.path ],
               "PUT", "/projects/7/plan", { "key" => "goal", "title" => "Goal", "tasks" => [ {
                 "key" => "one", "title" => "One", "description_markdown" => "Do it",

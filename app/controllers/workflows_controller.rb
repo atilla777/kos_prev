@@ -6,7 +6,11 @@ class WorkflowsController < ApplicationController
   end
 
   def show
-    render json: { workflow: serialize(Workflow.find(params[:id])) }
+    render json: { workflow: serialize(find_workflow) }
+  end
+
+  def schema
+    render json: { schema: Kos::WorkflowDefinition.contract, example: Kos::WorkflowDefinition.example }
   end
 
   def create
@@ -27,6 +31,10 @@ class WorkflowsController < ApplicationController
 
 
   private
+
+  def find_workflow
+    Workflow.find_by(id: params[:id]) || not_found!("Workflow", id: params[:id])
+  end
 
   def serialize(workflow)
     workflow.as_json(only: %i[id key name revision definition_json created_at])

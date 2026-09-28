@@ -72,9 +72,13 @@ class KosSkillsTest < ActiveSupport::TestCase
       assert_includes source, value
     end
     assert_includes source, "installation check"
-    [ "project create/show/update", "workflow create", "plan put/list/show/abandon",
+    [ "project create/show/update", "workflow create/list/show/schema", "plan put/list/show/abandon",
       "task list/ready/show/context/result/claim/takeover/report/answer" ].each do |surface|
       assert_includes source, surface
+    end
+    [ "project show --repository-identity IDENTITY", "workflow list [--key KEY]", "workflow show ID",
+      "workflow schema", "plan show --project-id ID --key KEY", "task context ID" ].each do |signature|
+      assert_includes source, signature
     end
     (0..3).each { |status| assert_includes source, "`#{status}`" }
     refute_match(/session-id|task-type|resume|\blease\b|materializ|kos-git|kos-step|Net::HTTP|ActiveRecord/, source)

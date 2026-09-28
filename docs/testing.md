@@ -7,7 +7,8 @@ agent intelligence.
 
 - Workflow tests cover immutable revisions, structural validation, generic
   outcomes, backward transitions, pauses, and completion without name-based
-  built-in behavior.
+  built-in behavior. They also prove that the published schema and example agree
+  with validation.
 - Plan tests cover atomic creation, replacement and abandonment, replacement
   rejection after work starts, dependency cycles, and dependency blocking.
 - Lifecycle tests cover non-expiring claims, optimistic versions, conflicting
@@ -20,11 +21,13 @@ agent intelligence.
   exact answer binding, and readiness for a new claim.
 - Request tests cover authentication, project-scoped non-completed-state
   discovery, API projections, status mapping and selected stable error bodies,
-  transaction rollback, bounded request and definition inputs, and persistence.
+  resource-specific not-found diagnostics, task workflow identity, transaction
+  rollback, bounded request and definition inputs, and persistence.
 - CLI tests execute the packaged client and cover discoverable help, health,
   installation identity/readiness checks, claim identity generation, argument
-  and standard-input mapping, output preservation, and exit statuses for every
-  public command family.
+  and standard-input mapping, workflow list/show/schema, complete command shape
+  and response help, output preservation, and exit statuses for every public
+  command family.
 - Installation tests verify exactly one `/kos` command, one `kos-worker` agent,
   skills `kos`, `kos-cli`, `kos-worker`, and `okf`; clean and legacy installation,
   manifest-owned stale cleanup, unmanaged-file preservation, compatibility

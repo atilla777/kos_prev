@@ -44,6 +44,34 @@ class AdministrationApiTest < ActionDispatch::IntegrationTest
     }, headers: @headers, as: :json
     assert_response :created
     assert_equal 2, response.parsed_body.dig("workflow", "revision")
+
+    create_workflow(key: "analysis")
+    get workflows_path, headers: @headers
+    assert_equal %w[analysis delivery delivery], response.parsed_body.fetch("workflows").pluck("key")
+    get workflows_path, params: { key: "delivery" }, headers: @headers
+    assert_equal [ 1, 2 ], response.parsed_body.fetch("workflows").pluck("revision")
+  end
+
+  test "publishes the authenticated workflow definition schema and valid example" do
+    get workflow_schema_path, headers: @headers
+
+    assert_response :success
+    assert_equal Kos::WorkflowDefinition.contract, response.parsed_body.fetch("schema")
+    example = response.parsed_body.fetch("example")
+    assert Workflow.new(key: "schema-example", name: "Schema example", revision: 1,
+      definition_json: example).valid?
+
+    get workflow_schema_path
+    assert_response :unauthorized
+  end
+
+  test "identifies a missing workflow revision without changing the discriminator" do
+    get workflow_path(123_456), headers: @headers
+
+    assert_response :not_found
+    assert_equal "not_found", response.parsed_body.fetch("error")
+    assert_includes response.parsed_body.fetch("message"), "Workflow"
+    assert_includes response.parsed_body.fetch("message"), "123456"
   end
 
   test "rejects oversized API input without persistence" do

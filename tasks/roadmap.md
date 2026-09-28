@@ -43,6 +43,7 @@ development records and are not read by the KOS server or CLI.
 | 033 | [Bound coordination state](033-bound-coordination-state/task.md) | done | 032 |
 | 034 | [Finish operational readiness](034-finish-operational-readiness/task.md) | done | 033 |
 | 035 | [Harden installation and project bootstrap](035-harden-installation-bootstrap/task.md) | done | 034 |
+| 036 | [Complete CLI discovery](036-complete-cli-discovery/task.md) | done | 035 |
 
 ## Planned
 

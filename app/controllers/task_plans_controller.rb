@@ -21,13 +21,14 @@ class TaskPlansController < ApplicationController
 
   def show
     project = Project.find(params[:project_id])
-    render json: serialize(project.task_plans.find_by!(key: required_string(:key,
-      max_bytes: CoordinationLimits::MAX_KEY_BYTES)))
+    key = required_string(:key, max_bytes: CoordinationLimits::MAX_KEY_BYTES)
+    render json: serialize(project.task_plans.find_by(key:) || not_found!("Task plan", project_id: project.id, key:))
   end
 
   def abandon
     project = Project.find(params[:project_id])
-    plan = project.task_plans.find_by!(key: required_string(:key))
+    key = required_string(:key)
+    plan = project.task_plans.find_by(key:) || not_found!("Task plan", project_id: project.id, key:)
     render json: serialize(TaskLifecycle.new.abandon_plan!(task_plan: plan, version: required_integer(:version)))
   end
 

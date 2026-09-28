@@ -49,6 +49,9 @@ outcomes, and one transition for each outcome. A transition moves to another
 step, pauses with `needs_human` or `blocked`, or completes the task. KOS validates
 workflow shape and references but never interprets instruction or result
 meaning.
+The workflow definition schema is a read-only rendering of that same validation
+contract and includes one complete valid example. It is not separately persisted
+or versioned.
 
 Built-in workflows are convenient defaults and use exactly the same transition
 mechanism as custom workflows. Workflow, step, and outcome names confer no
@@ -130,8 +133,7 @@ reports an accepted result. Answering does not allow a stale worker to report.
 ## Public Operations
 
 The CLI exposes the focused agent-facing capabilities below. The API also
-supports numeric project reads plus workflow revision listing and reads for
-administration and inspection.
+supports numeric project reads for administration and inspection.
 
 | CLI | API | Purpose |
 | --- | --- | --- |
@@ -141,6 +143,9 @@ administration and inspection.
 | `claim-id` | local | Create one dispatch claim identity |
 | `project create`, `project show`, `project update` | `POST /projects`, `GET /projects`, `PATCH /projects/:id` | Register, inspect, and update project metadata |
 | `workflow create` | `POST /workflows` | Create one immutable keyed revision |
+| `workflow list` | `GET /workflows[?key=KEY]` | List keys and immutable revisions, optionally for one exact key |
+| `workflow show ID` | `GET /workflows/:id` | Read one numeric immutable revision ID returned by the list |
+| `workflow schema` | `GET /workflows/schema` | Read the authoritative definition contract and complete valid example |
 | `plan list` | `GET /projects/:project_id/plans` | List non-completed plans, including abandoned state, or all plans when explicitly requested |
 | `plan put`, `plan show` | `PUT /projects/:project_id/plan`, `GET /projects/:project_id/plan?key=KEY` | Atomically replace an unstarted plan and inspect it by key |
 | `plan abandon` | `POST /projects/:project_id/plan/abandon` | Version-fence and atomically retire one started plan |
@@ -159,6 +164,8 @@ token. Inputs are JSON or explicit file/standard-input values through the CLI.
 Complete command help defines exact options and response fields. Failed
 validation, dependency cycles, conflicting claims, and stale writes produce no
 partial state change.
+Missing workflow, plan, task, and task-result responses retain the stable
+`not_found` discriminator and identify the resource and lookup value.
 
 ## Coordination Limits
 
@@ -193,8 +200,9 @@ active, needs-human, blocked, and terminal abandoned state; active entries
 expose their claim fence, and paused or abandoned entries retain persisted pause
 and answer evidence. Completed state is excluded by default but can be requested
 for deliberate inspection. Plan listings return identity, status, version, and
-timestamps. Task listings return task and plan identity, workflow identity,
-key, title, status, current step, claim, version, pause and answer fields,
+timestamps. Task listings return task and plan identity, `workflow_id`,
+`workflow_key`, `workflow_revision`, task key, title, status, current step,
+claim, version, pause and answer fields,
 timestamps, and blocker IDs; per-command help names the exact fields.
 
 After an ambiguous mutation, clients inspect the listing, `task show`,

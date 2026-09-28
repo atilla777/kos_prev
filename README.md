@@ -84,7 +84,7 @@ kos health
 kos claim-id
 kos installation check
 kos project create|show|update
-kos workflow create
+kos workflow create|list|show|schema
 kos plan put|list|show|abandon
 kos task list|ready|show|context|result|claim|takeover|report|answer
 ```
@@ -92,7 +92,11 @@ kos task list|ready|show|context|result|claim|takeover|report|answer
 `claim-id` creates a local unpredictable identity for one worker dispatch.
 `installation check` validates the successful OpenCode installation manifest
 and requires its version and `source_id` to match both the CLI and `/ready`.
-`project`, `workflow`, and `plan` commands administer durable definitions.
+`workflow list` discovers keys and immutable revision IDs, `workflow show ID`
+reads one revision, and `workflow schema` prints the authoritative definition
+contract with a complete valid example. `workflow create --help` includes the
+same exact shape and example. `project`, `workflow`, and `plan` commands
+administer durable definitions.
 `plan list` and `task list` discover non-completed project state after
 interruption, including terminal abandoned records; `--include-completed` adds
 successful history for deliberate inspection. `task
@@ -101,7 +105,8 @@ ready` supports orchestrator scheduling; `show` observes lifecycle state;
 pause/answer, and result index; `result` returns one latest accepted step result.
 The remaining task commands are version-fenced mutations.
 
-Use `kos --help` and per-command help for exact options. Prefer standard input
+Use `kos --help` and per-command help for required arguments, accepted
+identifiers, input shapes, response fields, and examples. Prefer standard input
 or file options for workflow definitions, plans, results, questions, and answers
 rather than interpolating structured content into shell commands.
 
@@ -133,6 +138,9 @@ POST /projects
 GET  /projects?repository_identity=IDENTITY
 PATCH /projects/:id
 POST /workflows
+GET  /workflows[?key=KEY]
+GET  /workflows/schema
+GET  /workflows/:id
 PUT  /projects/:project_id/plan
 GET  /projects/:project_id/plan?key=KEY
 POST /projects/:project_id/plan/abandon
@@ -157,6 +165,8 @@ Definition writes validate completely before changing state. Lifecycle writes
 are atomic and return conflicts for stale `version`, `claim_id`, or step data.
 Plan abandonment is atomic, version-fenced, and does not roll back external
 effects. Known validation, absence, and conflict failures use stable JSON errors.
+Missing-resource errors retain `error: not_found` and identify the resource and
+lookup value.
 
 ## Verify
 

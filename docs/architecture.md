@@ -65,14 +65,15 @@ health
 claim-id
 installation check
 project create|show|update
-workflow create
+workflow create|list|show|schema
 plan put|list|show|abandon
 task list|ready|show|context|result|claim|takeover|report|answer
 ```
 
 The JSON API mirrors these operations with public `GET /up` liveness and
 `GET /ready` dependency readiness probes, project resources,
-immutable workflow creation, project-scoped plan storage and abandonment,
+immutable workflow discovery and creation, the read-only workflow schema,
+project-scoped plan storage and abandonment,
 ready-task discovery, project-scoped non-completed-state discovery, task reads,
 and task claim/takeover/report/answer mutations. The CLI validates local arguments and
 input, sends one request, preserves server output, and does not duplicate
@@ -93,6 +94,10 @@ All definition writes are all-or-nothing. All lifecycle writes use the observed
 version; report additionally requires the current `claim_id` and step. Stable
 validation and conflict errors let agents reread authoritative state without
 requiring an encoded retry algorithm.
+Workflow schema output and workflow creation help derive from the same pure-Ruby
+contract used by model validation. The schema is read-only application data, not
+a persisted resource or workflow lifecycle. Missing-resource responses preserve
+the stable discriminator while naming the resource and lookup value.
 
 Finite count and UTF-8 byte limits bound request bodies, definitions, lifecycle
 text, and accepted-result state. Plan cycle detection is iterative and bounded

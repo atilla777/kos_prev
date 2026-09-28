@@ -10,8 +10,8 @@ Gem::Specification.new do |spec|
   spec.homepage = "https://github.com/atilla777/kos"
   spec.required_ruby_version = ">= 3.4.0"
 
-  spec.files = %w[README.md bin/kos lib/kos/api_token.rb lib/kos/build_identity.rb lib/kos/cli.rb
-    lib/kos/open_code_installation.rb lib/kos/version.rb]
+  spec.files = %w[README.md bin/kos lib/coordination_limits.rb lib/kos/api_token.rb lib/kos/build_identity.rb
+    lib/kos/cli.rb lib/kos/open_code_installation.rb lib/kos/version.rb lib/kos/workflow_definition.rb]
   spec.bindir = "bin"
   spec.executables = [ "kos" ]
   spec.require_paths = [ "lib" ]

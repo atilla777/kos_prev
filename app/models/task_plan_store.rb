@@ -6,7 +6,10 @@ class TaskPlanStore
     validate_graph!(definitions)
     workflows = definitions.to_h do |definition|
       workflow_key = definition.fetch("workflow_key")
-      [ workflow_key, Workflow.where(key: workflow_key).order(revision: :desc).first! ]
+      workflow = Workflow.where(key: workflow_key).order(revision: :desc).first
+      raise ActiveRecord::RecordNotFound, "Workflow not found for key=#{workflow_key.inspect}" unless workflow
+
+      [ workflow_key, workflow ]
     end
     TaskPlan.transaction do
       plan = TaskPlan.find_or_initialize_by(project:, key:)

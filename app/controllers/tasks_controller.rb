@@ -1,7 +1,7 @@
 class TasksController < ApplicationController
   def index
     project = Project.find(params[:project_id])
-    tasks = project.tasks.includes(:blockers).order(:id)
+    tasks = project.tasks.includes(:blockers, :workflow).order(:id)
     tasks = tasks.where.not(status: "completed") unless optional_query_boolean(:include_completed)
 
     render json: { tasks: tasks.map { |task| serialize_task(task) } }
@@ -9,14 +9,17 @@ class TasksController < ApplicationController
 
   def ready
     project = Project.find(required_query_integer(:project_id))
-    plan = TaskPlan.find(required_query_integer(:task_plan_id)) if params.key?(:task_plan_id)
-    raise ActiveRecord::RecordNotFound if plan && plan.project_id != project.id
+    if params.key?(:task_plan_id)
+      task_plan_id = required_query_integer(:task_plan_id)
+      plan = project.task_plans.find_by(id: task_plan_id) || not_found!("Task plan", id: task_plan_id,
+        project_id: project.id)
+    end
 
-    render json: { tasks: lifecycle.ready(project:, task_plan: plan).map { |task| serialize_task(task) } }
+    render json: { tasks: lifecycle.ready(project:, task_plan: plan).includes(:workflow).map { |task| serialize_task(task) } }
   end
 
   def show
-    render json: { task: serialize_task(Task.find(params[:id])) }
+    render json: { task: serialize_task(find_task) }
   end
 
   def context
@@ -36,9 +39,10 @@ class TasksController < ApplicationController
   end
 
   def result
-    task = Task.find(params[:id])
-    accepted = task.accepted_results[required_query_string(:step, max_bytes: CoordinationLimits::MAX_KEY_BYTES)]
-    raise ActiveRecord::RecordNotFound unless accepted
+    task = find_task
+    step = required_query_string(:step, max_bytes: CoordinationLimits::MAX_KEY_BYTES)
+    accepted = task.accepted_results[step]
+    not_found!("Task result", task_id: task.id, step:) unless accepted
 
     render json: accepted
   end
@@ -88,7 +92,15 @@ class TasksController < ApplicationController
 
   def serialize_task(task)
     task.as_json(only: %i[id task_plan_id workflow_id key title status current_step claim_id version pause_kind
-      pause_message pause_step answer created_at updated_at]).merge("blocker_ids" => task.blocker_ids.sort)
+      pause_message pause_step answer created_at updated_at]).merge(
+        "workflow_key" => task.workflow.key,
+        "workflow_revision" => task.workflow.revision,
+        "blocker_ids" => task.blocker_ids.sort
+      )
+  end
+
+  def find_task
+    Task.includes(:workflow).find_by(id: params[:id]) || not_found!("Task", id: params[:id])
   end
 
   def pause_for(task)

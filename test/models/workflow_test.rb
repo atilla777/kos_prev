@@ -1,6 +1,23 @@
 require "test_helper"
 
 class WorkflowTest < ActiveSupport::TestCase
+  test "publishes the same contract and example used by validation" do
+    contract = Kos::WorkflowDefinition.contract
+    example = Kos::WorkflowDefinition.example
+
+    assert_equal %w[steps], contract.fetch("required_fields")
+    assert_equal CoordinationLimits::MAX_STEPS_PER_WORKFLOW, contract.dig("steps", "maximum")
+    assert_equal CoordinationLimits::MAX_OUTCOMES_PER_WORKFLOW,
+      contract.dig("steps", "item", "fields", "outcomes", "total_maximum")
+    assert_equal "nonblank_utf8_string", contract.dig("steps", "item", "fields", "outcomes", "name_type")
+    assert Workflow.new(key: "example", name: "Example", revision: 1, definition_json: example).valid?
+
+    contract["required_fields"] << "changed"
+    example["steps"].clear
+    assert_equal %w[steps], Kos::WorkflowDefinition.contract.fetch("required_fields")
+    assert Kos::WorkflowDefinition.example.fetch("steps").any?
+  end
+
   test "validates the minimal workflow shape and generic transitions" do
     workflow = create_workflow
 

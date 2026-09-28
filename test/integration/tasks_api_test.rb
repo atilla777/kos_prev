@@ -37,6 +37,23 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     assert_response :bad_request
   end
 
+  test "identifies an unknown workflow key without replacing an existing plan" do
+    put project_plan_path(@project), params: plan_parameters.except(:project_id), headers: @headers, as: :json
+    original = TaskPlan.find_by!(project: @project, key: "release")
+    original_task_ids = original.tasks.order(:id).ids
+
+    assert_no_difference [ -> { TaskPlan.count }, -> { Task.count }, -> { TaskDependency.count } ] do
+      put project_plan_path(@project), params: plan_parameters.except(:project_id).merge(tasks: [
+        plan_task(key: "unknown", workflow: @workflow).merge("workflow_key" => "missing-workflow")
+      ]), headers: @headers, as: :json
+    end
+
+    assert_response :not_found
+    assert_equal "not_found", response.parsed_body.fetch("error")
+    assert_includes response.parsed_body.fetch("message"), "missing-workflow"
+    assert_equal original_task_ids, original.reload.tasks.order(:id).ids
+  end
+
   test "exposes ready state and the focused worker context and result" do
     put project_plan_path(@project), params: plan_parameters.except(:project_id), headers: @headers, as: :json
     tasks = response.parsed_body.fetch("tasks")
@@ -156,6 +173,17 @@ class TasksApiTest < ActionDispatch::IntegrationTest
       tasks.find { |task| task["key"] == "paused" }.values_at("pause_kind", "pause_message", "pause_step", "answer")
     assert_equal [ "needs_human", "Choose", "work", "A" ],
       tasks.find { |task| task["key"] == "pending" }.values_at("pause_kind", "pause_message", "pause_step", "answer")
+    assert_equal [ @workflow.id, "delivery", @workflow.revision ],
+      tasks.first.values_at("workflow_id", "workflow_key", "workflow_revision")
+
+    get tasks_ready_path, params: { project_id: @project.id }, headers: @headers
+    ready = response.parsed_body.fetch("tasks").first
+    assert_equal [ @workflow.id, "delivery", @workflow.revision ],
+      ready.values_at("workflow_id", "workflow_key", "workflow_revision")
+
+    get task_path(active), headers: @headers
+    assert_equal [ @workflow.id, "delivery", @workflow.revision ],
+      response.parsed_body.fetch("task").values_at("workflow_id", "workflow_key", "workflow_revision")
 
     get project_plans_path(@project), params: { include_completed: true }, headers: @headers
     assert_equal %w[current finished], response.parsed_body.fetch("task_plans").pluck("key")
@@ -170,6 +198,31 @@ class TasksApiTest < ActionDispatch::IntegrationTest
 
     get project_plans_path(0), headers: @headers
     assert_response :not_found
+
+    other_plan = create_task_plan(project: create_project(name: "Other project"), key: "other-plan")
+    get tasks_ready_path, params: { project_id: @project.id, task_plan_id: other_plan.id }, headers: @headers
+    assert_response :not_found
+    assert_includes response.parsed_body.fetch("message"), other_plan.id.to_s
+    assert_includes response.parsed_body.fetch("message"), @project.id.to_s
+  end
+
+  test "identifies missing plans tasks and results by lookup value" do
+    get project_plan_path(@project), params: { key: "missing-plan" }, headers: @headers
+    assert_response :not_found
+    assert_equal "not_found", response.parsed_body.fetch("error")
+    assert_includes response.parsed_body.fetch("message"), "missing-plan"
+
+    get task_path(123_456), headers: @headers
+    assert_response :not_found
+    assert_equal "not_found", response.parsed_body.fetch("error")
+    assert_includes response.parsed_body.fetch("message"), "123456"
+
+    task = create_task(project: @project, workflow: @workflow)
+    get result_task_path(task), params: { step: "missing-step" }, headers: @headers
+    assert_response :not_found
+    assert_equal "not_found", response.parsed_body.fetch("error")
+    assert_includes response.parsed_body.fetch("message"), task.id.to_s
+    assert_includes response.parsed_body.fetch("message"), "missing-step"
   end
 
   test "requires authentication on all task routes" do

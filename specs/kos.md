@@ -47,6 +47,9 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   erroneous or obsolete started plan without erasing completed work.
 - Built-in development, fix, and brief workflows may be supplied as convenient
   defaults, while custom workflows use the same generic state semantics.
+- An administrator can discover workflow keys and immutable revisions, inspect
+  the authoritative definition contract and example, and create a valid custom
+  workflow using only the installed CLI.
 
 # Rules
 
@@ -98,6 +101,8 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 - KOS skills describe available commands, role boundaries, and a small set of
   invariants. They do not encode shell, Git, locking, retry, review, testing, or
   publication algorithms that capable agents can determine from context.
+- Workflow definition validation, schema output, and CLI construction help share
+  one authoritative contract rather than independent persisted or prose schemas.
 - Project registration is an explicit administrator action over a published Git
   remote and chosen default branch. KOS derives a canonical host/path identity
   but does not create repositories, commits, branches, clones, or worktrees.
@@ -134,6 +139,8 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 - Missing, invalid, stale, or mismatched installation metadata fails before
   project discovery or worker activity and directs the operator to reinstall all
   components from one release and restart OpenCode.
+- A missing workflow, plan, task, or task result retains the stable `not_found`
+  discriminator and identifies the missing resource and lookup value.
 
 # Edge Cases
 
@@ -159,6 +166,8 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 - A clean administrator can register and verify a published repository using
   the CLI, and a matching OpenCode manifest, CLI, and ready server pass one
   explicit preflight before orchestration.
+- A clean administrator can list and inspect workflow revisions, print the
+  workflow schema, and create a valid custom workflow using installed CLI help.
 - The main orchestrator can atomically claim multiple independent ready tasks
   and dispatch separate workers without performing their substantive steps.
 - Two workers cannot successfully report the same claimed task version, and an
@@ -200,5 +209,4 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 Implementation boundaries are refined in
 [Architecture Rules](../docs/architecture.md), and verification layers and
 commands are defined in [Testing Rules](../docs/testing.md). Those documents
-describe the current implementation until the planned agent-led MVP
-simplification is completed.
+describe the current implementation.
