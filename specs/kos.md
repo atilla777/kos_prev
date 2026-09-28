@@ -52,6 +52,9 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   current workflow position, claims, versions, pauses, answers, and the latest
   accepted result for each executed step.
 - A task remains bound to the workflow revision selected when it is created.
+- Built-in definitions are installed as an explicitly versioned catalog. A
+  changed catalog creates new immutable workflow revisions for future tasks and
+  leaves obsolete revisions available to tasks already using them.
 - A workflow declares steps, concise instructions, allowed outcomes, and the
   transition associated with each outcome. KOS validates workflow shape and
   transitions but does not interpret instruction or result meaning.

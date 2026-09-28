@@ -44,6 +44,7 @@ export KOS_DATA_HOME="$HOME/.local/share/kos"
 export KOS_API_TOKEN="$(openssl rand -hex 32)"
 bundle check || bundle install
 bin/rails db:prepare
+bin/rails db:seed
 
 gem build kos.gemspec --output /tmp/kos.gem
 gem install /tmp/kos.gem

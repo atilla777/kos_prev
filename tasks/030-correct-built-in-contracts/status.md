@@ -1,22 +1,27 @@
 # Status
 
-State: planned
+State: done
 Updated: 2026-09-28
 
 ## Current
 
-The catalog hard-codes revision 1, so a future definition change would leave the
-new source definition uninstalled and make readiness fail. The `brief` publish
-instruction also assigns orchestrator-owned plan storage to a worker.
+Built-in definitions now use an explicit catalog revision. Idempotent seeding
+creates immutable revisions for changed definitions, rejects conflicting current
+entries atomically, and leaves existing tasks pinned to obsolete revisions.
+Readiness validates only the complete current catalog, and the brief publisher
+no longer performs orchestrator-owned plan storage.
 
 ## Next
 
-Start after task 029 and define the built-in revision contract.
+Task 031 can prove installed orchestration against the corrected contracts.
 
 ## Blockers
 
-Depends on task 029.
+None.
 
 ## Checks
 
-Not started.
+- `bin/check` passed: 83 tests, 1120 assertions, 0 failures.
+- Independent review found no remaining correctness, regression, test, or
+  documentation findings after catalog-conflict and canonical-name validation
+  findings were resolved.

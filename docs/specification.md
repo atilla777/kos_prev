@@ -51,8 +51,10 @@ meaning.
 Built-in workflows are convenient defaults and use exactly the same transition
 mechanism as custom workflows. Workflow, step, and outcome names confer no
 special task-type, Git, check, review, graph, publication, or completion rules.
-Updating a workflow creates a revision for future tasks; existing tasks remain
-bound to their selected revision.
+The built-in catalog has an explicit source revision, and installing a changed
+catalog creates new immutable workflow revisions. Updating any workflow creates
+a revision for future tasks; existing tasks remain bound to their selected
+revision.
 
 ## Plans And Readiness
 

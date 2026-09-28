@@ -23,7 +23,10 @@
 Projects identify registered repositories and contain task plans. Each workflow
 registration creates an immutable keyed revision. Tasks retain the revision
 chosen when their plan is stored, so later revisions cannot alter active or
-completed work.
+completed work. The source-controlled built-in catalog declares its current
+revision; idempotent seeding installs that revision without changing obsolete
+revisions, and readiness requires the current catalog rather than comparing old
+revisions with current source definitions.
 
 `plan put` validates the complete proposed task set and dependency graph before
 one transaction creates or replaces it. Replacement is rejected after any task

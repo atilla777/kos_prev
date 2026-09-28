@@ -17,7 +17,8 @@ class ReadinessTest < ActionDispatch::IntegrationTest
   end
 
   test "readiness fails generically when the canonical catalog is unavailable while liveness remains up" do
-    Workflow.find_by!(key: "development", revision: 1).update_column(:key, "development-unavailable")
+    Workflow.find_by!(key: "development", revision: BuiltInCatalog::REVISION)
+      .update_column(:key, "development-unavailable")
 
     get readiness_path, as: :json, headers: { "X-Request-Id" => "readiness-correlation" }
     assert_response :service_unavailable
@@ -28,6 +29,21 @@ class ReadinessTest < ActionDispatch::IntegrationTest
 
     get rails_health_check_path
     assert_response :success
+  end
+
+  test "readiness accepts obsolete built-in revisions alongside the current catalog" do
+    create_workflow(key: "development", revision: BuiltInCatalog::REVISION - 1,
+      definition: valid_workflow_definition, name: "Old development")
+
+    assert ReadinessCheck.call
+  end
+
+  test "readiness requires the complete canonical catalog entry" do
+    Workflow.find_by!(key: "development", revision: BuiltInCatalog::REVISION)
+      .update_column(:name, "Not canonical")
+
+    error = assert_raises(ReadinessCheck::Error) { ReadinessCheck.call }
+    assert_equal :catalog, error.component
   end
 
   test "readiness rejects a database that cannot accept writes" do

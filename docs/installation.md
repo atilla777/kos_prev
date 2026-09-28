@@ -18,6 +18,7 @@ export KOS_DATA_HOME="$HOME/.local/share/kos"
 export KOS_API_TOKEN="$(openssl rand -hex 32)"
 bundle check || bundle install
 bin/rails db:prepare
+bin/rails db:seed
 
 gem build kos.gemspec --output /tmp/kos.gem
 gem install /tmp/kos.gem
@@ -43,6 +44,10 @@ state needed by `/kos`. Use `project show`, `plan list`, and `task list` to
 recover unfinished state after a restart; use `plan show` for one detailed plan.
 The list commands exclude completed state unless `--include-completed` is given.
 Consult per-command help for exact file and standard-input options.
+
+Run `bin/rails db:seed` after each KOS upgrade. Seeding idempotently installs the
+current built-in catalog revision while preserving obsolete workflow revisions
+used by existing tasks.
 
 ## OpenCode Inventory
 
@@ -103,10 +108,12 @@ request keys, or brief graphs.
 1. Stop Rails, OpenCode, and every orchestrator or worker.
 2. Optionally create and verify a backup of the old SQLite database.
 3. Remove the old `production.sqlite3` and its SQLite `-wal` and `-shm` files.
-4. Install the new release and run `RAILS_ENV=production bin/rails db:prepare`.
+4. Install the new release and run `RAILS_ENV=production bin/rails db:prepare`
+   followed by `RAILS_ENV=production bin/rails db:seed`.
 5. Reinstall the CLI and run `bin/install-opencode` from that same release.
 6. Recreate projects with `project create`.
-7. Recreate built-in or custom workflows with `workflow create`.
+7. Recreate custom workflows with `workflow create`; seeding installs the
+   built-in workflows.
 8. Recreate current task plans and dependencies with `plan put`.
 9. Restart Rails and OpenCode, then verify `health` and the corresponding `show`
    commands.

@@ -1,4 +1,6 @@
 class BuiltInCatalog
+  REVISION = 2
+
   PAUSES = {
     "needs_human" => { "pause" => "needs_human" },
     "blocked" => { "pause" => "blocked" }
@@ -39,7 +41,7 @@ class BuiltInCatalog
         "specified" => { "next_step" => "review" }),
       step("review", "Review", "Review the specification and proposed task plan independently.",
         "approved" => { "next_step" => "publish" }, "changes_requested" => { "next_step" => "brief" }),
-      step("publish", "Publish", "Publish the approved specification and store its task plan.",
+      step("publish", "Publish", "Publish the approved specification and observe the result.",
         "published" => { "complete_task" => true }, "changes_requested" => { "next_step" => "brief" })
     ]
   }.freeze
@@ -47,17 +49,17 @@ class BuiltInCatalog
   def self.install!
     Workflow.transaction do
       DEFINITIONS.each do |key, steps|
-        Workflow.find_or_create_by!(key:, revision: 1) do |workflow|
-          workflow.name = key.titleize
-          workflow.definition_json = { "steps" => steps }
-        end
+        workflow = Workflow.find_or_initialize_by(key:, revision: REVISION)
+        workflow.assign_attributes(name: key.titleize, definition_json: { "steps" => steps })
+        workflow.save!
       end
     end
   end
 
   def self.installed?
     DEFINITIONS.all? do |key, steps|
-      Workflow.find_by(key:, revision: 1)&.definition_json == { "steps" => steps }
+      workflow = Workflow.find_by(key:, revision: REVISION)
+      workflow&.name == key.titleize && workflow.definition_json == { "steps" => steps }
     end
   end
 
