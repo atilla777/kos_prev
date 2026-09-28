@@ -41,12 +41,12 @@ development records and are not read by the KOS server or CLI.
 | 031 | [Prove installed orchestration](031-prove-installed-orchestration/task.md) | done | 030 |
 | 032 | [Add plan abandonment](032-add-plan-abandonment/task.md) | done | 031 |
 | 033 | [Bound coordination state](033-bound-coordination-state/task.md) | done | 032 |
+| 034 | [Finish operational readiness](034-finish-operational-readiness/task.md) | done | 033 |
 
 ## Planned
 
 | ID | Task | Status | Dependencies |
 | --- | --- | --- | --- |
-| 034 | [Finish operational readiness](034-finish-operational-readiness/task.md) | planned | 033 |
 
 ## Resolved Decisions
 

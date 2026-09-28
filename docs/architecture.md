@@ -69,7 +69,8 @@ plan put|list|show|abandon
 task list|ready|show|context|result|claim|takeover|report|answer
 ```
 
-The JSON API mirrors these operations with `GET /up`, project resources,
+The JSON API mirrors these operations with public `GET /up` liveness and
+`GET /ready` dependency readiness probes, project resources,
 immutable workflow creation, project-scoped plan storage and abandonment,
 ready-task discovery, project-scoped non-completed-state discovery, task reads,
 and task claim/takeover/report/answer mutations. The CLI validates local arguments and
@@ -142,9 +143,10 @@ receipts.
 ## Deployment And Upgrade
 
 The supported MVP deployment is one Rails process with local SQLite and a shared
-bearer token. `GET /up` is public liveness; application operations are
-authenticated. SQLite must reside on local storage and should be backed up with
-SQLite's online backup operation while writers are stopped.
+bearer token. `GET /up` is public process liveness and `GET /ready` is public
+dependency readiness; application operations are authenticated. SQLite must
+reside on local storage and should be backed up with SQLite's online backup
+operation while writers are stopped.
 
 The agent-led schema is a pre-release compatibility break. Upgrades reset the
 database rather than migrating PLAN-022 state. An operator may preserve a backup

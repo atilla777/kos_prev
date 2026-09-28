@@ -348,6 +348,41 @@ class GemPackageTest < ActiveSupport::TestCase
     end
   end
 
+  test "rejects a relative explicit OpenCode destination without changing files" do
+    Dir.mktmpdir("kos-opencode") do |directory|
+      root = Pathname(directory)
+      config_home = root.join("config/opencode")
+      FileUtils.mkdir_p(config_home)
+      config_home.join("marker").write("preserved\n")
+      before = tree_snapshot(root)
+
+      _output, error, status = Open3.capture3(Rails.root.join("bin/install-opencode").to_s,
+        "--config-home", "config/opencode", chdir: root.to_s)
+
+      refute_predicate status, :success?
+      assert_includes error, "--config-home must be an absolute path"
+      assert_equal before, tree_snapshot(root)
+    end
+  end
+
+  test "ignores a relative XDG configuration home" do
+    Dir.mktmpdir("kos-opencode") do |directory|
+      root = Pathname(directory)
+      home = root.join("home")
+      home.mkpath
+
+      _output, error, status = Open3.capture3(
+        { "HOME" => home.to_s, "XDG_CONFIG_HOME" => "relative-config" },
+        Rails.root.join("bin/install-opencode").to_s,
+        chdir: root.to_s
+      )
+
+      assert_predicate status, :success?, error
+      assert_predicate home.join(".config/opencode/kos-installation.json"), :file?
+      refute_predicate root.join("relative-config"), :exist?
+    end
+  end
+
   test "fails instead of nesting a skill when replacement cannot be removed" do
     Dir.mktmpdir("kos-opencode") do |directory|
       config_home = Pathname(directory).join("config/opencode")
@@ -398,7 +433,7 @@ class GemPackageTest < ActiveSupport::TestCase
     {
       "RAILS_ENV" => "production", "KOS_API_TOKEN" => system.fetch(:token),
       "KOS_DATA_HOME" => system.fetch(:data_home).to_s, "SECRET_KEY_BASE" => "production-smoke-secret",
-      "RAILS_LOG_TO_STDOUT" => "1", "DATABASE_URL" => nil
+      "DATABASE_URL" => nil
     }
   end
 
@@ -466,5 +501,14 @@ class GemPackageTest < ActiveSupport::TestCase
     source_files.each do |relative_path|
       assert_equal source.join(relative_path).binread, destination.join(relative_path).binread
     end
+  end
+
+  def tree_snapshot(root)
+    root.glob("**/*", File::FNM_DOTMATCH).filter_map do |path|
+      next if %w[. ..].include?(path.basename.to_s)
+
+      value = path.directory? ? :directory : path.binread
+      [ path.relative_path_from(root).to_s, value ]
+    end.sort_by(&:first)
   end
 end

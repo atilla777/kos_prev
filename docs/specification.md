@@ -136,6 +136,7 @@ administration and inspection.
 | CLI | API | Purpose |
 | --- | --- | --- |
 | `health` | `GET /up` | Public process liveness |
+| - | `GET /ready` | Public database, migration, catalog, and data-directory readiness |
 | `claim-id` | local | Create one dispatch claim identity |
 | `project create`, `project show`, `project update` | `POST /projects`, `GET /projects`, `PATCH /projects/:id` | Register, inspect, and update project metadata |
 | `workflow create` | `POST /workflows` | Create one immutable keyed revision |
@@ -152,10 +153,11 @@ administration and inspection.
 | `task report` | `POST /tasks/:id/report` | Store one result and transition atomically |
 | `task answer` | `POST /tasks/:id/answer` | Durably answer a paused step |
 
-Application operations require the bearer token. Inputs are JSON or explicit
-file/standard-input values through the CLI. Complete command help defines exact
-options and response fields. Failed validation, dependency cycles, conflicting
-claims, and stale writes produce no partial state change.
+Only `/up` and `/ready` are public. Application operations require the bearer
+token. Inputs are JSON or explicit file/standard-input values through the CLI.
+Complete command help defines exact options and response fields. Failed
+validation, dependency cycles, conflicting claims, and stale writes produce no
+partial state change.
 
 ## Coordination Limits
 

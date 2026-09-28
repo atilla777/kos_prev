@@ -97,10 +97,11 @@ rather than interpolating structured content into shell commands.
 
 ## API
 
-The authenticated JSON API mirrors the CLI operations:
+The JSON API exposes public probes and authenticated coordination operations:
 
 ```text
 GET  /up
+GET  /ready
 POST /projects
 GET  /projects?repository_identity=IDENTITY
 PATCH /projects/:id
@@ -119,6 +120,11 @@ POST /tasks/:id/takeover
 POST /tasks/:id/report
 POST /tasks/:id/answer
 ```
+
+`GET /up` reports process liveness. `GET /ready` returns `200` only when the
+database, migrations, built-in catalog, and data directory are ready, and
+returns `503` otherwise. These two probes are public; every coordination route
+requires the bearer token.
 
 Definition writes validate completely before changing state. Lifecycle writes
 are atomic and return conflicts for stale `version`, `claim_id`, or step data.

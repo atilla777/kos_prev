@@ -9,8 +9,7 @@ agent intelligence.
   outcomes, backward transitions, pauses, and completion without name-based
   built-in behavior.
 - Plan tests cover atomic creation, replacement and abandonment, replacement
-  rejection after work starts, missing references, dependency cycles, and
-  readiness only after every blocker completes.
+  rejection after work starts, dependency cycles, and dependency blocking.
 - Lifecycle tests cover non-expiring claims, optimistic versions, conflicting
   claims, explicit takeover, stale claim/version/step rejection, one worker per
   task, terminal abandoned work, and parallel claims for independent tasks.
@@ -18,10 +17,9 @@ agent intelligence.
   repeated step's latest result, no partial write on failure, and focused result
   retrieval.
 - Pause tests cover durable question or obstruction storage, claim release,
-  exact answer binding, readiness for a new claim, clearing after an accepted
-  report, and process restart.
+  exact answer binding, and readiness for a new claim.
 - Request tests cover authentication, project-scoped non-completed-state
-  discovery, API projections, stable validation and conflict errors,
+  discovery, API projections, status mapping and selected stable error bodies,
   transaction rollback, bounded request and definition inputs, and persistence.
 - CLI tests execute the packaged client and cover discoverable help, health,
   claim identity generation, argument and standard-input mapping, output
@@ -29,15 +27,15 @@ agent intelligence.
 - Installation tests verify exactly one `/kos` command, one `kos-worker` agent,
   skills `kos`, `kos-cli`, `kos-worker`, and `okf`, plus abandonment persistence
   across backup and restart.
-- Agent-contract tests verify orchestrator-only coordination, one worker per
-  step, worker-owned reporting, and concurrent dispatch of independent tasks
-  plus explicit user intent for abandonment without implementing a second
-  scheduler in the test suite.
-- Persistence tests use isolated SQLite databases and restart the application
-  across claims, accepted reports, pauses, answers, and fresh-session discovery.
-- Limit tests cover exact boundaries, one-over rejection, iterative maximum-depth
-  dependency validation, aggregate accepted-result bounds, and unchanged state
-  after rejected writes.
+- Agent-contract tests verify the installed inventory, frontmatter, immutable
+  worker envelope, and durable role boundaries without treating exact prose as
+  executable behavior.
+- Persistence tests use isolated SQLite databases and exercise backup and
+  restore of completed and abandoned lifecycle inspection state plus
+  fresh-session discovery.
+- Limit tests cover collection, request-body, result, aggregate-result, and
+  representative text boundaries, iterative maximum-depth dependency
+  validation, and unchanged state after rejected writes.
 
 Tests must not use a developer's database, credentials, OpenCode configuration,
 or repository state. Concurrency tests assert both the winning write and the
@@ -55,6 +53,11 @@ main-step execution, leases, or scheduler prose-literal tests.
 Workers may choose such tools and procedures when workflow instructions permit
 them, but KOS tests only its storage and coordination boundary. Passing tests do
 not claim that worker-authored evidence is semantically correct.
+
+The retained task 031 clean-install acceptance record separately demonstrates a
+real installed `/kos` run with parallel worker dispatch, pause and answer,
+fresh-session discovery, takeover, and completion. Its verifier checks the
+recorded evidence; it is not a new live-model run for each release.
 
 ## Commands
 

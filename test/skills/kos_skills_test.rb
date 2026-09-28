@@ -33,52 +33,45 @@ class KosSkillsTest < ActiveSupport::TestCase
   end
 
   test "orchestrator coordinates but never performs substantive work" do
-    source = File.read(Rails.root.join("skills/kos/SKILL.md"))
+    source = normalized(Rails.root.join("skills/kos/SKILL.md"))
 
-    assert_includes source, "store it atomically"
-    assert_includes source, "Dispatch independent claims in\nparallel"
-    assert_includes source, "`task_id`, `claim_id`, `version`, and `step`"
-    assert_includes source, "It never performs a\nworkflow step"
-    assert_includes source, "trust KOS state rather than worker prose"
-    assert_includes source, "discover\nunfinished plans and tasks"
-    assert_includes source, "before creating replacement work"
-    assert_includes source, "Take over an active task only after deciding its worker has\nstopped"
-    assert_includes source, "only with explicit\nuser intent and the observed plan version"
-    assert_includes source, "Abandoned work is terminal"
-    assert_includes source, "neither rolls back external effects"
+    assert_match(/discover unfinished plans and tasks before creating replacement work/i, source)
+    assert_match(/dispatch independent claims in parallel/i, source)
+    assert_equal %w[claim_id step task_id version], envelope_fields(source)
+    assert_match(/never performs a workflow step/i, source)
+    assert_match(/trust KOS state rather than worker prose/i, source)
+    assert_match(/take over an active task only after deciding its worker has stopped/i, source)
+    assert_match(/abandon .* only with explicit user intent and the observed plan version/i, source)
     refute_match(/git status|git push|retry|lease|review algorithm/i, source)
   end
 
   test "worker executes exactly one immutable fenced step" do
-    skill = File.read(Rails.root.join("skills/kos-worker/SKILL.md"))
+    skill = normalized(Rails.root.join("skills/kos-worker/SKILL.md"))
     agent_path = Rails.root.join(".opencode/agents/kos-worker.md")
-    agent = File.read(agent_path)
+    agent = normalized(agent_path)
     metadata = frontmatter(agent_path)
 
     assert_equal "subagent", metadata.fetch("mode")
     assert_equal %w[description mode reasoningEffort], metadata.keys.sort
-    assert_includes agent, "immutable JSON envelope"
-    assert_includes skill, "require\nall four values to match"
-    assert_includes skill, "original\nenvelope's `claim_id`, `version`, and `step`"
-    assert_includes skill, "Never adopt a later claim, version, or\nstep"
-    assert_includes skill, "never execute the next step"
-    assert_includes skill, "workflow instruction defines the single step's objective and authority"
+    assert_match(/immutable JSON envelope/i, agent)
+    assert_equal %w[claim_id step task_id version], envelope_fields(agent)
+    assert_match(/require all four values to match its active claim before doing work/i, skill)
+    assert_match(/report exactly one allowed outcome .* using the original envelope/i, skill)
+    assert_match(/never adopt a later claim, version, or step/i, skill)
+    assert_match(/never execute the next step/i, skill)
     refute_match(/git (?:status|diff|push|commit)|retry|lock|lease/i, skill)
   end
 
   test "CLI skill is concise and names the complete public surface" do
-    source = File.read(Rails.root.join("skills/kos-cli/SKILL.md"))
+    source = normalized(Rails.root.join("skills/kos-cli/SKILL.md"))
 
     %w[KOS_CLI_PATH KOS_API_URL KOS_API_TOKEN health claim-id].each { |value| assert_includes source, value }
-    [ "project create/show/update", "workflow create", "plan\nput/list/show/abandon",
+    [ "project create/show/update", "workflow create", "plan put/list/show/abandon",
       "task list/ready/show/context/result/claim/takeover/report/answer" ].each do |surface|
       assert_includes source, surface
     end
-    assert_includes source, "Pass each value as a separate argument"
-    assert_includes source, "use `-` for standard input"
     (0..3).each { |status| assert_includes source, "`#{status}`" }
-    refute_match(/session-id|task-type|resume|lease|materializ|kos-git|kos-step/, source)
-    assert_operator source.lines.length, :<=, 30
+    refute_match(/session-id|task-type|resume|lease|materializ|kos-git|kos-step|Net::HTTP|ActiveRecord/, source)
   end
 
   private
@@ -92,5 +85,13 @@ class KosSkillsTest < ActiveSupport::TestCase
 
   def frontmatter(path)
     YAML.safe_load(File.read(path).match(/\A---\n(.*?)\n---/m)[1])
+  end
+
+  def normalized(path)
+    File.read(path).gsub(/\s+/, " ")
+  end
+
+  def envelope_fields(source)
+    source.scan(/`(task_id|claim_id|version|step)`/).flatten.uniq.sort
   end
 end

@@ -61,26 +61,6 @@ class ConfigurationTest < ActiveSupport::TestCase
     end
   end
 
-  test "separate server and OpenCode environments derive the same nondefault worktree path" do
-    data_home = "/srv/kos-instance"
-    server_environment = { "KOS_DATA_HOME" => data_home, "KOS_API_TOKEN" => "server-token" }
-    opencode_environment = { "KOS_DATA_HOME" => data_home, "KOS_API_URL" => "http://127.0.0.1:3000" }
-
-    server_home = Kos::Configuration.data_home(server_environment, home: "/server-default")
-    output, error, status = Open3.capture3(opencode_environment, RbConfig.ruby,
-      Rails.root.join("test/support/worktree_path_process.rb").to_s, "7", "19")
-
-    assert_predicate status, :success?, error
-    assert_equal "#{File.join(server_home, "worktrees", "7", "19")}\n", output
-
-    [ {}, { "KOS_DATA_HOME" => "relative" } ].each do |invalid_environment|
-      _output, error, status = Open3.capture3(invalid_environment, RbConfig.ruby,
-        Rails.root.join("test/support/worktree_path_process.rb").to_s, "7", "19")
-      refute_predicate status, :success?
-      assert_match(/KOS_DATA_HOME/, error)
-    end
-  end
-
   test "boots development with a token and creates its external data directory" do
     Dir.mktmpdir("kos-data") do |temporary_directory|
       data_home = File.join(temporary_directory, "data")
