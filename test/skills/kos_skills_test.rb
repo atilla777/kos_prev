@@ -43,6 +43,9 @@ class KosSkillsTest < ActiveSupport::TestCase
     assert_match(/never performs a workflow step/i, source)
     assert_match(/trust KOS state rather than worker prose/i, source)
     assert_match(/take over an active task only after deciding its worker has stopped/i, source)
+    assert_match(/release only when the active task still matches the cancelled dispatch.*`task_id`.*`claim_id`.*`version`.*`step`/i,
+      source)
+    assert_match(/use takeover when immediate replacement is intended/i, source)
     assert_match(/abandon .* only with explicit user intent and the observed plan version/i, source)
     refute_match(/git status|git push|retry|\blease\b|review algorithm/i, source)
   end
@@ -58,10 +61,10 @@ class KosSkillsTest < ActiveSupport::TestCase
     assert_match(/never guess a key, create a fallback workflow, or silently substitute/i, source)
     assert_match(/sole supported orchestration command is `\/kos`/i, source)
     assert_match(/planning only, stop after storage, with every task pending and unclaimed/i, source)
-    assert_match(/do not query ready tasks, claim or take over work, or dispatch a worker after that planning-only write/i,
+    assert_match(/do not query ready tasks, claim, take over, or release work, or dispatch a worker after that planning-only write/i,
       source)
     assert_match(/goal explicitly authorizes execution, coordinate the plan's execution/i, source)
-    assert_match(/intent is ambiguous, ask one material question before any ready-task query, claim, takeover, or worker dispatch/i,
+    assert_match(/intent is ambiguous, ask one material question before any ready-task query, claim, takeover, release, or worker dispatch/i,
       source)
   end
 
@@ -72,6 +75,8 @@ class KosSkillsTest < ActiveSupport::TestCase
       source)
     assert_match(/reread authoritative task state after known cancellation and before any takeover or later claim-release decision/i,
       source)
+    assert_match(/after assessing possible external effects, release only when the active task still matches/i, source)
+    assert_match(/never release unknown work based on age, inactivity, or inferred worker health/i, source)
   end
 
   test "worker executes exactly one immutable fenced step" do
@@ -100,7 +105,7 @@ class KosSkillsTest < ActiveSupport::TestCase
     end
     assert_includes source, "installation check"
     [ "project create/show/resolve/update", "workflow create/list/show/schema", "plan put/list/show/abandon",
-      "task list/ready/show/context/result/claim/takeover/report/answer" ].each do |surface|
+      "task list/ready/show/context/result/claim/takeover/release/report/answer" ].each do |surface|
       assert_includes source, surface
     end
     [ "project show --repository-identity IDENTITY", "project resolve --remote REMOTE", "status --remote REMOTE",

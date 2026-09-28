@@ -139,6 +139,70 @@ class TaskLifecycleTest < ActiveSupport::TestCase
     end
   end
 
+  test "release returns only an exact active claim to pending at the same step" do
+    task = create_task(project: @project, workflow: @workflow)
+    task.update!(accepted_results: { "prior" => { "outcome" => "done", "result" => "kept" } })
+    task = @lifecycle.claim!(task_id: task.id, claim_id: "worker", version: 0)
+
+    released = @lifecycle.release!(task_id: task.id, claim_id: "worker", version: 1, step: "work")
+
+    assert_equal [ "pending", "work", nil, 2 ], released.values_at(:status, :current_step, :claim_id, :version)
+    assert_equal "kept", released.accepted_results.dig("prior", "result")
+    assert_equal 2, task.task_plan.reload.version
+    assert_equal [ task.id ], @lifecycle.ready(project: @project).ids
+
+    reclaimed = @lifecycle.claim!(task_id: task.id, claim_id: "replacement", version: 2)
+    assert_equal [ "active", "replacement", 3 ], reclaimed.values_at(:status, :claim_id, :version)
+  end
+
+  test "release rejects stale mismatched and ineligible state without changes" do
+    task = create_task(project: @project, workflow: @workflow)
+    task = @lifecycle.claim!(task_id: task.id, claim_id: "worker", version: 0)
+
+    [
+      { claim_id: "other", version: 1, step: "work" },
+      { claim_id: "worker", version: 0, step: "work" },
+      { claim_id: "worker", version: 1, step: "review" }
+    ].each do |fence|
+      before = task.reload.attributes
+      plan_version = task.task_plan.reload.version
+      assert_raises(TaskLifecycle::Conflict) { @lifecycle.release!(task_id: task.id, **fence) }
+      assert_equal before, task.reload.attributes
+      assert_equal plan_version, task.task_plan.reload.version
+    end
+
+    released = @lifecycle.release!(task_id: task.id, claim_id: "worker", version: 1, step: "work")
+    before = released.attributes
+    plan_version = released.task_plan.reload.version
+    assert_raises(TaskLifecycle::Conflict) do
+      @lifecycle.release!(task_id: task.id, claim_id: "worker", version: 1, step: "work")
+    end
+    assert_equal before, task.reload.attributes
+    assert_equal plan_version, task.task_plan.reload.version
+  end
+
+  test "release invalidates the stopped worker report and rejects paused completed and abandoned tasks" do
+    task = create_task(project: @project, workflow: @workflow)
+    @lifecycle.claim!(task_id: task.id, claim_id: "worker", version: 0)
+    @lifecycle.release!(task_id: task.id, claim_id: "worker", version: 1, step: "work")
+    assert_raises(TaskLifecycle::Conflict) do
+      @lifecycle.report!(task_id: task.id, claim_id: "worker", version: 1, step: "work", outcome: "done",
+        result: "late")
+    end
+
+    %w[needs_human blocked completed abandoned].each do |status|
+      candidate = create_task(project: @project, workflow: @workflow, key: status)
+      paused = TaskLifecycle::PAUSED_STATUSES.include?(status)
+      candidate.update!(status:, claim_id: nil, pause_kind: paused ? status : nil,
+        pause_message: paused ? "Stopped" : nil, pause_step: paused ? "work" : nil, version: 1)
+      plan_version = candidate.task_plan.reload.version
+      assert_raises(TaskLifecycle::Conflict) do
+        @lifecycle.release!(task_id: candidate.id, claim_id: "worker", version: 1, step: "work")
+      end
+      assert_equal plan_version, candidate.task_plan.reload.version
+    end
+  end
+
   test "reports store the latest result and release each step claim" do
     task = create_task(project: @project, workflow: @workflow)
     task = @lifecycle.claim!(task_id: task.id, claim_id: "worker", version: 0)
@@ -384,6 +448,48 @@ class TaskLifecycleConcurrencyTest < ActiveSupport::TestCase
     assert_includes [ "Result 0", "Result 1" ], task.reload.accepted_results.dig("work", "result")
   end
 
+  test "concurrent release and report have one winner without mixed state" do
+    project = create_project
+    workflow = create_workflow
+    task = create_task(project:, workflow:)
+    TaskLifecycle.new.claim!(task_id: task.id, claim_id: "worker", version: 0)
+
+    results = race(
+      -> { TaskLifecycle.new.release!(task_id: task.id, claim_id: "worker", version: 1, step: "work") },
+      -> { TaskLifecycle.new.report!(task_id: task.id, claim_id: "worker", version: 1, step: "work",
+        outcome: "done", result: "finished") }
+    )
+
+    assert_equal 1, results.grep(Task).size
+    assert_equal 1, results.grep(TaskLifecycle::Conflict).size
+    assert_equal 2, task.task_plan.reload.version
+    if task.reload.status == "pending" && task.current_step == "work"
+      assert_nil task.claim_id
+      assert_empty task.accepted_results
+    else
+      assert_equal [ "pending", "review", nil, "finished" ],
+        task.values_at(:status, :current_step, :claim_id).push(task.accepted_results.dig("work", "result"))
+    end
+  end
+
+  test "concurrent release and takeover have one winner" do
+    project = create_project
+    workflow = create_workflow
+    task = create_task(project:, workflow:)
+    TaskLifecycle.new.claim!(task_id: task.id, claim_id: "worker", version: 0)
+
+    results = race(
+      -> { TaskLifecycle.new.release!(task_id: task.id, claim_id: "worker", version: 1, step: "work") },
+      -> { TaskLifecycle.new.takeover!(task_id: task.id, claim_id: "replacement", version: 1, step: "work") }
+    )
+
+    assert_equal 1, results.grep(Task).size
+    assert_equal 1, results.grep(TaskLifecycle::Conflict).size
+    assert_equal 2, task.task_plan.reload.version
+    assert_includes [ [ "pending", nil, 2 ], [ "active", "replacement", 2 ] ],
+      task.reload.values_at(:status, :claim_id, :version)
+  end
+
 
   test "abandonment races atomically with every task lifecycle mutation" do
     {
@@ -397,6 +503,9 @@ class TaskLifecycleConcurrencyTest < ActiveSupport::TestCase
       end,
       takeover: ->(lifecycle, task) do
         lifecycle.takeover!(task_id: task.id, claim_id: "new", version: task.version, step: "work")
+      end,
+      release: ->(lifecycle, task) do
+        lifecycle.release!(task_id: task.id, claim_id: task.claim_id, version: task.version, step: "work")
       end
     }.each do |operation, mutation|
       plan, task = abandonment_race_state(operation)
@@ -437,6 +546,22 @@ class TaskLifecycleConcurrencyTest < ActiveSupport::TestCase
 
   private
 
+  def race(*mutations)
+    gate = Queue.new
+    threads = mutations.map do |mutation|
+      Thread.new do
+        ActiveRecord::Base.connection_pool.with_connection do
+          gate.pop
+          mutation.call
+        rescue StandardError => error
+          error
+        end
+      end
+    end
+    mutations.size.times { gate << true }
+    threads.map(&:value)
+  end
+
   def abandonment_race_state(operation)
     project = create_project(name: operation.to_s)
     workflow = create_workflow
@@ -447,7 +572,7 @@ class TaskLifecycleConcurrencyTest < ActiveSupport::TestCase
     })
     task = create_task(task_plan: plan, workflow:, key: "target")
     case operation
-    when :report, :takeover
+    when :report, :takeover, :release
       task.update!(status: "active", claim_id: "worker", version: 1)
     when :answer
       task.update!(status: "needs_human", pause_kind: "needs_human", pause_message: "Choose", pause_step: "work",

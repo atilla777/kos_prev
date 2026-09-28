@@ -215,13 +215,16 @@ pending migrations, a stale catalog, or unavailable storage fails separately as
 The `/kos`
 agent coordinates only: it discovers non-completed state before creating work,
 discovers and selects existing workflows, stores plans, finds and claims ready
-work, dispatches workers, presents pauses, performs explicit takeover, abandons
-started plans only with explicit user intent, and observes state. A planning-only
+work, dispatches workers, presents pauses, performs explicit takeover or exact
+release of a known cancelled dispatch, abandons started plans only with explicit
+user intent, and observes state. A planning-only
 request stops after plan storage, before ready discovery or dispatch. An absent
 explicitly requested workflow requires a question rather than a guessed key or
 fallback definition. Each `kos-worker` performs and reports one current step.
 Cancelling that runtime worker does not clear its KOS claim; reread the task
-before takeover. The managed command and agent inherit the model and provider
+before releasing its exact envelope or taking it over. Release returns the same
+step to pending without a replacement; takeover installs one immediately. The
+managed command and agent inherit the model and provider
 selected by OpenCode; configure and authenticate a provider before the first
 run.
 
@@ -396,8 +399,8 @@ unset old_token new_token
 
 Update `KOS_API_TOKEN` in every CLI and OpenCode execution environment before
 resuming orchestration. Rotation does not release task claims; after rereading
-authoritative state, explicitly take over a task only if its old worker has
-stopped.
+authoritative state, release only an exact known stopped dispatch when no
+immediate replacement is wanted, or take it over when replacement is intended.
 
 ## Pre-Release Upgrade
 

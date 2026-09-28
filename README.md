@@ -7,8 +7,8 @@ It does not perform or judge diagnosis, implementation, testing, review, Git, or
 publication.
 
 The main orchestrator maintains a plan, selects dependency-ready tasks, claims
-them, dispatches workers, presents pauses, performs explicit takeover, and
-observes state. Every worker performs exactly one current workflow step and
+them, dispatches workers, presents pauses, performs explicit takeover or exact
+release of known cancelled dispatches, and observes state. Every worker performs exactly one current workflow step and
 reports one allowed outcome. Independent tasks may run in parallel; one task has
 at most one current worker.
 
@@ -26,11 +26,13 @@ goals stop after atomic plan storage, before ready discovery or worker dispatch.
 - A task is ready when it is pending and all blockers are complete.
 - A claim has an unpredictable `claim_id`, belongs to one worker dispatch, and
   does not expire. There are no leases, heartbeats, or clock-based recovery.
-- Every task has an optimistic `version`. Claim, takeover, answer, and report
+- Every task has an optimistic `version`. Claim, takeover, release, answer, and report
   operations reject stale versions; reports also reject stale claims or steps.
 - Explicit takeover installs a new claim and invalidates the previous worker.
+- Exact release clears a known stopped dispatch and returns its same step to
+  pending without assigning a replacement. It also invalidates the old worker.
 - Cancelling an OpenCode worker does not change KOS state; reread the task before
-  deciding whether its active claim should be taken over.
+  deciding whether its exact active claim should be released or taken over.
 - An accepted report stores the latest result for the executed step and applies
   its declared workflow transition in one transaction.
 - Pause questions and technical obstructions are durable. An answer remains
@@ -94,7 +96,7 @@ kos project create|show|resolve|update
 kos status
 kos workflow create|list|show|schema
 kos plan put|list|show|abandon
-kos task list|ready|show|context|result|claim|takeover|report|answer
+kos task list|ready|show|context|result|claim|takeover|release|report|answer
 ```
 
 `claim-id` creates a local unpredictable identity for one worker dispatch.
@@ -168,6 +170,7 @@ GET  /tasks/:id/context
 GET  /tasks/:id/result?step=STEP
 POST /tasks/:id/claim
 POST /tasks/:id/takeover
+POST /tasks/:id/release
 POST /tasks/:id/report
 POST /tasks/:id/answer
 ```

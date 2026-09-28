@@ -14,13 +14,17 @@ access.
 Use `--help` and per-command help for the installed interface. The commands are
 `health`, `claim-id`, `installation check`, `status`, `project create/show/resolve/update`,
 `workflow create/list/show/schema`, `plan put/list/show/abandon`, and `task
-list/ready/show/context/result/claim/takeover/report/answer`. Run `installation
+list/ready/show/context/result/claim/takeover/release/report/answer`. Run `installation
 check` before a KOS workflow; it verifies the OpenCode manifest, CLI, and server
 release identity and server readiness. `KOS_OPENCODE_MANIFEST` may select a
 non-default absolute manifest path.
 `plan abandon` is fenced by the observed plan version. List commands return
 non-completed state, including terminal abandoned records; use
 `--include-completed` for successful history.
+`task release ID --claim-id CLAIM --version VERSION --step STEP` returns only
+that exact active dispatch to pending at the same step. Use takeover to install
+an immediate replacement claim and plan abandonment only to retire the whole
+started plan.
 Common signatures are `project show --repository-identity IDENTITY`, `project
 resolve --remote REMOTE`, `status --remote REMOTE`, `workflow
 list [--key KEY]`, `workflow show ID`, `workflow schema`, `plan list

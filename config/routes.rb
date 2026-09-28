@@ -19,6 +19,7 @@ Rails.application.routes.draw do
       get :result
       post :claim
       post :takeover
+      post :release
       post :report
       post :answer
     end

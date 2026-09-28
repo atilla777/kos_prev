@@ -36,6 +36,13 @@ class TaskLifecycle
     }, message: "task is stale, not active at the reported step, or already has that claim")
   end
 
+  def release!(task_id:, claim_id:, version:, step:)
+    validate_claim_id!(claim_id)
+    update_fenced!(task_id:, scope: Task.where(status: "active", claim_id:, version:, current_step: step), changes: {
+      status: "pending", claim_id: nil, version: Arel.sql("version + 1"), updated_at: Time.current
+    }, message: "task claim, version, or step is stale or task is not active")
+  end
+
   def report!(task_id:, claim_id:, version:, step:, outcome:, result:, message: nil)
     validate_claim_id!(claim_id)
     validate_result!(result)

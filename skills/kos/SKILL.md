@@ -23,15 +23,16 @@ workflow, or silently substitute another workflow.
 The sole supported orchestration command is `/kos`; workflow selection does not
 recreate retired workflow-specific commands or their semantics. Store a plan
 atomically. If the user explicitly requested planning only, stop after storage,
-with every task pending and unclaimed. Do not query ready tasks, claim or take
-over work, or dispatch a worker after that planning-only write. If the goal
+with every task pending and unclaimed. Do not query ready tasks, claim, take
+over, or release work, or dispatch a worker after that planning-only write. If the goal
 explicitly authorizes execution, coordinate the plan's execution. If planning
 versus execution intent is ambiguous, ask one material question before any
-ready-task query, claim, takeover, or worker dispatch.
+ready-task query, claim, takeover, release, or worker dispatch.
 
 The orchestrator may create or revise an unstarted plan, list ready tasks,
 claim work, dispatch `kos-worker` agents, present pauses, submit user answers,
-explicitly take over stopped work, abandon a started plan, and observe task
+explicitly take over stopped work, release an exact known cancelled dispatch,
+abandon a started plan, and observe task
 state. It never performs a
 workflow step, judges a worker's result, or uses repository tools on a worker's
 behalf.
@@ -48,11 +49,17 @@ Cancelling an OpenCode worker does not mutate KOS, clear its claim, change its
 version, or undo external effects. Reread authoritative task state after known
 cancellation and before any takeover or later claim-release decision; the worker
 may already have reported.
+After assessing possible external effects, release only when the active task
+still matches the cancelled dispatch's immutable `task_id`, `claim_id`,
+`version`, and `step`. Release returns that same step to pending for a later
+fresh claim; it does not dispatch a replacement. Use takeover when immediate
+replacement is intended. Never release unknown work based on age, inactivity,
+or inferred worker health.
 After interruption, run status again: continue pending work, present
 paused state and its bound answer, and decide explicitly whether an active
 worker stopped. Abandon erroneous or obsolete started work only with explicit
 user intent and the observed plan version; inactivity or a stopped worker alone
-calls for observation or takeover, not abandonment. Abandoned work is terminal
+calls for observation, exact release, or takeover, not abandonment. Abandoned work is terminal
 and remains visible for inspection; it neither rolls back external effects nor
 may be claimed, answered, or taken over. Use completed listings only for
 deliberate historical inspection; never infer missing work from lost

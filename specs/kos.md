@@ -21,8 +21,9 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 - A user gives the main orchestrator a goal and answers material questions.
 - A main orchestrator creates or updates a task plan, preserves whether the user
   requested planning or execution, selects discovered workflows, claims ready
-  tasks, starts workers, and observes authoritative state. It does not diagnose,
-  implement, review, test, or publish task work itself.
+  tasks, starts workers, releases exact known cancelled dispatches, and observes
+  authoritative state. It does not diagnose, implement, review, test, or publish
+  task work itself.
 - A worker agent performs exactly one current workflow step. Depending on the
   step, it may diagnose, plan, implement, select and run checks, review, use
   Git, or publish.
@@ -47,6 +48,9 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   the registered project from one explicitly selected checkout remote, obtains
   its non-completed plans and tasks in one status operation, reads their KOS
   state, and explicitly takes over unfinished work when appropriate.
+- After cancelling its own worker, an orchestrator can reread the task and
+  release that exact stopped dispatch back to pending without assigning a
+  replacement.
 - With explicit user intent, the orchestrator can atomically abandon an
   erroneous or obsolete started plan without erasing completed work.
 - Built-in development, fix, and brief workflows may be supplied as convenient
@@ -74,7 +78,8 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   graph, or completion semantics.
 - The main orchestrator owns scheduling only: plan maintenance, ready-task
   selection, claiming, worker dispatch, pause presentation, takeover, and state
-  observation. It never substitutes its own work for a worker step.
+  observation, including exact release after its known worker cancellation. It
+  never substitutes its own work for a worker step.
 - Before storing new work, the orchestrator discovers available workflows. It
   selects `development` for ordinary implementation, `fix` for defect
   correction, `brief` for specification work, or the exact discovered custom
@@ -84,10 +89,11 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   not guess a key, create a fallback workflow, or silently substitute one.
 - Explicit planning-only intent authorizes one atomic plan write, not execution.
   After that write every task remains pending and unclaimed, and the
-  orchestrator stops before even querying ready tasks.
+  orchestrator stops before even querying ready tasks or performing a claim,
+  takeover, release, or dispatch.
 - Worker execution requires execution intent. If planning versus execution is
   ambiguous, the orchestrator asks one material question before any ready-task
-  query, claim, takeover, or dispatch.
+  query, claim, takeover, release, or dispatch.
 - A worker owns one substantive step. Its stored workflow instruction defines
   the objective and authority; the worker chooses the appropriate reasoning,
   repository tools, checks, Git operations, and evidence.
@@ -101,13 +107,18 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 - Claims do not expire automatically in the MVP. Recovery uses an explicit,
   version-fenced takeover that invalidates the prior claim. KOS requires no
   lease clock, heartbeat, or automatic redispatch algorithm.
+- Releasing an active task requires its exact `claim_id`, observed `version`,
+  and current step. It atomically clears the claim, returns the same step to
+  pending, and advances both task and plan versions. It is only for a known
+  stopped dispatch, never an age-, inactivity-, or health-based decision.
 - Cancelling a worker in the agent runtime does not mutate KOS, clear its claim,
   advance its version, or undo external effects. The orchestrator rereads
   authoritative task state before deciding whether takeover or any later claim
   release is still valid.
 - Creating or replacing a not-yet-started task plan stores its tasks and
   dependencies atomically so workers never observe a partial plan.
-- Each plan has an optimistic version advanced by every task lifecycle change.
+- Each plan has an optimistic version advanced by every task lifecycle change,
+  including release.
   Abandoning a started plan requires the observed plan version and atomically
   marks every unfinished task abandoned, clears its claim, and advances its
   task version while preserving completed tasks and all accepted results.
@@ -156,6 +167,9 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   errors and no partial state change.
 - Stale or concurrent plan abandonment fails without partially abandoning the
   plan; claim, report, answer, takeover, and abandonment have one winner.
+- A stale or mismatched release, or release of paused, completed, abandoned, or
+  unclaimed work, fails without changing task or plan state. Release racing a
+  report, takeover, or abandonment has one winner.
 - A scheduler that finds no ready task reports that fact without creating
   speculative work.
 - A missing explicitly requested workflow produces one material question and no
@@ -179,6 +193,8 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 
 - If a stale worker finishes after explicit takeover, its report is rejected by
   the changed claim or task version.
+- If a released worker finishes later, its report is rejected, while a fresh
+  claim may continue the same workflow step.
 - If a stale worker finishes after plan abandonment, its report is rejected by
   the abandoned status and advanced task version.
 - If an orchestrator stops after dispatch, another orchestrator can discover
@@ -207,6 +223,9 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   unclaimed, while execution goals use an existing discovered workflow.
 - Two workers cannot successfully report the same claimed task version, and an
   explicitly superseded worker cannot change state.
+- An orchestrator can release its exact known stopped dispatch once; the task
+  becomes pending and claimable at the same step, and the old worker cannot
+  report.
 - A worker can obtain all information needed to understand one current step and
   can atomically report one allowed result and transition.
 - Pause, answer, completion, and the latest accepted step results survive a

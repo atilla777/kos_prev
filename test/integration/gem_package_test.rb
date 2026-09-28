@@ -50,7 +50,7 @@ class GemPackageTest < ActiveSupport::TestCase
         "project" => %w[create show resolve update],
         "workflow" => %w[create list show schema],
         "plan" => %w[put list show abandon],
-        "task" => %w[list ready show context result claim takeover report answer]
+        "task" => %w[list ready show context result claim takeover release report answer]
       }.each do |resource, actions|
         inventory = output.lines.grep(/^\s*#{Regexp.escape(resource)}\s+/).join
         assert_not_empty inventory
@@ -67,6 +67,7 @@ class GemPackageTest < ActiveSupport::TestCase
         %w[task context] => [],
         %w[plan abandon] => %w[--project-id --key --version],
         %w[task result] => %w[--step],
+        %w[task release] => %w[--claim-id --version --step],
         %w[task report] => %w[--claim-id --version --result-file]
       }.each do |command, options|
         command_output, command_error, command_status = Open3.capture3(
@@ -155,6 +156,7 @@ class GemPackageTest < ActiveSupport::TestCase
       paused_task = nil
       active_task = nil
       blocked_task = nil
+      released_task = nil
       Tempfile.create([ "smoke-plan", ".json" ], root.to_s) do |plan_file|
         plan_file.write(JSON.generate(key: "smoke", title: "Smoke", tasks: [
           {
@@ -224,6 +226,26 @@ class GemPackageTest < ActiveSupport::TestCase
         end
       end
 
+
+      Tempfile.create([ "released-plan", ".json" ], root.to_s) do |plan_file|
+        plan_file.write(JSON.generate(key: "released", title: "Released", tasks: [ {
+          key: "released", title: "Released dispatch", description_markdown: "Release the stopped dispatch",
+          workflow_key: "development", blocker_keys: []
+        } ]))
+        plan_file.flush
+        run_installed_json(cli, authenticated, root, "plan", "put", "--project-id", project.fetch("id").to_s,
+          "--definition-file", plan_file.path)
+        released_task = run_installed_json(cli, authenticated, root, "task", "ready", "--project-id",
+          project.fetch("id").to_s).fetch("tasks").find { |candidate| candidate.fetch("key") == "released" }
+        released_task = run_installed_json(cli, authenticated, root, "task", "claim", released_task.fetch("id").to_s,
+          "--claim-id", "smoke-release", "--version", released_task.fetch("version").to_s).fetch("task")
+        released_task = run_installed_json(cli, authenticated, root, "task", "release", released_task.fetch("id").to_s,
+          "--claim-id", "smoke-release", "--version", released_task.fetch("version").to_s,
+          "--step", released_task.fetch("current_step")).fetch("task")
+        assert_equal [ "pending", "plan", nil, 2 ],
+          released_task.values_at("status", "current_step", "claim_id", "version")
+      end
+
       current_plan = run_installed_json(cli, authenticated, root, "plan", "show", "--project-id",
         project.fetch("id").to_s, "--key", "smoke").fetch("task_plan")
       abandoned_plan = run_installed_json(cli, authenticated, root, "plan", "abandon", "--project-id",
@@ -256,19 +278,21 @@ class GemPackageTest < ActiveSupport::TestCase
       restored = recovery_status.fetch("project")
       assert_equal project.fetch("id"), restored.fetch("id")
       discovered_plans = recovery_status.fetch("task_plans")
-      assert_equal [ "smoke" ], discovered_plans.pluck("key")
-      assert_equal "abandoned", discovered_plans.first.fetch("status")
+      assert_equal %w[smoke released], discovered_plans.pluck("key")
+      assert_equal %w[abandoned active], discovered_plans.pluck("status")
       discovered_tasks = recovery_status.fetch("tasks")
-      assert_equal %w[paused active blocked], discovered_tasks.pluck("key")
+      assert_equal %w[paused active blocked released], discovered_tasks.pluck("key")
       assert_equal [ "abandoned", "plan", "Choose a direction", "# Result\n" ],
         discovered_tasks.first.values_at("status", "pause_step", "pause_message", "answer")
       assert_equal [ "abandoned", nil, 2 ],
         discovered_tasks.second.values_at("status", "claim_id", "version")
       assert_equal [ "abandoned", "blocked", "plan", "Dependency unavailable", nil ],
-        discovered_tasks.last.values_at("status", "pause_kind", "pause_step", "pause_message", "answer")
+        discovered_tasks.third.values_at("status", "pause_kind", "pause_step", "pause_message", "answer")
+      assert_equal [ "pending", "plan", nil, 2 ],
+        discovered_tasks.last.values_at("status", "current_step", "claim_id", "version")
       all_tasks = run_installed_json(cli, restored_environment, root, "task", "list", "--project-id",
         restored.fetch("id").to_s, "--include-completed").fetch("tasks")
-      assert_equal %w[lifecycle paused active blocked], all_tasks.pluck("key")
+      assert_equal %w[lifecycle paused active blocked released], all_tasks.pluck("key")
       restored_context = run_installed_json(cli, restored_environment, root, "task", "context",
         task.fetch("id").to_s)
       assert_equal "completed", restored_context.dig("task", "status")
@@ -282,8 +306,11 @@ class GemPackageTest < ActiveSupport::TestCase
         active_task.fetch("id").to_s)
       assert_equal [ "abandoned", nil, 2 ],
         restored_active.fetch("task").values_at("status", "claim_id", "version")
-      assert_empty run_installed_json(cli, restored_environment, root, "task", "ready", "--project-id",
+      ready_after_restore = run_installed_json(cli, restored_environment, root, "task", "ready", "--project-id",
         restored.fetch("id").to_s).fetch("tasks")
+      assert_equal [ released_task.fetch("id") ], ready_after_restore.pluck("id")
+      assert_equal [ "pending", "plan", nil, 2 ],
+        ready_after_restore.first.values_at("status", "current_step", "claim_id", "version")
     ensure
       stop_server(system) if system
     end

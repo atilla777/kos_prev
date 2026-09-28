@@ -12,8 +12,9 @@ agent intelligence.
 - Plan tests cover atomic creation, replacement and abandonment, replacement
   rejection after work starts, dependency cycles, and dependency blocking.
 - Lifecycle tests cover non-expiring claims, optimistic versions, conflicting
-  claims, explicit takeover, stale claim/version/step rejection, one worker per
-  task, terminal abandoned work, and parallel claims for independent tasks.
+  claims, explicit takeover, exact release to the same pending step, stale
+  claim/version/step and ineligible-state rejection, one worker per task,
+  terminal abandoned work, and parallel claims for independent tasks.
 - Result tests cover atomic result-plus-transition acceptance, replacement of a
   repeated step's latest result, no partial write on failure, and focused result
   retrieval.
@@ -31,13 +32,13 @@ agent intelligence.
 - Installation tests verify exactly one `/kos` command, one `kos-worker` agent,
   skills `kos`, `kos-cli`, `kos-worker`, and `okf`; clean and legacy installation,
   manifest-owned stale cleanup, unmanaged-file preservation, compatibility
-  failure, and abandonment persistence across backup and restart.
+  failure, and release and abandonment persistence across backup and restart.
 - Agent-contract tests verify the installed inventory, frontmatter, immutable
   worker envelope, planning-only stop boundary, discovered workflow selection,
   cancellation observation, and durable role boundaries without treating exact
   prose as executable behavior.
 - Persistence tests use isolated SQLite databases and exercise backup and
-  restore of completed and abandoned lifecycle inspection state plus
+  restore of completed, released, and abandoned lifecycle inspection state plus
   fresh-session discovery.
 - Limit tests cover collection, request-body, result, aggregate-result, and
   representative text boundaries, iterative maximum-depth dependency
@@ -46,7 +47,8 @@ agent intelligence.
 Tests must not use a developer's database, credentials, OpenCode configuration,
 or repository state. Concurrency tests assert both the winning write and the
 unchanged invariant after rejected writes, including abandonment races with
-claim, report, answer, and takeover. No test depends on wall-clock claim expiry
+claim, report, answer, takeover, and release, plus release races with report and
+takeover. No test depends on wall-clock claim expiry
 because claims do not expire.
 
 ## Exclusions

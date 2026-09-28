@@ -19,8 +19,8 @@ coordinate writes; they are not identities for authorization.
 - The main orchestrator creates or updates a plan, preserves planning-only or
   execution intent, selects an existing discovered workflow, selects ready
   tasks, claims them, dispatches workers, presents pauses, explicitly takes over
-  stopped work, abandons erroneous or obsolete started plans with explicit user
-  intent, and observes authoritative state.
+  stopped work, releases exact known cancelled dispatches, abandons erroneous
+  or obsolete started plans with explicit user intent, and observes authoritative state.
 - A worker performs exactly one current workflow step. It chooses the reasoning,
   tools, checks, repository operations, and evidence appropriate to that step,
   reports one allowed outcome, and stops.
@@ -70,7 +70,7 @@ plan. A plan may be replaced only while none of its tasks has started.
 
 An explicit planning-only request authorizes discovery needed to construct the
 plan and one atomic `plan put`, but not execution. After storing the plan, the
-orchestrator stops before a ready-task query, claim, takeover, or worker
+orchestrator stops before a ready-task query, claim, takeover, release, or worker
 dispatch; all tasks remain pending and unclaimed. An execution request first
 discovers available workflow keys and uses `development` for ordinary
 implementation, `fix` for defect correction, `brief` for specification work, or
@@ -81,7 +81,7 @@ or silently substitutes another workflow.
 
 Worker execution requires execution intent. If planning versus execution is
 ambiguous, the orchestrator asks one material question before any ready-task
-query, claim, takeover, or worker dispatch.
+query, claim, takeover, release, or worker dispatch.
 
 `/kos` is the sole supported orchestration command. Selecting `brief` or another
 workflow does not restore retired workflow-specific command behavior or imply
@@ -117,12 +117,19 @@ external effects. Its claim remains active unless the worker already reported.
 The orchestrator rereads authoritative task state after known cancellation and
 before deciding whether to take over or later release the still-active claim.
 
+Release is for an intentionally stopped dispatch without immediate replacement.
+It requires the exact active `claim_id`, observed task `version`, and current
+step. In one transaction it clears the claim, returns that same step to pending,
+and advances task and plan versions. Takeover instead installs a replacement
+claim immediately. Release is never inferred from age, inactivity, or worker
+health and does not undo external effects.
+
 Every lifecycle mutation supplies the observed task `version`. Worker reports
 also supply the active `claim_id` and current step. A stale version, claim, or
 step changes nothing. Consequently, two workers cannot both report the same task
 version, and a worker superseded by takeover cannot change task state.
 
-Every successful claim, takeover, answer, or report also advances the plan
+Every successful claim, takeover, release, answer, or report also advances the plan
 version. Abandonment competes through that aggregate fence, so it and a
 concurrent task mutation have one winner; successful abandonment invalidates
 all claims and task versions for unfinished work.
@@ -182,6 +189,7 @@ supports numeric project reads for administration and inspection.
 | `task result` | `GET /tasks/:id/result?step=STEP` | Read one latest accepted result |
 | `task claim` | `POST /tasks/:id/claim` | Claim a ready task |
 | `task takeover` | `POST /tasks/:id/takeover` | Explicitly replace a stopped worker's claim |
+| `task release` | `POST /tasks/:id/release` | Return one exact known stopped dispatch to pending without replacement |
 | `task report` | `POST /tasks/:id/report` | Store one result and transition atomically |
 | `task answer` | `POST /tasks/:id/answer` | Durably answer a paused step |
 
@@ -230,7 +238,8 @@ contacts it, or infers worker liveness.
 
 Recovery state includes pending,
 active, needs-human, blocked, and terminal abandoned state; active entries
-expose their claim fence, and paused or abandoned entries retain persisted pause
+expose their claim fence, released entries are ordinary pending unclaimed work,
+and paused or abandoned entries retain persisted pause
 and answer evidence. Completed state is excluded by default but can be requested
 for deliberate inspection. Plan listings return identity, status, version, and
 timestamps. Task listings return task and plan identity, `workflow_id`,

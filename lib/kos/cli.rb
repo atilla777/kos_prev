@@ -74,7 +74,7 @@ module Kos
           status
           workflow create | list | show | schema
           plan put | list | show | abandon
-          task list | ready | show | context | result | claim | takeover | report | answer
+          task list | ready | show | context | result | claim | takeover | release | report | answer
 
         Options:
           -v, --version             Show the installed CLI version
@@ -144,6 +144,7 @@ module Kos
       when [ "task", "result" ] then task_result
       when [ "task", "claim" ] then task_claim
       when [ "task", "takeover" ] then task_takeover
+      when [ "task", "release" ] then task_release
       when [ "task", "report" ] then task_report
       when [ "task", "answer" ] then task_answer
       else
@@ -369,6 +370,20 @@ module Kos
         "kos task takeover 9 --claim-id NEW --version 2 --step work"))
       require_values!(values, :claim_id, :version, :step)
       [ :post, "/tasks/#{id}/takeover", values ]
+    end
+
+    def task_release
+      id = shift_id!("task")
+      values = parse_options("kos task release ID", fence_options, footer: task_id_help(
+        "task with #{task_response_fields}",
+        "kos task release 9 --claim-id STOPPED --version 2 --step work") + <<~HELP)
+
+        Releases only the exact known stopped dispatch, returning the same step to pending without replacement.
+        It does not undo external effects. Use takeover for immediate replacement, a pause outcome for worker-reported
+        questions or obstructions, and plan abandon only to retire an entire started plan with explicit user intent.
+      HELP
+      require_values!(values, :claim_id, :version, :step)
+      [ :post, "/tasks/#{id}/release", values ]
     end
 
     def task_report

@@ -111,6 +111,34 @@ class TasksApiTest < ActionDispatch::IntegrationTest
     assert_equal [ "pending", "A", 4 ], response.parsed_body.fetch("task").values_at("status", "answer", "version")
   end
 
+  test "releases only an exact active dispatch" do
+    task = create_task(project: @project, workflow: @workflow)
+    post claim_task_path(task), params: { claim_id: "worker", version: 0 }, headers: @headers, as: :json
+
+    post release_task_path(task), params: { claim_id: "other", version: 1, step: "work" },
+      headers: @headers, as: :json
+    assert_response :conflict
+    assert_equal [ "active", "worker", 1 ], task.reload.values_at(:status, :claim_id, :version)
+    assert_equal 1, task.task_plan.reload.version
+
+    post release_task_path(task), params: { claim_id: "worker", version: 1, step: "work" },
+      headers: @headers, as: :json
+    assert_response :success
+    assert_equal [ "pending", "work", nil, 2 ],
+      response.parsed_body.fetch("task").values_at("status", "current_step", "claim_id", "version")
+    assert_equal 2, task.task_plan.reload.version
+
+    post report_task_path(task), params: {
+      claim_id: "worker", version: 1, step: "work", outcome: "done", result: "late"
+    }, headers: @headers, as: :json
+    assert_response :conflict
+    post release_task_path(task), params: { claim_id: "worker", version: 1, step: "work" },
+      headers: @headers, as: :json
+    assert_response :conflict
+    post release_task_path(task), params: { claim_id: "worker", version: 2 }, headers: @headers, as: :json
+    assert_response :bad_request
+  end
+
   test "abandons a started plan through an exact plan fence" do
     plan = create_task_plan(project: @project, key: "obsolete")
     completed = create_task(task_plan: plan, workflow: @workflow, key: "completed")
@@ -258,6 +286,7 @@ class TasksApiTest < ActionDispatch::IntegrationTest
       -> { get result_task_path(1) },
       -> { post claim_task_path(1), params: {}, as: :json },
       -> { post takeover_task_path(1), params: {}, as: :json },
+      -> { post release_task_path(1), params: {}, as: :json },
       -> { post report_task_path(1), params: {}, as: :json },
       -> { post answer_task_path(1), params: {}, as: :json }
     ]

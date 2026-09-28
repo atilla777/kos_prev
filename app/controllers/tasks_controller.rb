@@ -61,6 +61,13 @@ class TasksController < ApplicationController
     render json: { task: serialize_task(task) }
   end
 
+  def release
+    task = lifecycle.release!(task_id: params[:id], claim_id: required_string(:claim_id,
+      max_bytes: CoordinationLimits::MAX_CLAIM_ID_BYTES),
+      version: required_integer(:version), step: required_string(:step))
+    render json: { task: serialize_task(task) }
+  end
+
   def report
     task = lifecycle.report!(task_id: params[:id], claim_id: required_string(:claim_id,
       max_bytes: CoordinationLimits::MAX_CLAIM_ID_BYTES),

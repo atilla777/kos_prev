@@ -1,13 +1,14 @@
 # Status
 
-State: planned
+State: done
 Updated: 2026-09-28
 
 ## Current
 
-Claims are deliberately non-expiring. A stopped worker can be replaced through
-takeover or its whole plan can be abandoned, but one known cancelled dispatch
-cannot be returned to pending without immediately assigning a new claim.
+`task release` now returns one exact active dispatch to pending at the same
+workflow step, clears its claim, and advances task and plan versions. The API,
+packaged CLI, orchestrator guidance, specifications, and installation guidance
+distinguish release from takeover, pause, and plan abandonment.
 
 ## Decisions
 
@@ -16,11 +17,17 @@ cannot be returned to pending without immediately assigning a new claim.
 - Require the original immutable worker envelope so a caller cannot release
   newly taken-over work accidentally.
 - Keep external-effect assessment with the orchestrator before release.
+- Reuse existing pending state rather than adding a release status or schema.
 
-## Next
+## Verification
 
-Begin after orchestration intent and repository recovery behavior are stable.
+- `bin/check` passes: 119 tests, 1878 assertions, no failures or errors.
+- Packaged CLI coverage proves release survives SQLite backup and restore as
+  ready pending work at the same step.
+- Independent review found no production correctness or safety defects. Its one
+  low-severity test gap for explicit `blocked` rejection was added before the
+  final check.
 
 ## Blockers
 
-- Depends on tasks 037 and 038.
+- None.

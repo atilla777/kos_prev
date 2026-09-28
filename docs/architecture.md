@@ -8,8 +8,9 @@
 - The packaged CLI is a thin authenticated HTTP client. `claim-id` is its only
   local state-producing operation.
 - The `/kos` main agent is an orchestrator. It plans, finds ready tasks, claims
-  them, dispatches `kos-worker`, presents pauses, performs explicit takeover,
-  and observes state. It performs no substantive workflow step.
+  them, dispatches `kos-worker`, presents pauses, performs explicit takeover or
+  exact release of its known cancelled dispatch, and observes state. It performs
+  no substantive workflow step.
 - Explicit planning-only intent ends orchestration immediately after atomic plan
 storage, before ready discovery or any lifecycle mutation. Workflow selection
 is based on discovery and user intent, never a guessed key or fallback
@@ -45,7 +46,7 @@ while preserving completed tasks and all inspection state. It does not undo
 repository, Git, or other external effects.
 
 Each task has an optimistic integer `version` and at most one active `claim_id`.
-Claim, takeover, answer, and report use compare-and-change transactions. Claims
+Claim, takeover, release, answer, and report use compare-and-change transactions. Claims
 are non-expiring. Explicit takeover with the observed version installs a new
 claim and makes every prior worker stale; there is no lease or time-dependent
 state transition.
@@ -73,7 +74,7 @@ project create|show|resolve|update
 status
 workflow create|list|show|schema
 plan put|list|show|abandon
-task list|ready|show|context|result|claim|takeover|report|answer
+task list|ready|show|context|result|claim|takeover|release|report|answer
 ```
 
 The JSON API mirrors these operations with public `GET /up` liveness and
@@ -120,7 +121,7 @@ part of the report transaction, before task or plan versions advance. The exact
 public limits are listed in [the system specification](specification.md).
 
 Plan abandonment uses the observed plan version. It shares one transactional
-plan fence with claim, report, answer, and takeover, so concurrent operations
+plan fence with claim, report, answer, takeover, and release, so concurrent operations
 have one winner and cannot expose partially abandoned state.
 
 ## Agent Integration
@@ -176,7 +177,8 @@ Runtime cancellation of a worker is not a KOS mutation: it does not clear the
 claim, advance the version, or undo external effects. After known cancellation,
 the orchestrator rereads the task because the worker may have reported before it
 stopped, and only then decides whether a still-active claim should be taken over
-or later released.
+or later released. Release requires the exact cancelled dispatch envelope and
+returns the same step to pending; takeover installs an immediate replacement.
 
 Successful abandonment similarly invalidates every unfinished worker. Terminal
 abandoned records remain in default non-completed discovery but are never ready

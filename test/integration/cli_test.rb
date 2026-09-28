@@ -19,7 +19,7 @@ class CliTest < ActiveSupport::TestCase
     assert_match(/^\s*status\s*$/, output)
     assert_match(/^\s*workflow create \| list \| show \| schema\s*$/, output)
     assert_match(/^\s*plan put \| list \| show \| abandon\s*$/, output)
-    assert_match(/^\s*task list \| ready \| show \| context \| result \| claim \| takeover \| report \| answer\s*$/, output)
+    assert_match(/^\s*task list \| ready \| show \| context \| result \| claim \| takeover \| release \| report \| answer\s*$/, output)
     %w[session-id task-type create-or-get resume lease artifact report-attempt materialize children graph].each do |removed|
       refute_match(/\b#{Regexp.escape(removed)}\b/, output)
     end
@@ -46,6 +46,7 @@ class CliTest < ActiveSupport::TestCase
       %w[task result] => %w[--step],
       %w[task claim] => %w[--claim-id --version],
       %w[task takeover] => %w[--claim-id --version --step],
+      %w[task release] => %w[--claim-id --version --step],
       %w[task report] => %w[--claim-id --version --step --outcome --result-file --message],
       %w[task answer] => %w[--version --step --answer-file]
     }.each do |command, options|
@@ -85,6 +86,8 @@ class CliTest < ActiveSupport::TestCase
     end
     status_help, = run_cli("status", "--help", environment: {})
     %w[project task_plans tasks observational].each { |detail| assert_includes status_help, detail }
+    release_help, = run_cli("task", "release", "--help", environment: {})
+    %w[pending replacement takeover pause abandon external].each { |detail| assert_includes release_help, detail }
     assert Workflow.new(key: "help-example", name: "Help example", revision: 1,
       definition_json: Kos::WorkflowDefinition.example).valid?
   end
@@ -302,6 +305,8 @@ class CliTest < ActiveSupport::TestCase
               { "claim_id" => "claim-a", "version" => 0 } ],
             [ [ "task", "takeover", "9", "--claim-id", "claim-b", "--version", "4", "--step", "work" ],
               "POST", "/tasks/9/takeover", { "claim_id" => "claim-b", "version" => 4, "step" => "work" } ],
+            [ [ "task", "release", "9", "--claim-id", "claim-b", "--version", "5", "--step", "work" ],
+              "POST", "/tasks/9/release", { "claim_id" => "claim-b", "version" => 5, "step" => "work" } ],
             [ [ "task", "report", "9", "--claim-id", "claim-b", "--version", "5", "--step", "work",
               "--outcome", "done", "--result-file", result.path, "--message", "evidence" ],
               "POST", "/tasks/9/report", { "claim_id" => "claim-b", "version" => 5, "step" => "work",
