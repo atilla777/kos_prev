@@ -33,8 +33,9 @@ agent intelligence.
   manifest-owned stale cleanup, unmanaged-file preservation, compatibility
   failure, and abandonment persistence across backup and restart.
 - Agent-contract tests verify the installed inventory, frontmatter, immutable
-  worker envelope, and durable role boundaries without treating exact prose as
-  executable behavior.
+  worker envelope, planning-only stop boundary, discovered workflow selection,
+  cancellation observation, and durable role boundaries without treating exact
+  prose as executable behavior.
 - Persistence tests use isolated SQLite databases and exercise backup and
   restore of completed and abandoned lifecycle inspection state plus
   fresh-session discovery.

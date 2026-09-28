@@ -44,7 +44,34 @@ class KosSkillsTest < ActiveSupport::TestCase
     assert_match(/trust KOS state rather than worker prose/i, source)
     assert_match(/take over an active task only after deciding its worker has stopped/i, source)
     assert_match(/abandon .* only with explicit user intent and the observed plan version/i, source)
-    refute_match(/git status|git push|retry|lease|review algorithm/i, source)
+    refute_match(/git status|git push|retry|\blease\b|review algorithm/i, source)
+  end
+
+  test "orchestrator preserves planning and workflow intent" do
+    source = normalized(Rails.root.join("skills/kos/SKILL.md"))
+
+    assert_match(/before creating or revising an unstarted plan, discover workflow keys/i, source)
+    assert_match(/`development` workflow for ordinary implementation.*`fix` for defect correction.*`brief` for specification work/i,
+      source)
+    assert_match(/exact discovered custom key when the user requests one/i, source)
+    assert_match(/requested workflow is absent, ask one material question and make no coordination mutation/i, source)
+    assert_match(/never guess a key, create a fallback workflow, or silently substitute/i, source)
+    assert_match(/sole supported orchestration command is `\/kos`/i, source)
+    assert_match(/planning only, stop after storage, with every task pending and unclaimed/i, source)
+    assert_match(/do not query ready tasks, claim or take over work, or dispatch a worker after that planning-only write/i,
+      source)
+    assert_match(/goal explicitly authorizes execution, coordinate the plan's execution/i, source)
+    assert_match(/intent is ambiguous, ask one material question before any ready-task query, claim, takeover, or worker dispatch/i,
+      source)
+  end
+
+  test "orchestrator observes state after worker cancellation" do
+    source = normalized(Rails.root.join("skills/kos/SKILL.md"))
+
+    assert_match(/cancelling an OpenCode worker does not mutate KOS, clear its claim, change its version, or undo external effects/i,
+      source)
+    assert_match(/reread authoritative task state after known cancellation and before any takeover or later claim-release decision/i,
+      source)
   end
 
   test "worker executes exactly one immutable fenced step" do

@@ -1,5 +1,5 @@
 class BuiltInCatalog
-  REVISION = 2
+  REVISION = 3
 
   PAUSES = {
     "needs_human" => { "pause" => "needs_human" },
@@ -37,9 +37,9 @@ class BuiltInCatalog
         "published" => { "complete_task" => true }, "changes_requested" => { "next_step" => "implement" })
     ],
     "brief" => [
-      step("brief", "Brief", "Specify the requested behavior and propose a minimal task plan.",
+      step("brief", "Brief", "Specify the requested behavior and its acceptance criteria.",
         "specified" => { "next_step" => "review" }),
-      step("review", "Review", "Review the specification and proposed task plan independently.",
+      step("review", "Review", "Review the complete specification independently and report actionable findings.",
         "approved" => { "next_step" => "publish" }, "changes_requested" => { "next_step" => "brief" }),
       step("publish", "Publish", "Publish the approved specification and observe the result.",
         "published" => { "complete_task" => true }, "changes_requested" => { "next_step" => "brief" })

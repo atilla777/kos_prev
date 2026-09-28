@@ -210,11 +210,16 @@ pending migrations, a stale catalog, or unavailable storage fails separately as
 
 The `/kos`
 agent coordinates only: it discovers non-completed state before creating work,
-stores plans, finds and claims ready work, dispatches workers, presents pauses,
-performs explicit takeover, abandons started plans only with explicit user
-intent, and observes state. Each `kos-worker` performs and reports one current
-step. The managed command and agent inherit the model and provider selected by
-OpenCode; configure and authenticate a provider before the first run.
+discovers and selects existing workflows, stores plans, finds and claims ready
+work, dispatches workers, presents pauses, performs explicit takeover, abandons
+started plans only with explicit user intent, and observes state. A planning-only
+request stops after plan storage, before ready discovery or dispatch. An absent
+explicitly requested workflow requires a question rather than a guessed key or
+fallback definition. Each `kos-worker` performs and reports one current step.
+Cancelling that runtime worker does not clear its KOS claim; reread the task
+before takeover. The managed command and agent inherit the model and provider
+selected by OpenCode; configure and authenticate a provider before the first
+run.
 
 ## Production
 

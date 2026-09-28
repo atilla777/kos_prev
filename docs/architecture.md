@@ -10,6 +10,11 @@
 - The `/kos` main agent is an orchestrator. It plans, finds ready tasks, claims
   them, dispatches `kos-worker`, presents pauses, performs explicit takeover,
   and observes state. It performs no substantive workflow step.
+- Explicit planning-only intent ends orchestration immediately after atomic plan
+storage, before ready discovery or any lifecycle mutation. Workflow selection
+is based on discovery and user intent, never a guessed key or fallback
+definition. Ambiguous planning-versus-execution intent is clarified before any
+ready-task query or worker lifecycle mutation.
 - A `kos-worker` agent reads authoritative context, performs exactly one current
   step, reports one outcome, and stops.
 - Workflow instructions grant substantive authority. The application and skills
@@ -114,6 +119,13 @@ have one winner and cannot expose partially abandoned state.
 The managed OpenCode inventory is one `/kos` command, one `kos-worker` agent,
 and skills `kos`, `kos-cli`, `kos-worker`, and `okf`.
 
+The generic `/kos` command discovers workflow keys before planning execution. It
+uses the existing `development`, `fix`, or `brief` workflow for ordinary
+implementation, defect correction, or specification work respectively, and an
+exact discovered custom key when explicitly requested. An absent requested key
+causes one material question and no coordination mutation. Workflow selection
+does not recreate retired workflow-specific slash commands.
+
 Both the orchestrator and independently invoked workers run `installation
 check` before project or task access. A missing or invalid manifest, inventory
 or release mismatch, or unavailable server stops execution before repository or
@@ -149,6 +161,12 @@ and pause state; it does not infer readiness, staleness, or takeover policy. A
 delayed worker's report fails because takeover changed both claim identity and
 task version. An ambiguous mutation is resolved by reading current state before
 another write.
+
+Runtime cancellation of a worker is not a KOS mutation: it does not clear the
+claim, advance the version, or undo external effects. After known cancellation,
+the orchestrator rereads the task because the worker may have reported before it
+stopped, and only then decides whether a still-active claim should be taken over
+or later released.
 
 Successful abandonment similarly invalidates every unfinished worker. Terminal
 abandoned records remain in default non-completed discovery but are never ready

@@ -22,10 +22,10 @@ class BuiltInCatalogTest < ActiveSupport::TestCase
   end
 
   test "installs a changed catalog as new revisions while existing tasks remain pinned" do
-    legacy_definition = BuiltInCatalog.definitions.fetch("development").deep_dup
+    legacy_definition = BuiltInCatalog.definitions.fetch("brief").deep_dup
     legacy_definition.fetch("steps").first["instruction"] = "Legacy planning instruction."
-    legacy = create_workflow(key: "development", revision: BuiltInCatalog::REVISION - 1,
-      definition: legacy_definition, name: "Development")
+    legacy = create_workflow(key: "brief", revision: BuiltInCatalog::REVISION - 1,
+      definition: legacy_definition, name: "Brief")
     task = create_task(workflow: legacy)
 
     assert_difference -> { Workflow.count }, 3 do
@@ -37,8 +37,8 @@ class BuiltInCatalogTest < ActiveSupport::TestCase
 
     assert_equal legacy.id, task.reload.workflow_id
     assert_equal legacy_definition, legacy.reload.definition_json
-    assert_equal BuiltInCatalog.definitions.fetch("development"),
-      Workflow.find_by!(key: "development", revision: BuiltInCatalog::REVISION).definition_json
+    assert_equal BuiltInCatalog.definitions.fetch("brief"),
+      Workflow.find_by!(key: "brief", revision: BuiltInCatalog::REVISION).definition_json
   end
 
   test "worker instructions do not assign orchestrator coordination" do
@@ -49,6 +49,13 @@ class BuiltInCatalogTest < ActiveSupport::TestCase
     instructions.each do |instruction|
       refute_match(/\b(?:creat|replac|claim|answer|schedul)\w*\b|\btake\s+over\b|\btakeover\b/i, instruction)
     end
+    brief_instructions = BuiltInCatalog.definitions.fetch("brief").fetch("steps").pluck("instruction")
+    assert_equal [
+      "Specify the requested behavior and its acceptance criteria.",
+      "Review the complete specification independently and report actionable findings.",
+      "Publish the approved specification and observe the result."
+    ], brief_instructions
+    brief_instructions.each { |instruction| refute_match(/task plan|implement/i, instruction) }
     assert_equal "Publish the approved specification and observe the result.",
       BuiltInCatalog.definitions.fetch("brief").fetch("steps").find { |step| step.fetch("id") == "publish" }
         .fetch("instruction")

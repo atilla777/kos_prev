@@ -19,9 +19,10 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 # Actors
 
 - A user gives the main orchestrator a goal and answers material questions.
-- A main orchestrator creates or updates a task plan, claims ready tasks, starts
-  workers, and observes authoritative state. It does not diagnose, implement,
-  review, test, or publish task work itself.
+- A main orchestrator creates or updates a task plan, preserves whether the user
+  requested planning or execution, selects discovered workflows, claims ready
+  tasks, starts workers, and observes authoritative state. It does not diagnose,
+  implement, review, test, or publish task work itself.
 - A worker agent performs exactly one current workflow step. Depending on the
   step, it may diagnose, plan, implement, select and run checks, review, use
   Git, or publish.
@@ -31,6 +32,8 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 
 - The main orchestrator turns a goal into an ordered or dependency-linked plan
   of tasks and stores that plan in KOS.
+- For an explicit planning-only goal, the orchestrator stores the complete plan
+  and stops before ready-task discovery, claiming, takeover, or dispatch.
 - The main orchestrator finds ready tasks, claims independent tasks atomically,
   and runs multiple worker agents in parallel on different tasks.
 - A worker reads its task, current workflow step, and relevant prior results;
@@ -47,6 +50,8 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   erroneous or obsolete started plan without erasing completed work.
 - Built-in development, fix, and brief workflows may be supplied as convenient
   defaults, while custom workflows use the same generic state semantics.
+- One generic `/kos` command handles planning and execution with built-in or
+  custom workflows; retired workflow-specific command semantics are not implied.
 - An administrator can discover workflow keys and immutable revisions, inspect
   the authoritative definition contract and example, and create a valid custom
   workflow using only the installed CLI.
@@ -69,6 +74,19 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 - The main orchestrator owns scheduling only: plan maintenance, ready-task
   selection, claiming, worker dispatch, pause presentation, takeover, and state
   observation. It never substitutes its own work for a worker step.
+- Before storing new work, the orchestrator discovers available workflows. It
+  selects `development` for ordinary implementation, `fix` for defect
+  correction, `brief` for specification work, or the exact discovered custom
+  workflow explicitly requested by the user.
+- If an explicitly requested workflow is absent, the orchestrator asks one
+  material question without creating or replacing coordination state. It does
+  not guess a key, create a fallback workflow, or silently substitute one.
+- Explicit planning-only intent authorizes one atomic plan write, not execution.
+  After that write every task remains pending and unclaimed, and the
+  orchestrator stops before even querying ready tasks.
+- Worker execution requires execution intent. If planning versus execution is
+  ambiguous, the orchestrator asks one material question before any ready-task
+  query, claim, takeover, or dispatch.
 - A worker owns one substantive step. Its stored workflow instruction defines
   the objective and authority; the worker chooses the appropriate reasoning,
   repository tools, checks, Git operations, and evidence.
@@ -82,6 +100,10 @@ KOS coordinates agents; it does not perform or judge their substantive work.
 - Claims do not expire automatically in the MVP. Recovery uses an explicit,
   version-fenced takeover that invalidates the prior claim. KOS requires no
   lease clock, heartbeat, or automatic redispatch algorithm.
+- Cancelling a worker in the agent runtime does not mutate KOS, clear its claim,
+  advance its version, or undo external effects. The orchestrator rereads
+  authoritative task state before deciding whether takeover or any later claim
+  release is still valid.
 - Creating or replacing a not-yet-started task plan stores its tasks and
   dependencies atomically so workers never observe a partial plan.
 - Each plan has an optimistic version advanced by every task lifecycle change.
@@ -130,6 +152,8 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   plan; claim, report, answer, takeover, and abandonment have one winner.
 - A scheduler that finds no ready task reports that fact without creating
   speculative work.
+- A missing explicitly requested workflow produces one material question and no
+  workflow, plan, task, claim, or takeover mutation.
 - A worker that cannot make a material product decision pauses with one precise
   question instead of inventing the answer.
 - A technical obstruction is recorded as a pause with its observed reason.
@@ -170,6 +194,8 @@ KOS coordinates agents; it does not perform or judge their substantive work.
   workflow schema, and create a valid custom workflow using installed CLI help.
 - The main orchestrator can atomically claim multiple independent ready tasks
   and dispatch separate workers without performing their substantive steps.
+- An explicit planning-only goal leaves the atomically stored plan pending and
+  unclaimed, while execution goals use an existing discovered workflow.
 - Two workers cannot successfully report the same claimed task version, and an
   explicitly superseded worker cannot change state.
 - A worker can obtain all information needed to understand one current step and

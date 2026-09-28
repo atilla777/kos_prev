@@ -12,6 +12,11 @@ observes state. Every worker performs exactly one current workflow step and
 reports one allowed outcome. Independent tasks may run in parallel; one task has
 at most one current worker.
 
+`/kos` is the sole orchestration command. It discovers existing workflows and
+uses `development` for implementation, `fix` for defect correction, `brief` for
+specification work, or an explicitly requested custom workflow. Planning-only
+goals stop after atomic plan storage, before ready discovery or worker dispatch.
+
 ## Coordination Model
 
 - A plan stores all of its tasks and dependencies atomically. It may be replaced
@@ -24,6 +29,8 @@ at most one current worker.
 - Every task has an optimistic `version`. Claim, takeover, answer, and report
   operations reject stale versions; reports also reject stale claims or steps.
 - Explicit takeover installs a new claim and invalidates the previous worker.
+- Cancelling an OpenCode worker does not change KOS state; reread the task before
+  deciding whether its active claim should be taken over.
 - An accepted report stores the latest result for the executed step and applies
   its declared workflow transition in one transaction.
 - Pause questions and technical obstructions are durable. An answer remains

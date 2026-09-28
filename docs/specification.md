@@ -16,10 +16,11 @@ coordinate writes; they are not identities for authorization.
 ## Roles
 
 - The user supplies a goal and answers material questions.
-- The main orchestrator creates or updates a plan, selects ready tasks, claims
-  them, dispatches workers, presents pauses, explicitly takes over stopped work,
-  abandons erroneous or obsolete started plans with explicit user intent, and
-  observes authoritative state.
+- The main orchestrator creates or updates a plan, preserves planning-only or
+  execution intent, selects an existing discovered workflow, selects ready
+  tasks, claims them, dispatches workers, presents pauses, explicitly takes over
+  stopped work, abandons erroneous or obsolete started plans with explicit user
+  intent, and observes authoritative state.
 - A worker performs exactly one current workflow step. It chooses the reasoning,
   tools, checks, repository operations, and evidence appropriate to that step,
   reports one allowed outcome, and stops.
@@ -67,6 +68,25 @@ revision.
 all task definitions and blocker relationships. No reader can observe a partial
 plan. A plan may be replaced only while none of its tasks has started.
 
+An explicit planning-only request authorizes discovery needed to construct the
+plan and one atomic `plan put`, but not execution. After storing the plan, the
+orchestrator stops before a ready-task query, claim, takeover, or worker
+dispatch; all tasks remain pending and unclaimed. An execution request first
+discovers available workflow keys and uses `development` for ordinary
+implementation, `fix` for defect correction, `brief` for specification work, or
+an exact discovered custom key explicitly requested by the user. If that
+requested key is absent, the orchestrator asks one material question and makes
+no coordination mutation. It never guesses a workflow key, creates a fallback,
+or silently substitutes another workflow.
+
+Worker execution requires execution intent. If planning versus execution is
+ambiguous, the orchestrator asks one material question before any ready-task
+query, claim, takeover, or worker dispatch.
+
+`/kos` is the sole supported orchestration command. Selecting `brief` or another
+workflow does not restore retired workflow-specific command behavior or imply
+automatic creation of a follow-on implementation plan.
+
 With explicit user intent, `plan abandon` retires one started plan using its
 observed version. In one transaction it marks every unfinished task
 `abandoned`, clears active claims, advances affected task versions, and marks
@@ -91,6 +111,11 @@ comparison, stale-worker detector, or automatic redispatch. After deciding that
 a worker stopped, the orchestrator performs `task takeover` with the observed
 version and a new `claim_id`. A successful takeover increments the version and
 invalidates the old worker.
+
+Stopping or cancelling an OpenCode worker changes no KOS state and does not undo
+external effects. Its claim remains active unless the worker already reported.
+The orchestrator rereads authoritative task state after known cancellation and
+before deciding whether to take over or later release the still-active claim.
 
 Every lifecycle mutation supplies the observed task `version`. Worker reports
 also supply the active `claim_id` and current step. A stale version, claim, or
